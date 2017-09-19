@@ -3,3 +3,11 @@
 """
 .. $Id$
 """
+
+from nti.app.products.courseware_admin.views import CreateCourseView
+
+class CreateSCORMCourseView(CreateCourseView):
+    """
+    An object that can create SCORM courses.
+    """
+    pass
