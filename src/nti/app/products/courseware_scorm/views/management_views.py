@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from nti.app.products.courseware_admin.views import CreateCourseView
+from nti.app.products.courseware_admin.views.management_views import CreateCourseView
 
 class CreateSCORMCourseView(CreateCourseView):
     """
