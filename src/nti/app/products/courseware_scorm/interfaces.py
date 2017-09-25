@@ -8,6 +8,8 @@ from zope import interface
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
+from nti.schema.field import TextLine as ValidTextLine
+
 
 class IScormCourseInstance(ICourseInstance):
     """
@@ -19,3 +21,6 @@ class ISCORMCourseMetadata(interface.Interface):
     """
     Metadata for a SCORM course.
     """
+
+    scorm_id = ValidTextLine(title=u"The SCORM ID",
+                             required=True)
