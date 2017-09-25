@@ -4,6 +4,8 @@
 .. $Id$
 """
 
+from zope import interface
+
 from nti.contenttypes.courses.courses import CourseInstance
 
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
