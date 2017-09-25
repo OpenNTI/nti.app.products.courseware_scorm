@@ -11,7 +11,7 @@ from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.schema.field import TextLine as ValidTextLine
 
 
-class IScormCourseInstance(ICourseInstance):
+class ISCORMCourseInstance(ICourseInstance):
     """
     A concrete instance of a SCORM course.
     """
