@@ -13,11 +13,9 @@ class IScormCourseInstance(ICourseInstance):
     """
     A concrete instance of a SCORM course.
     """
-    pass
 
 
 class ISCORMCourseMetadata(interface.Interface):
     """
     Metadata for a SCORM course.
     """
-    pass

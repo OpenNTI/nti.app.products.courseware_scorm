@@ -17,7 +17,6 @@ class SCORMCourseInstance(CourseInstance):
     """
     An instance of a SCORM course.
     """
-    pass
 
 
 @interface.implementer(IScormCourseMetadata)
@@ -25,4 +24,3 @@ class SCORMCourseMetadata(object):
     """
     A metadata object for a SCORM course instance.
     """
-    pass
