@@ -4,16 +4,18 @@
 .. $Id$
 """
 
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
+
 from zope import interface
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
-from nti.schema.field import TextLine as ValidTextLine
-
-from zope.annotation.interfaces import IAttributeAnnotatable
+from nti.schema.field import DecodingValidTextLine as ValidTextLine
 
 
-class ISCORMCourseInstance(ICourseInstance, IAttributeAnnotatable):
+class ISCORMCourseInstance(ICourseInstance):
     """
     A concrete instance of a SCORM course.
     """

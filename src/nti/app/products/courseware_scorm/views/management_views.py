@@ -4,9 +4,14 @@
 .. $Id$
 """
 
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
+
 from nti.app.products.courseware_admin.views.management_views import CreateCourseView
 
 from nti.app.products.courseware_scorm.courses import SCORMCourseInstance
+
 
 class CreateSCORMCourseView(CreateCourseView):
     """
