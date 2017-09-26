@@ -10,8 +10,10 @@ from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.schema.field import TextLine as ValidTextLine
 
+from zope.annotation.interfaces import IAttributeAnnotatable
 
-class ISCORMCourseInstance(ICourseInstance):
+
+class ISCORMCourseInstance(ICourseInstance, IAttributeAnnotatable):
     """
     A concrete instance of a SCORM course.
     """
