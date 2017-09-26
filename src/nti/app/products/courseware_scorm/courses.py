@@ -6,7 +6,7 @@
 
 from zope import component
 from zope import interface
-from zope.annotation.factory import factory as an_factory
+from zope.annotation import factory as an_factory
 
 from nti.contenttypes.courses.courses import CourseInstance
 
