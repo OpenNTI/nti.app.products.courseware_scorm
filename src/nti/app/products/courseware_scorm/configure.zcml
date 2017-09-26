@@ -10,6 +10,8 @@
 	<include package="zope.component" />
 	<include package="zope.security" />
 
-	<adapter factory=".courses.SCORMCourseInstanceMetadata" />
+	<include package="zope.annotation" />
+
+	<adapter factory=".courses.SCORMCourseInstanceMetadataFactory" />
 
 </configure>
