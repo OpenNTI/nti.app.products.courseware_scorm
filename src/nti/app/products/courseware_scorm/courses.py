@@ -25,7 +25,7 @@ class SCORMCourseInstance(CourseInstance):
 
 
 @component.adapter(ISCORMCourseInstance)
-@interface.implementer(IScormCourseMetadata)
+@interface.implementer(ISCORMCourseMetadata)
 class SCORMCourseMetadata(object):
     """
     A metadata object for a SCORM course instance.
