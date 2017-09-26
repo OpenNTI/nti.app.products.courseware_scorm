@@ -13,6 +13,9 @@ from nti.contenttypes.courses.courses import CourseInstance
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 
+from persistent import Persistent
+from zope.container.contained import Contained
+
 
 SCORM_COURSE_METADATA_KEY = 'nti.app.produts.courseware_scorm.courses.metadata'
 
@@ -26,7 +29,7 @@ class SCORMCourseInstance(CourseInstance):
 
 @component.adapter(ISCORMCourseInstance)
 @interface.implementer(ISCORMCourseMetadata)
-class SCORMCourseMetadata(object):
+class SCORMCourseMetadata(Persistent, Contained):
     """
     A metadata object for a SCORM course instance.
     """
