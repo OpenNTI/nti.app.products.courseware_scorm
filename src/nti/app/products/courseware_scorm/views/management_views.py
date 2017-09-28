@@ -13,6 +13,12 @@ from nti.app.products.courseware_admin.views.management_views import CreateCours
 from nti.app.products.courseware_scorm.courses import SCORMCourseInstance
 
 
+@view_config(route_name='objects.generic.traversal',
+             renderer='rest',
+             context=ICourseAdministrativeLevel,
+             request_method='POST',
+             permission=nauth.ACT_NTI_ADMIN,
+             name=CREATE_SCORM_COURSE_VIEW_NAME)
 class CreateSCORMCourseView(CreateCourseView):
     """
     An object that can create SCORM courses.
