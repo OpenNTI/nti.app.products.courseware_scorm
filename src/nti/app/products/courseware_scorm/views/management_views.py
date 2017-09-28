@@ -10,6 +10,8 @@ from __future__ import absolute_import
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
+from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
+
 from nti.app.products.courseware_admin.views.management_views import CreateCourseView
 
 from nti.app.products.courseware_scorm.courses import SCORMCourseInstance
@@ -29,7 +31,8 @@ class CreateSCORMCourseView(CreateCourseView):
     _COURSE_INSTANCE_FACTORY = SCORMCourseInstance
 
 
-class UploadSCORMView(AbstractAuthenticatedView):
+class UploadSCORMView(AbstractAuthenticatedView,
+                      ModeledContentUploadRequestUtilsMixin):
     """
     A view for uploading SCORM zip archives to SCORM courses.
     """
