@@ -28,3 +28,15 @@ class ISCORMCourseMetadata(interface.Interface):
 
     scorm_id = ValidTextLine(title=u"The SCORM ID",
                              required=True)
+
+
+class ISCORMCloudClient(interface.Interface):
+    """
+    A client for interacting with SCORM Cloud.
+    """
+
+    def uploadSCORMZip(path):
+        """
+        Uploads a SCORM zip from the given path.
+        :param path: The path which locates the SCORM zip to upload.
+        """
