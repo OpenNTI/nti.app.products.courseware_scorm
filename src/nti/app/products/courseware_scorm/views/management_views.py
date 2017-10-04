@@ -31,6 +31,12 @@ class CreateSCORMCourseView(CreateCourseView):
     _COURSE_INSTANCE_FACTORY = SCORMCourseInstance
 
 
+class DeleteSCORMCourseView(DeleteCourseView):
+    """
+    A view for deleting SCORM courses.
+    """
+
+
 class UploadSCORMView(AbstractAuthenticatedView,
                       ModeledContentUploadRequestUtilsMixin):
     """
