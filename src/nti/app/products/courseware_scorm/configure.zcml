@@ -14,4 +14,7 @@
 
 	<adapter factory=".courses.SCORMCourseInstanceMetadataFactory" />
 
+	<include package="." file="meta.zcml" />
+	<scorm:registerSCORMClient />
+
 </configure>
