@@ -17,6 +17,8 @@ from zope.component.zcml import utility
 
 from zope.configuration import fields
 
+from nti.app.products.courseware_scorm.client import SCORMClient
+
 
 class ISCORMClient(interface.Interface):
     """
@@ -24,5 +26,6 @@ class ISCORMClient(interface.Interface):
     """
 
 
-def registerSCORMClient():
-    pass
+def registerSCORMClient(_context, name=''):
+    factory = SCORMClient
+    utility(_context, provides=ISCORMClient, factory=factory, name=name)
