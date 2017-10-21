@@ -10,5 +10,4 @@ from __future__ import absolute_import
 
 from nti.app.products.courseware import MessageFactory
 
-
 CREATE_SCORM_COURSE_VIEW_NAME = 'CreateSCORM'

@@ -1,62 +1,46 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-.. $Id$
-"""
 
 from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
 # disable: accessing protected members, too many methods
-# pylint: disable=W0212,R0904
+# pylint: disable=E1101,W0212,R0904
 
 from hamcrest import is_
 from hamcrest import is_not
 from hamcrest import has_item
 from hamcrest import not_none
-from hamcrest import has_entry
-from hamcrest import has_length
 from hamcrest import assert_that
-from hamcrest import contains_inanyorder
 does_not = is_not
 
 import shutil
 
 from zope import component
 
-from nti.app.testing.webtest import TestApp
-from nti.app.testing.application_webtest import ApplicationLayerTest
+from nti.app.products.courseware.tests import PersistentInstructedCourseApplicationTestLayer
 
 from nti.app.products.courseware_admin import VIEW_COURSE_ADMIN_LEVELS
 
-from nti.app.products.courseware.views import VIEW_COURSE_ACCESS_TOKENS
+from nti.app.products.courseware_scorm.views import CREATE_SCORM_COURSE_VIEW_NAME
+
+from nti.app.testing.application_webtest import ApplicationLayerTest
+
+from nti.app.testing.decorators import WithSharedApplicationMockDS
 
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contentlibrary.interfaces import IDelimitedHierarchyContentPackageEnumeration
 
-from nti.ntiids.ntiids import find_object_with_ntiid
-
-from nti.app.products.courseware.tests import PersistentInstructedCourseApplicationTestLayer
-
-from nti.contenttypes.courses.interfaces import ICourseCatalog
-from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
-from nti.contenttypes.courses.interfaces import INonPublicCourseInstance
-
 from nti.externalization.interfaces import StandardExternalFields
 
-from nti.ntiids.ntiids import find_object_with_ntiid
-
-from nti.app.testing.decorators import WithSharedApplicationMockDS
-
 from nti.dataserver.tests import mock_dataserver
-
-from nti.app.products.courseware_scorm.views import CREATE_SCORM_COURSE_VIEW_NAME
 
 ITEMS = StandardExternalFields.ITEMS
 CLASS = StandardExternalFields.CLASS
 MIMETYPE = StandardExternalFields.MIMETYPE
 ITEM_COUNT = StandardExternalFields.ITEM_COUNT
+
 
 class TestManagementViews(ApplicationLayerTest):
 
@@ -107,7 +91,7 @@ class TestManagementViews(ApplicationLayerTest):
         assert_that(courses.json_body, does_not(has_item(new_course_key)))
 
         # Create course
-        create_course_href = new_admin_href + u'/' + CREATE_SCORM_COURSE_VIEW_NAME
+        create_course_href = new_admin_href + '/' + CREATE_SCORM_COURSE_VIEW_NAME
         new_course = self.testapp.post_json(create_course_href,
                                             {'course': new_course_key})
 
