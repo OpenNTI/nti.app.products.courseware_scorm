@@ -10,13 +10,9 @@ from __future__ import absolute_import
 
 from pyramid.view import view_config
 
-from nti.dataserver import authorization as nauth
-
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
-
-from nti.contenttypes.courses.interfaces import ICourseAdministrativeLevel
 
 from nti.app.products.courseware_admin.views.management_views import CreateCourseView
 from nti.app.products.courseware_admin.views.management_views import DeleteCourseView
@@ -24,6 +20,10 @@ from nti.app.products.courseware_admin.views.management_views import DeleteCours
 from nti.app.products.courseware_scorm.courses import SCORMCourseInstance
 
 from nti.app.products.courseware_scorm.views import CREATE_SCORM_COURSE_VIEW_NAME
+
+from nti.contenttypes.courses.interfaces import ICourseAdministrativeLevel
+
+from nti.dataserver import authorization as nauth
 
 
 @view_config(route_name='objects.generic.traversal',
