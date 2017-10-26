@@ -32,9 +32,9 @@ from nti.app.testing.decorators import WithSharedApplicationMockDS
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contentlibrary.interfaces import IDelimitedHierarchyContentPackageEnumeration
 
-from nti.externalization.interfaces import StandardExternalFields
-
 from nti.dataserver.tests import mock_dataserver
+
+from nti.externalization.interfaces import StandardExternalFields
 
 ITEMS = StandardExternalFields.ITEMS
 CLASS = StandardExternalFields.CLASS
@@ -81,7 +81,6 @@ class TestManagementViews(ApplicationLayerTest):
         admin_levels = self.testapp.get(admin_href)
         admin_levels = admin_levels.json_body
         new_admin = admin_levels[ITEMS][test_admin_key]
-        print(new_admin)
         new_admin_href = new_admin['href']
 
         assert_that(new_admin_href, not_none())

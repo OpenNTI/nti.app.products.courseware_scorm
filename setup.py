@@ -50,9 +50,16 @@ setup(
     install_requires=[
         'setuptools',
         'nti.app.products.courseware',
+        'nti.app.products.courseware_admin',
         'nti.contenttypes.courses',
+        'nti.externalization',
+        'nti.schema',
+        'nti.scorm_cloud',
+        'persistent',
+        'pyramid',
         'zope.annotation',
         'zope.component',
+        'zope.location',
         'zope.security',
     ],
     extras_require={

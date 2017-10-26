@@ -12,6 +12,8 @@
 
 	<include package="zope.annotation" />
 
+	<include package="nti.scorm_cloud" />
+
 	<adapter factory=".courses.SCORMCourseInstanceMetadataFactory" />
 
 </configure>
