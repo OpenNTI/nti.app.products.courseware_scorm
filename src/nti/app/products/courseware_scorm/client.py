@@ -37,11 +37,11 @@ class SCORMCloudClient(object):
         Imports a SCORM course into SCORM Cloud.
         :param path The relative path of the zip file to import.
         """
-        service = cloud.get_course_service()
-        importResult = service.import_uploaded_course(None, path)
+        cloud_service = cloud.get_course_service()
+        importResult = cloud_service.import_uploaded_course(None, path)
 
-        upsvc = cloud.get_upload_service()
-	    resp = upsvc.delete_file(path)
+        up_service = cloud.get_upload_service()
+        response = up_service.delete_file(path)
 
         # TODO: Use a real redirect URL
         redirectUrl = 'sample/courselist'
