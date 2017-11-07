@@ -108,6 +108,7 @@ class TestManagementViews(ApplicationLayerTest):
         catalog = catalog.json_body
         entry_ntiid = catalog['NTIID']
         assert_that(entry_ntiid, not_none())
+
         # GUID NTIID
         assert_that(entry_ntiid,
                     is_not('tag:nextthought.com,2011-10:NTI-CourseInfo-Heisenberg_BreakingBad'))
