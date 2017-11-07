@@ -15,7 +15,7 @@ from pyramid.httpexceptions import HTTPFound
 from nti.scorm_cloud.client import ScormCloudService
 from nti.scorm_cloud.client import ScormCloudUtilities
 
-from nti.app.products.courseware_scorm.zcml import ISCORMClient
+from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 
 
 # TODO: Use real values for these
@@ -26,13 +26,13 @@ origin = ScormCloudUtilities.get_canonical_origin_string('your company',
          'sample application', '1.0')
 cloud = ScormCloudService.withargs(appId, secretKey, serviceUrl, origin)
 
-@interface.implementer(ISCORMClient)
-class SCORMClient(object):
+@interface.implementer(ISCORMCloudClient)
+class SCORMCloudClient(object):
     """
     The default SCORM client.
     """
 
-    def import_course(self, path):
+    def import_SCORM_course(self, path):
         """
         Imports a SCORM course into SCORM Cloud.
         :param path The relative path of the zip file to import.

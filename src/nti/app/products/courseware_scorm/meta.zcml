@@ -4,9 +4,9 @@
 			xmlns:meta="http://namespaces.zope.org/meta">
 
   	<meta:directives namespace="http://nextthought.com/ntp/scorm">
-  		<meta:directive	name="scormClient"
-          						schema=".zcml.ISCORMClient"
-          						handler=".zcml.registerSCORMClient" />
+  		<meta:directive	name="registerSCORMCloudClient"
+          						schema=".zcml.IRegisterSCORMCloudClient"
+          						handler=".zcml.registerSCORMCloudClient" />
   	</meta:directives>
 
 </configure>

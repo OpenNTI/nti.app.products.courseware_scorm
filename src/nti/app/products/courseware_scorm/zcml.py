@@ -17,15 +17,17 @@ from zope.component.zcml import utility
 
 from zope.configuration import fields
 
-from nti.app.products.courseware_scorm.client import SCORMClient
+from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
+from nti.app.products.courseware_scorm.client import SCORMCloudClient
 
 
-class ISCORMClient(interface.Interface):
-    """
-    A client interface for SCORM operations.
-    """
+class IRegisterSCORMCloudClient(interface.Interface):
+
+    name = fields.TextLine(title=u"client identifier",
+						   required=False,
+						   default=u'')
 
 
-def registerSCORMClient(_context, name=''):
-    factory = SCORMClient
-    utility(_context, provides=ISCORMClient, factory=factory, name=name)
+def registerSCORMCloudClient(_context, name=''):
+    factory = partial(SCORMCloudClient)
+    utility(_context, provides=ISCORMCloudClient, factory=factory, name=name)
