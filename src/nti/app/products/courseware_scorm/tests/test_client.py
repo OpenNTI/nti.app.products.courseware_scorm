@@ -14,9 +14,9 @@ from hamcrest import assert_that
 
 from zope import component
 
-from nti.app.products.courseware_scorm.tests import CoursewareSCORMLayerTest
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
-from nti.app.products.courseware_scorm.client import SCORMCloudClient
+
+from nti.app.products.courseware_scorm.tests import CoursewareSCORMLayerTest
 
 
 class TestClient(CoursewareSCORMLayerTest):
