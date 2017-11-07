@@ -15,14 +15,16 @@ from zope.annotation import factory as an_factory
 
 from zope.container.contained import Contained
 
-from nti.contenttypes.courses.courses import CourseInstance
+from persistent import Persistent
 
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 
-from persistent import Persistent
+from nti.contenttypes.courses.courses import CourseInstance
 
 SCORM_COURSE_METADATA_KEY = 'nti.app.produts.courseware_scorm.courses.metadata'
+
+logger = __import__('logging').getLogger(__name__)
 
 
 @interface.implementer(ISCORMCourseInstance)
