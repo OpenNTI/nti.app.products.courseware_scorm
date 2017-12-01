@@ -8,8 +8,14 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+from zope import component
+
+from zipfile import ZipFile
+
 from pyramid.view import view_config
 
+from nti.app.base.abstract_views import get_all_sources
+from nti.app.base.abstract_views import get_safe_source_filename
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
@@ -20,10 +26,27 @@ from nti.app.products.courseware_admin.views.management_views import DeleteCours
 from nti.app.products.courseware_scorm.courses import SCORMCourseInstance
 
 from nti.app.products.courseware_scorm.views import CREATE_SCORM_COURSE_VIEW_NAME
+from nti.app.products.courseware_scorm.views import IMPORT_SCORM_COURSE_VIEW_NAME
+from nti.app.products.courseware_scorm.views import UPLOAD_SCORM_COURSE_VIEW_NAME
+from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 
 from nti.contenttypes.courses.interfaces import ICourseAdministrativeLevel
 
 from nti.dataserver import authorization as nauth
+
+from nti.scorm_cloud.client.mixins import get_source
+
+
+def _handle_multipart(sources):
+    for raw_source in sources:
+        source = get_source(raw_source)
+        if source:
+            break
+    if not source:
+        return
+
+    client = component.getUtility(ISCORMCloudClient)
+    client.upload_course(source, u'/' + IMPORT_SCORM_COURSE_VIEW_NAME)
 
 
 @view_config(route_name='objects.generic.traversal',
@@ -46,8 +69,35 @@ class DeleteSCORMCourseView(DeleteCourseView):
     """
 
 
-class UploadSCORMView(AbstractAuthenticatedView,
-                      ModeledContentUploadRequestUtilsMixin):
+@view_config(route_name='objects.generic.traversal',
+             renderer='rest',
+             context=ICourseAdministrativeLevel,
+             request_method='POST',
+             permission=nauth.ACT_NTI_ADMIN,
+             name=UPLOAD_SCORM_COURSE_VIEW_NAME)
+class UploadSCORMCourseView(AbstractAuthenticatedView,
+                            ModeledContentUploadRequestUtilsMixin):
     """
-    A view for uploading SCORM zip archives to SCORM courses.
+    A view for uploading SCORM course zip archives to SCORM Cloud.
     """
+    def __call__(self):
+        sources = get_all_sources(self.request)
+        if sources:
+            _handle_multipart(sources)
+
+
+@view_config(route_name='objects.generic.traversal',
+             renderer='rest',
+             context=ICourseAdministrativeLevel,
+             request_method='POST',
+             permission=nauth.ACT_NTI_ADMIN,
+             name=IMPORT_SCORM_COURSE_VIEW_NAME)
+class ImportSCORMCourseView(AbstractAuthenticatedView,
+                            ModeledContentUploadRequestUtilsMixin):
+    """
+    A view for importing uploaded SCORM courses to SCORM Cloud.
+    """
+    def __call__(self):
+        sources = get_all_sources(self.request)
+        if sources:
+            _handle_multipart(sources)
