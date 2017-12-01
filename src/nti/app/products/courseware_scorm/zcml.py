@@ -16,6 +16,9 @@ from zope.component.zcml import utility
 
 from zope.configuration import fields
 
+from nti.scorm_cloud.client import ScormCloudService
+from nti.scorm_cloud.interfaces import IScormCloudService
+
 from nti.app.products.courseware_scorm.client import SCORMCloudClient
 
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
@@ -41,3 +44,14 @@ class IRegisterSCORMCloudClient(interface.Interface):
 def registerSCORMCloudClient(_context, app_id=u'', secret_key=u'', name=u''):
     factory = partial(SCORMCloudClient, app_id=app_id, secret_key=secret_key)
     utility(_context, provides=ISCORMCloudClient, factory=factory, name=name)
+
+
+class IRegisterSCORMCloudService(interface.Interface):
+
+    factory = fields.GlobalObject(title=u'The service factory that should be registered.',
+                                  required=False)
+
+
+def registerSCORMCloudService(_context, factory=ScormCloudService, name=u''):
+    # The factory returns the class so the actual object can be constructed using `withargs`
+    utility(_context, provides=IScormCloudService, factory=lambda: factory, name=name)
