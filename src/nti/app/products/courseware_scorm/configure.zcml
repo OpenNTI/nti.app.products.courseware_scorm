@@ -17,6 +17,10 @@
 
 	<adapter factory=".courses.SCORMCourseInstanceMetadataFactory" />
 
+	<adapter factory=".courses.ScormIdentifier"
+			for=".interfaces.ICourseInstance"
+			provides=".interfaces.IScormIdentifier" />
+
 	<include package="." file="meta.zcml" />
 
 	<configure zcml:condition="not-have testmode">

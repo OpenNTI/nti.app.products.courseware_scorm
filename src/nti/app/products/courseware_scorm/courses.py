@@ -10,6 +10,7 @@ from __future__ import absolute_import
 
 from zope import component
 from zope import interface
+from zope.intid.interfaces import IIntIds
 
 from zope.annotation import factory as an_factory
 
@@ -19,7 +20,9 @@ from persistent import Persistent
 
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
+from nti.app.products.courseware_scorm.interfaces import IScormIdentifier
 
+from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.courses import CourseInstance
 
 SCORM_COURSE_METADATA_KEY = 'nti.app.produts.courseware_scorm.courses.metadata'
@@ -43,3 +46,18 @@ class SCORMCourseMetadata(Persistent, Contained):
 
 SCORMCourseInstanceMetadataFactory = an_factory(SCORMCourseMetadata,
                                                 SCORM_COURSE_METADATA_KEY)
+
+
+@component.adapter(ICourseInstance)
+@interface.implementer(IScormIdentifier)
+class ScormIdentifier(object):
+
+    def __init__(self, course):
+        self.course = course
+
+    def get_id(self):
+        intids = component.getUtility(IIntIds)
+        return intids.queryId(self.course)
+
+    def get_object(self):
+        return self.course
