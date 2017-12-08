@@ -13,7 +13,10 @@ from zope import interface
 
 from pyramid.httpexceptions import HTTPFound
 
+from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
+
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
+from nti.app.products.courseware_scorm.interfaces import IScormIdentifier
 
 from nti.scorm_cloud.interfaces import IScormCloudService
 from nti.scorm_cloud.client import ScormCloudService
@@ -36,20 +39,21 @@ class SCORMCloudClient(object):
         service = component.getUtility(IScormCloudService)
         self.cloud = service.withargs(app_id, secret_key, SERVICE_URL, origin)
 
-    def import_course(self, path):
+    def import_course(self, context, source):
         """
-        Imports a SCORM course into SCORM Cloud.
+        Imports a SCORM course zip file into SCORM Cloud.
 
-        :param path The relative path of the zip file to import.
+        :param context: The course context under which to import the SCORM course.
+        :param source: The zip file source of the course to import.
+        :returns: The result of the SCORM Cloud import operation.
         """
         cloud_service = self.cloud.get_course_service()
-        unused_importResult = cloud_service.import_uploaded_course(None, path)
+        entry = ICourseCatalogEntry(context, context)
+        course_id = getattr(entry, 'ntiid', entry)
+        scorm_id = IScormIdentifier(context).get_id()
+        import_result = cloud_service.import_uploaded_course(scorm_id, source)
 
-        upload_service = self.cloud.get_upload_service()
-        cloud_upload_link = upload_service.get_upload_url(import_url)
-        unused_response = upload_service.delete_file(path)
-
-        # TODO: Clean and finish
+        return import_result
 
 
     def upload_course(self, source, redirect_url):

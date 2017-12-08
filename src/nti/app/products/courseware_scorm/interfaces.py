@@ -37,15 +37,16 @@ class ISCORMCloudClient(interface.Interface):
     A client for interacting with SCORM Cloud.
     """
 
-    def import_course(path):
+    def import_course(context, source):
         """
-        Imports an uploaded SCORM course from the given path.
-        :param path: The path which locates the SCORM course to import.
+        Imports into SCORM Cloud a SCORM course from a zip file source.
+        :param context: The course context under which to import the SCORM course.
+        :param source: The SCORM course zip file source.
         """
 
     def upload_course(self, source, redirect_url):
         """
-        Uploads a SCORM zip to the SCORM Cloud server.
+        Uploads a SCORM course zip file to the SCORM Cloud server.
 
         :param source The SCORM course zip file to upload to SCORM Cloud.
         :param redirect_url The URL to which the client will be redirected after
