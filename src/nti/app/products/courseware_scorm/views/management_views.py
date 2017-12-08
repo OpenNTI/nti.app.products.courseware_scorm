@@ -30,6 +30,7 @@ from nti.app.products.courseware_scorm.views import IMPORT_SCORM_COURSE_VIEW_NAM
 from nti.app.products.courseware_scorm.views import UPLOAD_SCORM_COURSE_VIEW_NAME
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 
+from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseAdministrativeLevel
 
 from nti.dataserver import authorization as nauth
@@ -37,8 +38,9 @@ from nti.dataserver import authorization as nauth
 from nti.scorm_cloud.client.mixins import get_source
 
 
-def _handle_multipart(sources):
-    for raw_source in sources:
+def _handle_multipart(context, sources):
+    for key in sources:
+        raw_source = sources.get(key)
         source = get_source(raw_source)
         if source:
             break
@@ -46,7 +48,7 @@ def _handle_multipart(sources):
         return
 
     client = component.getUtility(ISCORMCloudClient)
-    client.upload_course(source, u'/' + IMPORT_SCORM_COURSE_VIEW_NAME)
+    client.import_course(context, source)
 
 
 @view_config(route_name='objects.generic.traversal',
@@ -88,7 +90,7 @@ class UploadSCORMCourseView(AbstractAuthenticatedView,
 
 @view_config(route_name='objects.generic.traversal',
              renderer='rest',
-             context=ICourseAdministrativeLevel,
+             context=ICourseInstance,
              request_method='POST',
              permission=nauth.ACT_NTI_ADMIN,
              name=IMPORT_SCORM_COURSE_VIEW_NAME)
@@ -100,4 +102,4 @@ class ImportSCORMCourseView(AbstractAuthenticatedView,
     def __call__(self):
         sources = get_all_sources(self.request)
         if sources:
-            _handle_multipart(sources)
+            _handle_multipart(self.context, sources)
