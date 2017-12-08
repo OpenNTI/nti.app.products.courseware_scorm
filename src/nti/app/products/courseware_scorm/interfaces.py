@@ -51,3 +51,19 @@ class ISCORMCloudClient(interface.Interface):
         :param redirect_url The URL to which the client will be redirected after
             the upload completes.
         """
+
+
+class IScormIdentifier(interface.Interface):
+    """
+    Provides SCORM identifiers for importing courses.
+    """
+
+    def get_id(self):
+        """
+        Returns the SCORM identifier of the adapted course.
+        """
+
+    def get_object(self):
+        """
+        Returns the adapted course.
+        """
