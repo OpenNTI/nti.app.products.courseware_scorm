@@ -13,6 +13,8 @@ from zope import interface
 
 from pyramid.httpexceptions import HTTPFound
 
+from nti.app.externalization.error import raise_json_error
+
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
@@ -50,6 +52,13 @@ class SCORMCloudClient(object):
         cloud_service = self.cloud.get_course_service()
         entry = ICourseCatalogEntry(context, context)
         scorm_id = IScormIdentifier(context).get_id()
+        if scorm_id is None:
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                 'message': _(u"Uploading SCORM to a non-persistent course is forbidden."),
+                             },
+                             None)
         import_result = cloud_service.import_uploaded_course(scorm_id, source)
 
         return import_result
