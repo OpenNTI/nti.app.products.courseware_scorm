@@ -24,6 +24,8 @@ from nti.scorm_cloud.interfaces import IScormCloudService
 from nti.scorm_cloud.client import ScormCloudService
 from nti.scorm_cloud.client import ScormCloudUtilities
 
+logger = __import__('logging').getLogger(__name__)
+
 SERVICE_URL = "http://cloud.scorm.com/EngineWebServices"
 
 
@@ -52,6 +54,11 @@ class SCORMCloudClient(object):
         cloud_service = self.cloud.get_course_service()
         entry = ICourseCatalogEntry(context, context)
         scorm_id = IScormIdentifier(context).get_id()
+        logger.info("""Importing course using:
+                        app_id=%s
+                        secret_key=%s
+                        scorm_id=%s""",
+                        self.app_id, self.secret_key, scorm_id)
         if scorm_id is None:
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
