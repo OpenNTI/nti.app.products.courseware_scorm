@@ -103,3 +103,4 @@ class ImportSCORMCourseView(AbstractAuthenticatedView,
         sources = get_all_sources(self.request)
         if sources:
             _handle_multipart(self.context, sources)
+        return self.context
