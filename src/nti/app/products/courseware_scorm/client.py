@@ -49,7 +49,6 @@ class SCORMCloudClient(object):
         """
         cloud_service = self.cloud.get_course_service()
         entry = ICourseCatalogEntry(context, context)
-        course_id = getattr(entry, 'ntiid', entry)
         scorm_id = IScormIdentifier(context).get_id()
         import_result = cloud_service.import_uploaded_course(scorm_id, source)
 
