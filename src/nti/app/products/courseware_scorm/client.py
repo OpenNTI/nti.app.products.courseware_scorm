@@ -59,9 +59,9 @@ class SCORMCloudClient(object):
                                  'message': _(u"Uploading SCORM to a non-persistent course is forbidden."),
                              },
                              None)
-        import_result = cloud_service.import_uploaded_course(scorm_id, source)
+        cloud_service.import_uploaded_course(scorm_id, source)
 
-        return import_result
+        return context
 
 
     def upload_course(self, source, redirect_url):
