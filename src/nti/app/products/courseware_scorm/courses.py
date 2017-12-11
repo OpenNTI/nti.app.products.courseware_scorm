@@ -59,6 +59,3 @@ class ScormIdentifier(object):
         # NTIIDs contain characters invalid for SCORM IDs, so use IntId
         intids = component.getUtility(IIntIds)
         return intids.queryId(self.course)
-
-    def get_object(self):
-        return self.course

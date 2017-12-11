@@ -63,8 +63,3 @@ class IScormIdentifier(interface.Interface):
         """
         Returns the SCORM identifier of the adapted course.
         """
-
-    def get_object(self):
-        """
-        Returns the adapted course.
-        """
