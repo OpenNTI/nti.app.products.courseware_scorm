@@ -5,8 +5,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-# disable: accessing protected members, too many methods
-# pylint: disable=E1101,W0212,R0904
+# pylint: disable=protected-access,too-many-public-methods
 
 from hamcrest import is_
 from hamcrest import is_not
@@ -56,6 +55,7 @@ class TestManagementViews(ApplicationLayerTest):
         with mock_dataserver.mock_db_trans(site_name='janux.ou.edu'):
             library = component.getUtility(IContentPackageLibrary)
             enumeration = IDelimitedHierarchyContentPackageEnumeration(library)
+            # pylint: disable=no-member
             shutil.rmtree(enumeration.root.absolute_path, True)
 
     def _get_admin_href(self):
