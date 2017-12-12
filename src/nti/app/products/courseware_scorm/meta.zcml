@@ -7,6 +7,9 @@
   		<meta:directive	name="registerSCORMCloudClient"
           						schema=".zcml.IRegisterSCORMCloudClient"
           						handler=".zcml.registerSCORMCloudClient" />
+			<meta:directive	name="registerSCORMCloudService"
+								      schema=".zcml.IRegisterSCORMCloudService"
+								      handler=".zcml.registerSCORMCloudService" />
   	</meta:directives>
 
 </configure>

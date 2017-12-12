@@ -17,7 +17,23 @@
 
 	<adapter factory=".courses.SCORMCourseInstanceMetadataFactory" />
 
+	<adapter factory=".courses.ScormIdentifier"
+			for=".interfaces.ICourseInstance"
+			provides=".interfaces.IScormIdentifier" />
+
 	<include package="." file="meta.zcml" />
-	<scorm:registerSCORMCloudClient />
+
+	<configure zcml:condition="not-have testmode">
+		<scorm:registerSCORMCloudService />
+	</configure>
+	<configure zcml:condition="have testmode">
+		<!-- <include package=".tests" file="test_client.py" /> -->
+		<scorm:registerSCORMCloudService
+			factory=".tests.test_client.MockSCORMCloudService" />
+	</configure>
+
+	<scorm:registerSCORMCloudClient
+		app_id="AQYJPZXZAY"
+		secret_key="G9M1J6uv1hr3ll7wnkPWGFXutMqQXbdhXX8dZnE8" />
 
 </configure>
