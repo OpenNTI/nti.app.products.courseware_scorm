@@ -38,19 +38,6 @@ from nti.dataserver import authorization as nauth
 from nti.scorm_cloud.client.mixins import get_source
 
 
-def _handle_multipart(context, sources):
-    for key in sources:
-        raw_source = sources.get(key)
-        source = get_source(raw_source)
-        if source:
-            break
-    if not source:
-        return
-
-    client = component.getUtility(ISCORMCloudClient)
-    client.import_course(context, source)
-
-
 @view_config(route_name='objects.generic.traversal',
              renderer='rest',
              context=ICourseAdministrativeLevel,
@@ -102,5 +89,19 @@ class ImportSCORMCourseView(AbstractAuthenticatedView,
     def __call__(self):
         sources = get_all_sources(self.request)
         if sources:
-            _handle_multipart(self.context, sources)
+            self._handle_multipart(self.context, sources)
         return self.context
+
+    def _handle_multipart(context, sources):
+        """
+        Handles file sources found in multi-part requests.
+        """
+        for key in sources:
+            raw_source = sources.get(key)
+            source = get_source(raw_source)
+            if source:
+                break
+        if not source:
+            return
+        client = component.getUtility(ISCORMCloudClient)
+        client.import_course(context, source)
