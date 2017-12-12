@@ -14,6 +14,8 @@ from zipfile import ZipFile
 
 from pyramid.view import view_config
 
+from nti.app.externalization.error import raise_json_error
+
 from nti.app.base.abstract_views import get_all_sources
 from nti.app.base.abstract_views import get_safe_source_filename
 from nti.app.base.abstract_views import AbstractAuthenticatedView
@@ -89,19 +91,25 @@ class ImportSCORMCourseView(AbstractAuthenticatedView,
     def __call__(self):
         sources = get_all_sources(self.request)
         if sources:
-            self._handle_multipart(self.context, sources)
+            source = self._handle_multipart(sources)
+        if not source:
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                 'message': _(u"No SCORM zip file was included with request."),
+                             },
+                             None)
+        client = component.getUtility(ISCORMCloudClient)
+        client.import_course(self.context, source)
         return self.context
 
-    def _handle_multipart(context, sources):
+    def _handle_multipart(self, sources):
         """
-        Handles file sources found in multi-part requests.
+        Returns a file source from the sources sent in a multi-part request.
         """
         for key in sources:
             raw_source = sources.get(key)
             source = get_source(raw_source)
             if source:
                 break
-        if not source:
-            return
-        client = component.getUtility(ISCORMCloudClient)
-        client.import_course(context, source)
+        return source
