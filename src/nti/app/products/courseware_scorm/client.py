@@ -11,18 +11,18 @@ from __future__ import absolute_import
 from zope import component
 from zope import interface
 
-from pyramid.httpexceptions import HTTPFound
+from pyramid import httpexceptions as hexc
 
 from nti.app.externalization.error import raise_json_error
 
-from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
+from nti.app.products.courseware_scorm import MessageFactory as _
 
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 from nti.app.products.courseware_scorm.interfaces import IScormIdentifier
 
-from nti.scorm_cloud.interfaces import IScormCloudService
-from nti.scorm_cloud.client import ScormCloudService
 from nti.scorm_cloud.client import ScormCloudUtilities
+
+from nti.scorm_cloud.interfaces import IScormCloudService
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -43,7 +43,7 @@ class SCORMCloudClient(object):
         service = component.getUtility(IScormCloudService)
         self.cloud = service.withargs(app_id, secret_key, SERVICE_URL, origin)
 
-    def import_course(self, context, source):
+    def import_course(self, context, source, request=None):
         """
         Imports a SCORM course zip file into SCORM Cloud.
 
@@ -52,14 +52,11 @@ class SCORMCloudClient(object):
         :returns: The result of the SCORM Cloud import operation.
         """
         cloud_service = self.cloud.get_course_service()
-        entry = ICourseCatalogEntry(context, context)
         scorm_id = IScormIdentifier(context).get_id()
-        logger.info("""Importing course using:
-                        app_id=%s
-                        scorm_id=%s""",
-                        self.app_id, self.secret_key, scorm_id)
+        logger.info("Importing course using: app_id=%s scorm_id=%s",
+                    self.app_id, self.secret_key, scorm_id)
         if scorm_id is None:
-            raise_json_error(self.request,
+            raise_json_error(request,
                              hexc.HTTPUnprocessableEntity,
                              {
                                  'message': _(u"Uploading SCORM to a non-persistent course is forbidden."),
@@ -69,8 +66,7 @@ class SCORMCloudClient(object):
 
         return context
 
-
-    def upload_course(self, source, redirect_url):
+    def upload_course(self, unused_source, redirect_url):
         """
         Uploads a SCORM course zip file to the SCORM Cloud server.
 
@@ -80,7 +76,4 @@ class SCORMCloudClient(object):
         """
         upload_service = self.cloud.get_upload_service()
         cloud_upload_link = upload_service.get_upload_url(redirect_url)
-
-        # TODO: Upload the zip bytes
-
-        return HTTPFound(location=redirectUrl)
+        return hexc.HTTPFound(location=cloud_upload_link)
