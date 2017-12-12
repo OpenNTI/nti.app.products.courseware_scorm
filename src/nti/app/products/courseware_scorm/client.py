@@ -56,7 +56,6 @@ class SCORMCloudClient(object):
         scorm_id = IScormIdentifier(context).get_id()
         logger.info("""Importing course using:
                         app_id=%s
-                        secret_key=%s
                         scorm_id=%s""",
                         self.app_id, self.secret_key, scorm_id)
         if scorm_id is None:
