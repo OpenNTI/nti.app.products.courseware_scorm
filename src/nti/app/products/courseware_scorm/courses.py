@@ -10,6 +10,7 @@ from __future__ import absolute_import
 
 from zope import component
 from zope import interface
+
 from zope.intid.interfaces import IIntIds
 
 from zope.annotation import factory as an_factory
@@ -43,7 +44,6 @@ class SCORMCourseMetadata(Persistent, Contained):
     """
     A metadata object for a SCORM course instance.
     """
-
 SCORMCourseInstanceMetadataFactory = an_factory(SCORMCourseMetadata,
                                                 SCORM_COURSE_METADATA_KEY)
 
