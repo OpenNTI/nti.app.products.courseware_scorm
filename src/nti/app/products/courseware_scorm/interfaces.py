@@ -55,6 +55,11 @@ class ISCORMCloudClient(interface.Interface):
             the upload completes.
         """
 
+    def sync_enrollment_record(self, enrollment_record):
+        """"
+        Syncs a course enrollment record with SCORM Cloud.
+        """"
+
 
 class IScormIdentifier(interface.Interface):
     """
