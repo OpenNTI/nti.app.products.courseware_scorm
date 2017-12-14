@@ -21,6 +21,11 @@
 			for=".interfaces.ICourseInstance"
 			provides=".interfaces.IScormIdentifier" />
 
+	<!-- Subscribers -->
+	<subscriber handler=".subscribers._enrollment_record_created" />
+
+	<!-- Client -->
+
 	<include package="." file="meta.zcml" />
 
 	<configure zcml:condition="not-have testmode">
