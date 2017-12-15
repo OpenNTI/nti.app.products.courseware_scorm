@@ -13,6 +13,7 @@ from zope import component
 from zipfile import ZipFile
 
 from pyramid.view import view_config
+from pyramid.httpexceptions import HTTPNoContent
 
 from nti.app.externalization.error import raise_json_error
 
@@ -101,7 +102,7 @@ class ImportSCORMCourseView(AbstractAuthenticatedView,
                              None)
         client = component.getUtility(ISCORMCloudClient)
         client.import_course(self.context, source)
-        return self.context
+        return HTTPNoContent()
 
     def _handle_multipart(self, sources):
         """
