@@ -19,6 +19,8 @@ from zope.container.contained import Contained
 
 from persistent import Persistent
 
+from nti.coremetadata.interfaces import IUser
+
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 from nti.app.products.courseware_scorm.interfaces import IScormIdentifier
@@ -49,6 +51,7 @@ SCORMCourseInstanceMetadataFactory = an_factory(SCORMCourseMetadata,
 
 
 @component.adapter(ICourseInstance)
+@component.adapter(IUser)
 @interface.implementer(IScormIdentifier)
 class ScormIdentifier(object):
 
