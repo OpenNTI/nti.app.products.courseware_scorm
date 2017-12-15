@@ -13,12 +13,15 @@ from zope import interface
 
 from pyramid import httpexceptions as hexc
 
+from nti.externalization.proxy import removeAllProxies
+
 from nti.app.externalization.error import raise_json_error
 
 from nti.app.products.courseware_scorm import MessageFactory as _
 
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 from nti.app.products.courseware_scorm.interfaces import IScormIdentifier
+from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
 
 from nti.scorm_cloud.client import ScormCloudUtilities
 
@@ -65,6 +68,8 @@ class SCORMCloudClient(object):
                              },
                              None)
         cloud_service.import_uploaded_course(scorm_id, source)
+        context = removeAllProxies(context)
+        interface.alsoProvides(context, ISCORMCourseInstance)
 
         return context
 
