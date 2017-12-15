@@ -22,7 +22,9 @@ from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 @component.adapter(ICourseInstanceEnrollmentRecord,
                    ICourseInstanceEnrollmentRecordCreatedEvent)
 def _enrollment_record_created(record, event):
-    if not ISCORMCourseInstance.providedBy(record.CourseInstance):
+    course = event.context
+    if not ISCORMCourseInstance.providedBy(course):
+        # TODO: Raise error?
         return
     client = component.getUtility(ISCORMCloudClient)
-    client.sync_enrollment_record(record)
+    client.sync_enrollment_record(record, course)
