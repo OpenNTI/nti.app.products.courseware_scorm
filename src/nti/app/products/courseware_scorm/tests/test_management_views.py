@@ -92,7 +92,9 @@ class TestManagementViews(ApplicationLayerTest):
         # Create course
         create_course_href = new_admin_href + '/' + CREATE_SCORM_COURSE_VIEW_NAME
         new_course = self.testapp.post_json(create_course_href,
-                                            {'course': new_course_key})
+                                            {'course': new_course_key,
+                                             'title': new_course_key,
+                                             'ProviderUniqueID': new_course_key})
 
         new_course = new_course.json_body
         new_course_href = new_course['href']
