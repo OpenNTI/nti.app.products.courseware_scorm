@@ -50,8 +50,6 @@ SCORMCourseInstanceMetadataFactory = an_factory(SCORMCourseMetadata,
                                                 SCORM_COURSE_METADATA_KEY)
 
 
-@component.adapter(ICourseInstance)
-@component.adapter(IUser)
 @interface.implementer(IScormIdentifier)
 class ScormIdentifier(object):
 
