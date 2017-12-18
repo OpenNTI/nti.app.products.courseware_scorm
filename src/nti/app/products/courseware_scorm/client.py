@@ -102,20 +102,21 @@ class SCORMCloudClient(object):
         user = User.get_user(enrollment_record.Principal.id)
         learner_id = IScormIdentifier(user).get_id()
         named = IFriendlyNamed(user)
+        first_name = ''
+        last_name = ''
         if named and named.realname:
             human_name = HumanName(named.realname)
-        if not human_name and human_name.first and human_name.last:
-            # TODO: Raise error?
-            return
+            first_name = human_name.first
+            last_name = human_name.last
         service = self.cloud.get_registration_service()
         logger.info("""Syncing enrollment record:
                         courseid=%s
                         fname=%s
                         lname=%s
                         learnerid=%s""",
-                        course_id, human_name.first, human_name.last, learner_id)
+                        course_id, first_name, last_name, learner_id)
         service.createRegistration(courseid=course_id,
                                     regid=None,
-                                    fname=human_name.first,
-                                    lname=human_name.last,
+                                    fname=first_name,
+                                    lname=last_name,
                                     learnerid=learner_id)
