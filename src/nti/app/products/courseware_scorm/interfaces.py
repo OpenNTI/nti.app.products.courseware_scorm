@@ -15,6 +15,7 @@ from zope import interface
 from zope.location.interfaces import IContained
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
+from nti.contenttypes.courses.interfaces import ICourseInstanceEnrollmentRecord
 
 from nti.schema.field import DecodingValidTextLine as ValidTextLine
 
