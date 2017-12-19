@@ -101,6 +101,7 @@ class SCORMCloudClient(object):
         course_id = IScormIdentifier(course).get_id()
         user = User.get_user(enrollment_record.Principal.id)
         learner_id = IScormIdentifier(user).get_id()
+        reg_id = IScormIdentifier(enrollment_record).get_id()
         named = IFriendlyNamed(user)
         first_name = ''
         last_name = ''
@@ -111,12 +112,13 @@ class SCORMCloudClient(object):
         service = self.cloud.get_registration_service()
         logger.info("""Syncing enrollment record:
                         courseid=%s
+                        reg_id=%s
                         fname=%s
                         lname=%s
                         learnerid=%s""",
-                        course_id, first_name, last_name, learner_id)
+                        course_id, reg_id, first_name, last_name, learner_id)
         service.createRegistration(courseid=course_id,
-                                    regid=None,
+                                    regid=reg_id,
                                     fname=first_name,
                                     lname=last_name,
                                     learnerid=learner_id)
