@@ -105,7 +105,6 @@ class ImportSCORMCourseView(AbstractAuthenticatedView,
         client.import_course(self.context, source)
 
         enrollments = ICourseEnrollments(self.context)
-        from IPython.terminal.debugger import set_trace;set_trace()
         for record in enrollments.iter_enrollments():
             client.sync_enrollment_record(record, self.context)
 
