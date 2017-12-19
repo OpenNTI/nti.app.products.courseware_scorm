@@ -9,20 +9,20 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 from zope import component
+from zope.intid.interfaces import IIntIdAddedEvent
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 from nti.contenttypes.courses.interfaces import ICourseInstanceEnrollmentRecord
-from nti.contenttypes.courses.interfaces import ICourseInstanceEnrollmentRecordCreatedEvent
 
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 
 
 @component.adapter(ICourseInstanceEnrollmentRecord,
-                   ICourseInstanceEnrollmentRecordCreatedEvent)
+                   IIntIdAddedEvent)
 def _enrollment_record_created(record, event):
-    course = event.context
+    course = record.CourseInstance
     if not ISCORMCourseInstance.providedBy(course):
         # TODO: Raise error?
         return
