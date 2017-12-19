@@ -28,7 +28,10 @@ from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 from nti.app.products.courseware_scorm.interfaces import IScormIdentifier
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
 
+from nti.scorm_cloud.client import ScormCloudService
 from nti.scorm_cloud.client import ScormCloudUtilities
+from nti.scorm_cloud.client.request import ScormCloudError
+from nti.scorm_cloud.interfaces import IScormCloudService
 
 from nti.scorm_cloud.interfaces import IScormCloudService
 
@@ -117,8 +120,12 @@ class SCORMCloudClient(object):
                         lname=%s
                         learnerid=%s""",
                         course_id, reg_id, first_name, last_name, learner_id)
-        service.createRegistration(courseid=course_id,
-                                    regid=reg_id,
-                                    fname=first_name,
-                                    lname=last_name,
-                                    learnerid=learner_id)
+        try:
+            service.createRegistration(courseid=course_id,
+                                       regid=reg_id,
+                                       fname=first_name,
+                                       lname=last_name,
+                                       learnerid=learner_id)
+        except ScormCloudError:
+            # Usually this is for trying to create a pre-existing registration
+            pass
