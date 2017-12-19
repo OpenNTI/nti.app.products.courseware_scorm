@@ -35,6 +35,7 @@ from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseAdministrativeLevel
+from nti.contenttypes.courses.interfaces import ICourseEnrollments
 
 from nti.dataserver import authorization as nauth
 
@@ -102,6 +103,12 @@ class ImportSCORMCourseView(AbstractAuthenticatedView,
                              None)
         client = component.getUtility(ISCORMCloudClient)
         client.import_course(self.context, source)
+
+        enrollments = ICourseEnrollments(self.context)
+        from IPython.terminal.debugger import set_trace;set_trace()
+        for record in enrollments.iter_enrollments():
+            client.sync_enrollment_record(record, self.context)
+
         return HTTPNoContent()
 
     def _handle_multipart(self, sources):
