@@ -24,7 +24,7 @@ from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 def _enrollment_record_created(record, event):
     course = record.CourseInstance
     if not ISCORMCourseInstance.providedBy(course):
-        # TODO: Raise error?
+        # We expect non-SCORM courses to fire, but we don't care about them
         return
     client = component.getUtility(ISCORMCloudClient)
     client.sync_enrollment_record(record, course)
