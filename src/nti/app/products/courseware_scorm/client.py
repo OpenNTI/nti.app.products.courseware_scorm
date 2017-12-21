@@ -40,6 +40,18 @@ logger = __import__('logging').getLogger(__name__)
 SERVICE_URL = "http://cloud.scorm.com/EngineWebServices"
 
 
+class ScormCourseNotFoundError(Exception):
+    """
+    An error raised on failure to find a course specified by courseid belonging to appid.
+    """
+
+
+class ScormCourseNoPasswordError(Exception):
+    """
+    An error raised when a postback URL login name is specified without password.
+    """
+
+
 @interface.implementer(ISCORMCloudClient)
 class SCORMCloudClient(object):
     """
@@ -126,6 +138,14 @@ class SCORMCloudClient(object):
                                        fname=first_name,
                                        lname=last_name,
                                        learnerid=learner_id)
-        except ScormCloudError:
-            # Usually this is for trying to create a pre-existing registration
-            pass
+        except ScormCloudError as error:
+            logger.info(error)
+            if error.code is 1:
+                # Couldn’t find the course specified by courseid belonging to appid
+                raise ScormCourseNotFoundError()
+            if error.code is 2:
+                # Registration already exists
+                pass
+            if error.code is 3:
+                # Postback URL login name specified without password
+                raise ScormCourseNoPasswordError()
