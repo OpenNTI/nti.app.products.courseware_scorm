@@ -54,7 +54,7 @@ class SCORMCloudClient(object):
         cloud_service = self.cloud.get_course_service()
         scorm_id = IScormIdentifier(context).get_id()
         logger.info("Importing course using: app_id=%s scorm_id=%s",
-                    self.app_id, self.secret_key, scorm_id)
+                    self.app_id, scorm_id)
         if scorm_id is None:
             raise_json_error(request,
                              hexc.HTTPUnprocessableEntity,
