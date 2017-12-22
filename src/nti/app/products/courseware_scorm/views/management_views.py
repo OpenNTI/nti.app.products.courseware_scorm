@@ -73,10 +73,13 @@ class UploadSCORMCourseView(AbstractAuthenticatedView,
     A view for uploading SCORM course zip archives to SCORM Cloud.
     """
 
+    def _handle_multipart(self, sources):
+        raise NotImplementedError()
+    
     def __call__(self):
         sources = get_all_sources(self.request)
         if sources:
-            _handle_multipart(sources)
+            self._handle_multipart(sources)
 
 
 @view_config(route_name='objects.generic.traversal',
@@ -105,6 +108,7 @@ class ImportSCORMCourseView(AbstractAuthenticatedView,
         client = component.getUtility(ISCORMCloudClient)
         client.import_course(self.context, source)
 
+        # pylint: disable=too-many-function-args
         enrollments = ICourseEnrollments(self.context)
         for record in enrollments.iter_enrollments():
             client.sync_enrollment_record(record, self.context)
