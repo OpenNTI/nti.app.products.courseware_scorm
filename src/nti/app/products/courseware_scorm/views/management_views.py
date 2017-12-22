@@ -8,18 +8,16 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-from zope import component
-
-from zipfile import ZipFile
+from pyramid import httpexceptions as hexc
 
 from pyramid.view import view_config
-from pyramid.httpexceptions import HTTPNoContent
 
-from nti.app.externalization.error import raise_json_error
+from zope import component
 
 from nti.app.base.abstract_views import get_all_sources
-from nti.app.base.abstract_views import get_safe_source_filename
 from nti.app.base.abstract_views import AbstractAuthenticatedView
+
+from nti.app.externalization.error import raise_json_error
 
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
@@ -28,14 +26,15 @@ from nti.app.products.courseware_admin.views.management_views import DeleteCours
 
 from nti.app.products.courseware_scorm.courses import SCORMCourseInstance
 
+from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
+
 from nti.app.products.courseware_scorm.views import CREATE_SCORM_COURSE_VIEW_NAME
 from nti.app.products.courseware_scorm.views import IMPORT_SCORM_COURSE_VIEW_NAME
 from nti.app.products.courseware_scorm.views import UPLOAD_SCORM_COURSE_VIEW_NAME
-from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
-from nti.contenttypes.courses.interfaces import ICourseAdministrativeLevel
 from nti.contenttypes.courses.interfaces import ICourseEnrollments
+from nti.contenttypes.courses.interfaces import ICourseAdministrativeLevel
 
 from nti.dataserver import authorization as nauth
 
@@ -73,6 +72,7 @@ class UploadSCORMCourseView(AbstractAuthenticatedView,
     """
     A view for uploading SCORM course zip archives to SCORM Cloud.
     """
+
     def __call__(self):
         sources = get_all_sources(self.request)
         if sources:
@@ -90,6 +90,7 @@ class ImportSCORMCourseView(AbstractAuthenticatedView,
     """
     A view for importing uploaded SCORM courses to SCORM Cloud.
     """
+
     def __call__(self):
         sources = get_all_sources(self.request)
         if sources:
@@ -108,7 +109,7 @@ class ImportSCORMCourseView(AbstractAuthenticatedView,
         for record in enrollments.iter_enrollments():
             client.sync_enrollment_record(record, self.context)
 
-        return HTTPNoContent()
+        return hexc.HTTPNoContent()
 
     def _handle_multipart(self, sources):
         """
