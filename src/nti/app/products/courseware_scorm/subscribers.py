@@ -9,22 +9,20 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 from zope import component
+
 from zope.intid.interfaces import IIntIdAddedEvent
 
-from nti.contenttypes.courses.interfaces import ICourseInstance
-from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
+from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
+from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
+
 from nti.contenttypes.courses.interfaces import ICourseInstanceEnrollmentRecord
 
-from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
-from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
+logger = __import__('logging').getLogger(__name__)
 
 
-@component.adapter(ICourseInstanceEnrollmentRecord,
-                   IIntIdAddedEvent)
-def _enrollment_record_created(record, event):
+@component.adapter(ICourseInstanceEnrollmentRecord, IIntIdAddedEvent)
+def _enrollment_record_created(record, unused_event):
     course = record.CourseInstance
-    if not ISCORMCourseInstance.providedBy(course):
-        # We expect non-SCORM courses to fire, but we don't care about them
-        return
-    client = component.getUtility(ISCORMCloudClient)
-    client.sync_enrollment_record(record, course)
+    if ISCORMCourseInstance.providedBy(course):
+        client = component.getUtility(ISCORMCloudClient)
+        client.sync_enrollment_record(record, course)
