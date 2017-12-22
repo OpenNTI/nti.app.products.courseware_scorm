@@ -18,12 +18,13 @@ from zope.component.zcml import utility
 
 from zope.configuration import fields
 
-from nti.scorm_cloud.client import ScormCloudService
-from nti.scorm_cloud.interfaces import IScormCloudService
-
 from nti.app.products.courseware_scorm.client import SCORMCloudClient
 
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
+
+from nti.scorm_cloud.client import ScormCloudService
+
+from nti.scorm_cloud.interfaces import IScormCloudService
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -55,5 +56,7 @@ class IRegisterSCORMCloudService(interface.Interface):
 
 
 def registerSCORMCloudService(_context, factory=ScormCloudService, name=u''):
-    # The factory returns the class so the actual object can be constructed using `withargs`
-    utility(_context, provides=IScormCloudService, factory=lambda: factory, name=name)
+    # The factory returns the class so the actual object can be constructed
+    # using `withargs`
+    utility(_context, provides=IScormCloudService,
+            factory=lambda: factory, name=name)

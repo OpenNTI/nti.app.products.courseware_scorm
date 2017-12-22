@@ -13,8 +13,8 @@ from hamcrest import assert_that
 
 from nti.app.products.courseware_scorm.courses import SCORMCourseInstance
 
-from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 from nti.app.products.courseware_scorm.interfaces import IScormIdentifier
+from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 
 from nti.app.products.courseware_scorm.tests import CoursewareSCORMLayerTest
 

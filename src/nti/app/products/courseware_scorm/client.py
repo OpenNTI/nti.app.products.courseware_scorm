@@ -8,36 +8,36 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-from zope import component
-from zope import interface
+from nameparser import HumanName
 
 from pyramid import httpexceptions as hexc
 
-from nti.externalization.proxy import removeAllProxies
+from zope import component
+from zope import interface
 
 from nti.app.externalization.error import raise_json_error
 
 from nti.app.products.courseware_scorm import MessageFactory as _
 
-from nti.dataserver.users.interfaces import IFriendlyNamed
-from nti.dataserver.users.users import User
-
-from nameparser import HumanName
-
-from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 from nti.app.products.courseware_scorm.interfaces import IScormIdentifier
+from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
 
-from nti.scorm_cloud.client import ScormCloudService
+from nti.dataserver.users.interfaces import IFriendlyNamed
+
+from nti.dataserver.users.users import User
+
+from nti.externalization.proxy import removeAllProxies
+
 from nti.scorm_cloud.client import ScormCloudUtilities
+
 from nti.scorm_cloud.client.request import ScormCloudError
-from nti.scorm_cloud.interfaces import IScormCloudService
 
 from nti.scorm_cloud.interfaces import IScormCloudService
-
-logger = __import__('logging').getLogger(__name__)
 
 SERVICE_URL = "http://cloud.scorm.com/EngineWebServices"
+
+logger = __import__('logging').getLogger(__name__)
 
 
 class ScormCourseNotFoundError(Exception):
@@ -75,11 +75,10 @@ class SCORMCloudClient(object):
         :returns: The result of the SCORM Cloud import operation.
         """
         cloud_service = self.cloud.get_course_service()
+        # pylint: disable=too-many-function-args
         scorm_id = IScormIdentifier(context).get_id()
-        logger.info("""Importing course using:
-                        app_id=%s
-                        scorm_id=%s""",
-                        self.app_id, scorm_id)
+        logger.info("Importing course using: app_id=%s scorm_id=%s",
+                    self.app_id, scorm_id)
         if scorm_id is None:
             raise_json_error(request,
                              hexc.HTTPUnprocessableEntity,
@@ -105,33 +104,24 @@ class SCORMCloudClient(object):
         cloud_upload_link = upload_service.get_upload_url(redirect_url)
         return hexc.HTTPFound(location=cloud_upload_link)
 
-        # TODO: Upload the zip bytes
-
-        return HTTPFound(location=redirectUrl)
-
     def sync_enrollment_record(self, enrollment_record, course):
         """
         Syncs a course enrollment record with SCORM Cloud.
         """
+        # pylint: disable=too-many-function-args
         course_id = IScormIdentifier(course).get_id()
         user = User.get_user(enrollment_record.Principal.id)
         learner_id = IScormIdentifier(user).get_id()
         reg_id = IScormIdentifier(enrollment_record).get_id()
         named = IFriendlyNamed(user)
-        first_name = ''
-        last_name = ''
+        last_name = first_name = ''
         if named and named.realname:
             human_name = HumanName(named.realname)
             first_name = human_name.first
             last_name = human_name.last
         service = self.cloud.get_registration_service()
-        logger.info("""Syncing enrollment record:
-                        courseid=%s
-                        reg_id=%s
-                        fname=%s
-                        lname=%s
-                        learnerid=%s""",
-                        course_id, reg_id, first_name, last_name, learner_id)
+        logger.info("Syncing enrollment record: courseid=%s reg_id=%s fname=%s lname=%s learnerid=%s",
+                    course_id, reg_id, first_name, last_name, learner_id)
         try:
             service.createRegistration(courseid=course_id,
                                        regid=reg_id,
@@ -140,12 +130,13 @@ class SCORMCloudClient(object):
                                        learnerid=learner_id)
         except ScormCloudError as error:
             logger.info(error)
-            if error.code is 1:
-                # Couldn’t find the course specified by courseid belonging to appid
+            if error.code == 1:
+                # Couldn’t find the course specified by courseid belonging to
+                # appid
                 raise ScormCourseNotFoundError()
-            if error.code is 2:
+            if error.code == 2:
                 # Registration already exists
                 pass
-            if error.code is 3:
+            if error.code == 3:
                 # Postback URL login name specified without password
                 raise ScormCourseNoPasswordError()
