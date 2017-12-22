@@ -21,6 +21,19 @@
 			for=".interfaces.ICourseInstance"
 			provides=".interfaces.IScormIdentifier" />
 
+	<adapter factory=".courses.ScormIdentifier"
+			for=".interfaces.IUser"
+			provides=".interfaces.IScormIdentifier" />
+
+	<adapter factory=".courses.ScormIdentifier"
+			for=".interfaces.ICourseInstanceEnrollmentRecord"
+			provides=".interfaces.IScormIdentifier" />
+
+	<!-- Subscribers -->
+	<subscriber handler=".subscribers._enrollment_record_created" />
+
+	<!-- Client -->
+
 	<include package="." file="meta.zcml" />
 
 	<configure zcml:condition="not-have testmode">

@@ -13,6 +13,9 @@ from zope import component
 from zipfile import ZipFile
 
 from pyramid.view import view_config
+from pyramid.httpexceptions import HTTPNoContent
+
+from nti.app.externalization.error import raise_json_error
 
 from nti.app.base.abstract_views import get_all_sources
 from nti.app.base.abstract_views import get_safe_source_filename
@@ -32,6 +35,7 @@ from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseAdministrativeLevel
+from nti.contenttypes.courses.interfaces import ICourseEnrollments
 
 from nti.dataserver import authorization as nauth
 
@@ -89,19 +93,30 @@ class ImportSCORMCourseView(AbstractAuthenticatedView,
     def __call__(self):
         sources = get_all_sources(self.request)
         if sources:
-            self._handle_multipart(self.context, sources)
-        return self.context
+            source = self._handle_multipart(sources)
+        if not source:
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                 'message': _(u"No SCORM zip file was included with request."),
+                             },
+                             None)
+        client = component.getUtility(ISCORMCloudClient)
+        client.import_course(self.context, source)
 
-    def _handle_multipart(context, sources):
+        enrollments = ICourseEnrollments(self.context)
+        for record in enrollments.iter_enrollments():
+            client.sync_enrollment_record(record, self.context)
+
+        return HTTPNoContent()
+
+    def _handle_multipart(self, sources):
         """
-        Handles file sources found in multi-part requests.
+        Returns a file source from the sources sent in a multi-part request.
         """
         for key in sources:
             raw_source = sources.get(key)
             source = get_source(raw_source)
             if source:
                 break
-        if not source:
-            return
-        client = component.getUtility(ISCORMCloudClient)
-        client.import_course(context, source)
+        return source

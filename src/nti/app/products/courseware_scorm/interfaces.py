@@ -15,6 +15,7 @@ from zope import interface
 from zope.location.interfaces import IContained
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
+from nti.contenttypes.courses.interfaces import ICourseInstanceEnrollmentRecord
 
 from nti.schema.field import DecodingValidTextLine as ValidTextLine
 
@@ -46,7 +47,7 @@ class ISCORMCloudClient(interface.Interface):
         :param source: The SCORM course zip file source.
         """
 
-    def upload_course(self, source, redirect_url):
+    def upload_course(source, redirect_url):
         """
         Uploads a SCORM course zip file to the SCORM Cloud server.
 
@@ -55,13 +56,18 @@ class ISCORMCloudClient(interface.Interface):
             the upload completes.
         """
 
+    def sync_enrollment_record(enrollment_record, course):
+        """
+        Syncs a course enrollment record with SCORM Cloud.
+        """
+
 
 class IScormIdentifier(interface.Interface):
     """
     Provides SCORM identifiers for importing courses.
     """
 
-    def get_id(self):
+    def get_id():
         """
         Returns the SCORM identifier of the adapted course.
         """

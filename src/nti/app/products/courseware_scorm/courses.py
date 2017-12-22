@@ -19,6 +19,8 @@ from zope.container.contained import Contained
 
 from persistent import Persistent
 
+from nti.coremetadata.interfaces import IUser
+
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 from nti.app.products.courseware_scorm.interfaces import IScormIdentifier
@@ -48,14 +50,13 @@ SCORMCourseInstanceMetadataFactory = an_factory(SCORMCourseMetadata,
                                                 SCORM_COURSE_METADATA_KEY)
 
 
-@component.adapter(ICourseInstance)
 @interface.implementer(IScormIdentifier)
 class ScormIdentifier(object):
 
-    def __init__(self, course):
-        self.course = course
+    def __init__(self, object):
+        self.object = object
 
     def get_id(self):
         # NTIIDs contain characters invalid for SCORM IDs, so use IntId
         intids = component.getUtility(IIntIds)
-        return intids.queryId(self.course)
+        return intids.queryId(self.object)
