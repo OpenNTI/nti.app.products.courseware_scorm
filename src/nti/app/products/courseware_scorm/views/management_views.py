@@ -24,6 +24,8 @@ from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtils
 from nti.app.products.courseware_admin.views.management_views import CreateCourseView
 from nti.app.products.courseware_admin.views.management_views import DeleteCourseView
 
+from nti.app.products.courseware_scorm import MessageFactory as _
+
 from nti.app.products.courseware_scorm.courses import SCORMCourseInstance
 
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
