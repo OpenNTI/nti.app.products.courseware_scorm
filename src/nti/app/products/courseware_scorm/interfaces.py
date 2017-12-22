@@ -46,7 +46,7 @@ class ISCORMCloudClient(interface.Interface):
         :param source: The SCORM course zip file source.
         """
 
-    def upload_course(self, source, redirect_url):
+    def upload_course(source, redirect_url):
         """
         Uploads a SCORM course zip file to the SCORM Cloud server.
 
@@ -61,7 +61,7 @@ class IScormIdentifier(interface.Interface):
     Provides SCORM identifiers for importing courses.
     """
 
-    def get_id(self):
+    def get_id():
         """
         Returns the SCORM identifier of the adapted course.
         """
