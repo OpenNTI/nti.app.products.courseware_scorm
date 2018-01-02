@@ -32,6 +32,7 @@ def _enrollment_record_created(record, unused_event):
 
 @component.adapter(ICourseInstanceEnrollmentRecord, IBeforeIdRemovedEvent)
 def _enrollment_record_dropped(record, unused_event):
+    course = record.CourseInstance
     if ISCORMCourseInstance.providedBy(course):
         client = component.getUtility(ISCORMCloudClient)
         client.delete_enrollment_record(record)
