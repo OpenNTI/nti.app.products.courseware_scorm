@@ -60,6 +60,11 @@ class ISCORMCloudClient(interface.Interface):
         Syncs a course enrollment record with SCORM Cloud.
         """
 
+    def delete_enrollment_record(enrollment_record):
+        """
+        Removes a course enrollment registration from SCORM Cloud.
+        """
+
 
 class IScormIdentifier(interface.Interface):
     """
