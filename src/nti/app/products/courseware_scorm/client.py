@@ -145,6 +145,8 @@ class SCORMCloudClient(object):
     def delete_enrollment_record(self, enrollment_record):
         reg_id = IScormIdentifier(enrollment_record).get_id()
         service = self.cloud.get_registration_service()
+        logger.info("Deleting enrollment record: reg_id=%s",
+                    reg_id)
         try:
             service.deleteRegistration(reg_id)
         except ScormCloudError as error:
