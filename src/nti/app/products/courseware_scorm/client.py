@@ -140,3 +140,13 @@ class SCORMCloudClient(object):
             if error.code == 3:
                 # Postback URL login name specified without password
                 raise ScormCourseNoPasswordError()
+
+
+    def delete_enrollment_record(self, enrollment_record):
+        reg_id = IScormIdentifier(enrollment_record).get_id()
+        service = self.cloud.get_registration_service()
+        try:
+            service.deleteRegistration(reg_id)
+        except ScormCloudError as error:
+            logger.info(error)
+            raise error
