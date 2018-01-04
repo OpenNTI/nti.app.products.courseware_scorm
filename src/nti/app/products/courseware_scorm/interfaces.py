@@ -74,6 +74,10 @@ class ISCORMCloudClient(interface.Interface):
         :redirect_url: The URL upon which to redirect when the registration
                         has completed.
         """
+    def get_registration_list(course):
+        """
+        Returns the list of registrations for the given course.
+        """
 
 
 class IScormIdentifier(interface.Interface):

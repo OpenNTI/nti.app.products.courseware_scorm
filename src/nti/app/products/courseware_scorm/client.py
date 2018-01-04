@@ -165,3 +165,8 @@ class SCORMCloudClient(object):
         # pylint: disable=too-many-function-args
         registration_id = IScormIdentifier(enrollment).get_id()
         return service.launch(registration_id, redirect_url)
+
+    def get_registration_list(self, course):
+        service = self.cloud.get_registration_service()
+        course_id = IScormIdentifier(course).get_id()
+        return service.getRegistrationList(courseid=course_id)
