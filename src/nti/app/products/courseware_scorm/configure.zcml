@@ -31,6 +31,7 @@
 
 	<!-- Subscribers -->
 	<subscriber handler=".subscribers._enrollment_record_created" />
+	<subscriber handler=".subscribers._enrollment_record_dropped" />
 
 	<!-- Client -->
 	<include package="." file="meta.zcml" />
