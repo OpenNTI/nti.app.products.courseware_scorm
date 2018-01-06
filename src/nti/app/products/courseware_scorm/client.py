@@ -141,8 +141,8 @@ class SCORMCloudClient(object):
                 # Postback URL login name specified without password
                 raise ScormCourseNoPasswordError()
 
-
     def delete_enrollment_record(self, enrollment_record):
+        # pylint: disable=too-many-function-args
         reg_id = IScormIdentifier(enrollment_record).get_id()
         service = self.cloud.get_registration_service()
         logger.info("Deleting enrollment record: reg_id=%s",
