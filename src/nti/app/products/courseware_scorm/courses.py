@@ -43,6 +43,9 @@ class SCORMCourseMetadata(Persistent, Contained):
     """
     A metadata object for a SCORM course instance.
     """
+
+    scorm_id = u''
+
 SCORMCourseInstanceMetadataFactory = an_factory(SCORMCourseMetadata,
                                                 SCORM_COURSE_METADATA_KEY)
 
