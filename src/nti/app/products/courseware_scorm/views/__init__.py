@@ -12,4 +12,5 @@ from nti.app.products.courseware_scorm import MessageFactory
 
 CREATE_SCORM_COURSE_VIEW_NAME = u'CreateSCORM'
 IMPORT_SCORM_COURSE_VIEW_NAME = u'ImportSCORM'
+LAUNCH_SCORM_COURSE_VIEW_NAME = u'LaunchSCORM'
 UPLOAD_SCORM_COURSE_VIEW_NAME = u'UploadSCORM'
