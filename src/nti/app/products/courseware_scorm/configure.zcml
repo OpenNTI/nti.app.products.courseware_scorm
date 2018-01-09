@@ -49,4 +49,21 @@
 		app_id="AQYJPZXZAY"
 		secret_key="G9M1J6uv1hr3ll7wnkPWGFXutMqQXbdhXX8dZnE8" />
 
+	<!-- Decorators -->
+	<subscriber factory=".decorators._SCORMCourseInstanceDecorator"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"
+				for=".interfaces.ISCORMCourseInstance" />
+
+	<subscriber factory=".decorators._SCORMCourseInstanceMetadataDecorator"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"
+				for=".interfaces.ISCORMCourseMetadata" />
+
+	<!-- Externalization -->
+	<include package="nti.externalization" file="meta.zcml" />
+	<include package="nti.externalization" />
+
+	<ext:registerAutoPackageIO
+					root_interfaces=".interfaces.ISCORMCourseMetadata"
+					modules=".courses" />
+
 </configure>
