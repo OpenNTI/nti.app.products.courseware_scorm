@@ -22,6 +22,7 @@ from nti.app.products.courseware_scorm import MessageFactory as _
 from nti.app.products.courseware_scorm.interfaces import IScormIdentifier
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
+from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 
 from nti.dataserver.users.interfaces import IFriendlyNamed
 
@@ -89,6 +90,9 @@ class SCORMCloudClient(object):
         cloud_service.import_uploaded_course(scorm_id, source)
         context = removeAllProxies(context)
         interface.alsoProvides(context, ISCORMCourseInstance)
+
+        metadata = ISCORMCourseMetadata(context, None)
+        metadata.scorm_id = scorm_id
 
         return context
 
