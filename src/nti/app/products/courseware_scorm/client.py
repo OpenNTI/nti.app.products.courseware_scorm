@@ -156,3 +156,7 @@ class SCORMCloudClient(object):
         except ScormCloudError as error:
             logger.info(error)
             raise error
+
+    def launch(self, registration_id, redirect_url):
+        service = self.cloud.get_registration_service()
+        return service.launch(registration_id, redirect_url)
