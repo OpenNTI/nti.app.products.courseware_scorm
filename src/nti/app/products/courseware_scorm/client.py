@@ -170,3 +170,9 @@ class SCORMCloudClient(object):
         service = self.cloud.get_registration_service()
         course_id = IScormIdentifier(course).get_id()
         return service.getRegistrationList(courseid=course_id)
+
+    def delete_all_registrations(self, course):
+        service = self.cloud.get_registration_service()
+        registration_list = self.get_registration_list(course)
+        for registration in registration_list:
+            service.deleteRegistration(registration.registrationId)

@@ -79,6 +79,12 @@ class ISCORMCloudClient(interface.Interface):
         Returns the list of registrations for the given course.
         """
 
+    def delete_all_registrations(course):
+        """
+        Deletes all SCORM Cloud registrations for the specified course.
+        """
+
+
 
 class IScormIdentifier(interface.Interface):
     """
