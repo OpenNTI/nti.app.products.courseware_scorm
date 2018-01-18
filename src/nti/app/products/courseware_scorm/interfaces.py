@@ -65,11 +65,12 @@ class ISCORMCloudClient(interface.Interface):
         Removes a course enrollment registration from SCORM Cloud.
         """
 
-    def launch(registration_id, redirect_url):
+    def launch(course, user, redirect_url):
         """
         Launches the given registration by redirecting the client's browser to
         the main launch page for the course associated with the registration.
-        :param registration_id The unique identifier for this registration.
+        :param course The course instance for which to launch SCORM Cloud.
+        :param user The user for whom to launch SCORM Cloud.
         :redirect_url: The URL upon which to redirect when the registration
                         has completed.
         """
