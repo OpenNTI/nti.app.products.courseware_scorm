@@ -28,10 +28,7 @@ from nti.traversal.traversal import find_interface
 from zope import component
 from zope import interface
 
-CLASS = StandardExternalFields.CLASS
-ITEMS = StandardExternalFields.ITEMS
 LINKS = StandardExternalFields.LINKS
-MIMETYPE = StandardExternalFields.MIMETYPE
 
 LAUNCH_REL = LAUNCH_SCORM_COURSE_VIEW_NAME
 
