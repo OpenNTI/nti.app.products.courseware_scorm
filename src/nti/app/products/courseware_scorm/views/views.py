@@ -20,7 +20,7 @@ from nti.app.products.courseware_scorm.views import LAUNCH_SCORM_COURSE_VIEW_NAM
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
-from nti.contenttypes.courses.utils import get_enrollment_in_hierarchy
+from nti.contenttypes.courses.utils import get_enrollment_record
 
 from nti.dataserver import authorization as nauth
 
@@ -43,6 +43,6 @@ class LaunchSCORMCourseView(AbstractAuthenticatedView):
 
     def __call__(self):
         client = component.getUtility(ISCORMCloudClient)
-        enrollment = get_enrollment_in_hierarchy(self.context, self.remoteUser)
+        enrollment = get_enrollment_record(self.context, self.remoteUser)
         registration_id = str(IScormIdentifier(enrollment).get_id())
         return hexc.HTTPSeeOther(location=client.launch(registration_id, u'message'))
