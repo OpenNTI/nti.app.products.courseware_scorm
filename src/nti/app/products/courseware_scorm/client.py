@@ -91,7 +91,7 @@ class SCORMCloudClient(object):
         context = removeAllProxies(context)
         interface.alsoProvides(context, ISCORMCourseInstance)
 
-        metadata = ISCORMCourseMetadata(context, None)
+        metadata = ISCORMCourseMetadata(context)
         metadata.scorm_id = scorm_id
 
         return context
