@@ -44,5 +44,5 @@ class LaunchSCORMCourseView(AbstractAuthenticatedView):
     def __call__(self):
         client = component.getUtility(ISCORMCloudClient)
         enrollment = get_enrollment_record(self.context, self.remoteUser)
-        registration_id = str(IScormIdentifier(enrollment).get_id())
+        registration_id = IScormIdentifier(enrollment).get_id()
         return hexc.HTTPSeeOther(location=client.launch(registration_id, u'message'))
