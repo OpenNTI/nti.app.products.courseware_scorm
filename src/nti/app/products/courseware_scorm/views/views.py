@@ -19,6 +19,10 @@ from nti.app.products.courseware_scorm.views import LAUNCH_SCORM_COURSE_VIEW_NAM
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
+from nti.contenttypes.courses.utils import get_enrollment_record
+from nti.contenttypes.courses.utils import is_course_editor
+from nti.contenttypes.courses.utils import is_course_instructor
+
 from nti.dataserver import authorization as nauth
 
 from pyramid import httpexceptions as hexc
@@ -39,6 +43,11 @@ class LaunchSCORMCourseView(AbstractAuthenticatedView):
     """
 
     def __call__(self):
+        if (get_enrollment_record(self.context, self.remoteUser) is None and
+            not is_course_editor(self.context, self.remoteUser) and
+            not is_course_instructor(self.context, self.remoteUser) and
+            not nauth.is_admin_or_site_admin(self.remoteUser)):
+            return hexc.HTTPForbidden
         client = component.getUtility(ISCORMCloudClient)
         launch_url = client.launch(self.context, self.remoteUser, u'message')
         return hexc.HTTPSeeOther(location=launch_url)
