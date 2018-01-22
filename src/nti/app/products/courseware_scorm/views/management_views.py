@@ -42,6 +42,8 @@ from nti.dataserver import authorization as nauth
 
 from nti.scorm_cloud.client.mixins import get_source
 
+logger = __import__('logging').getLogger(__name__)
+
 
 @view_config(route_name='objects.generic.traversal',
              renderer='rest',
@@ -77,7 +79,7 @@ class UploadSCORMCourseView(AbstractAuthenticatedView,
 
     def _handle_multipart(self, sources):
         raise NotImplementedError()
-    
+
     def __call__(self):
         sources = get_all_sources(self.request)
         if sources:
