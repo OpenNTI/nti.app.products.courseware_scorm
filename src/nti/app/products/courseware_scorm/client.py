@@ -22,6 +22,9 @@ from nti.app.products.courseware_scorm import MessageFactory as _
 from nti.app.products.courseware_scorm.interfaces import IScormIdentifier
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
+from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
+
+from nti.contenttypes.courses.utils import get_enrollment_record
 
 from nti.dataserver.users.interfaces import IFriendlyNamed
 
@@ -90,6 +93,9 @@ class SCORMCloudClient(object):
         context = removeAllProxies(context)
         interface.alsoProvides(context, ISCORMCourseInstance)
 
+        metadata = ISCORMCourseMetadata(context)
+        metadata.scorm_id = scorm_id
+
         return context
 
     def upload_course(self, unused_source, redirect_url):
@@ -152,3 +158,9 @@ class SCORMCloudClient(object):
         except ScormCloudError as error:
             logger.info(error)
             raise error
+
+    def launch(self, course, user, redirect_url):
+        service = self.cloud.get_registration_service()
+        enrollment = get_enrollment_record(course, user)
+        registration_id = IScormIdentifier(enrollment).get_id()
+        return service.launch(registration_id, redirect_url)

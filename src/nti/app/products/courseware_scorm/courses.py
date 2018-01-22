@@ -43,6 +43,9 @@ class SCORMCourseMetadata(Persistent, Contained):
     """
     A metadata object for a SCORM course instance.
     """
+
+    scorm_id = u''
+
 SCORMCourseInstanceMetadataFactory = an_factory(SCORMCourseMetadata,
                                                 SCORM_COURSE_METADATA_KEY)
 
@@ -56,4 +59,4 @@ class ScormIdentifier(object):
     def get_id(self):
         # NTIIDs contain characters invalid for SCORM IDs, so use IntId
         intids = component.getUtility(IIntIds)
-        return intids.queryId(self.object)
+        return str(intids.queryId(self.object))
