@@ -43,10 +43,10 @@ class LaunchSCORMCourseView(AbstractAuthenticatedView):
     """
 
     def __call__(self):
-        if (get_enrollment_record(self.context, self.remoteUser) is None and
-            not is_course_editor(self.context, self.remoteUser) and
-            not is_course_instructor(self.context, self.remoteUser) and
-            not nauth.is_admin_or_site_admin(self.remoteUser)):
+        if get_enrollment_record(self.context, self.remoteUser) is None \
+            and not is_course_editor(self.context, self.remoteUser) \
+            and not is_course_instructor(self.context, self.remoteUser) \
+            and not nauth.is_admin_or_site_admin(self.remoteUser):
             return hexc.HTTPForbidden
         client = component.getUtility(ISCORMCloudClient)
         launch_url = client.launch(self.context, self.remoteUser, u'message')
