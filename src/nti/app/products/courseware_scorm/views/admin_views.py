@@ -25,6 +25,13 @@ from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.dataserver import authorization as nauth
 
+from nti.externalization.interfaces import LocatedExternalDict
+from nti.externalization.interfaces import StandardExternalFields
+
+ITEMS = StandardExternalFields.ITEMS
+TOTAL = StandardExternalFields.TOTAL
+ITEM_COUNT = StandardExternalFields.ITEM_COUNT
+
 
 @view_config(route_name='objects.generic.traversal',
 renderer='rest',
@@ -57,4 +64,9 @@ class GetRegistrationListView(AbstractAuthenticatedView):
     def __call__(self):
         client = component.getUtility(ISCORMCloudClient)
         registration_list = client.get_registration_list(self.context)
-        return {'Items': registration_list}
+        result = LocatedExternalDict()
+        result[ITEMS] = registration_list
+        count = len(registration_list)
+        result[TOTAL] = count
+        result[ITEM_COUNT] = count
+        return result
