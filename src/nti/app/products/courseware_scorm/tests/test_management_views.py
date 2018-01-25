@@ -22,6 +22,8 @@ from nti.app.products.courseware.tests import PersistentInstructedCourseApplicat
 
 from nti.app.products.courseware_admin import VIEW_COURSE_ADMIN_LEVELS
 
+from nti.app.products.courseware_scorm.courses import SCORM_COURSE_MIME_TYPE
+
 from nti.app.products.courseware_scorm.views import CREATE_SCORM_COURSE_VIEW_NAME
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
@@ -102,7 +104,7 @@ class TestManagementViews(ApplicationLayerTest):
         assert_that(new_course_href, not_none())
         assert_that(new_course[CLASS], is_('SCORMCourseInstance'))
         assert_that(new_course[MIMETYPE],
-                    is_('application/vnd.nextthought.courses.courseinstance'))
+                    is_(SCORM_COURSE_MIME_TYPE))
         assert_that(new_course['NTIID'], not_none())
         assert_that(new_course['TotalEnrolledCount'], is_(0))
 

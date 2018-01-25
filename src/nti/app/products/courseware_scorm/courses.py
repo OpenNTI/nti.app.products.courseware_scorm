@@ -26,6 +26,7 @@ from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 from nti.contenttypes.courses.courses import CourseInstance
 
 SCORM_COURSE_METADATA_KEY = 'nti.app.produts.courseware_scorm.courses.metadata'
+SCORM_COURSE_MIME_TYPE = 'application/vnd.nextthought.courses.scormcourseinstance'
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -35,6 +36,8 @@ class SCORMCourseInstance(CourseInstance):
     """
     An instance of a SCORM course.
     """
+
+    mime_type = mimeType = SCORM_COURSE_MIME_TYPE
 
 
 @component.adapter(ISCORMCourseInstance)
