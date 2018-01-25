@@ -11,8 +11,12 @@ from __future__ import absolute_import
 from zc.intid.interfaces import IBeforeIdRemovedEvent
 
 from zope import component
+from zope import interface
 
 from zope.intid.interfaces import IIntIdAddedEvent
+
+from nti.app.products.courseware.interfaces import ICoursesCollection
+from nti.app.products.courseware.interfaces import IAllCoursesCollectionAcceptsProvider
 
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
@@ -36,3 +40,9 @@ def _enrollment_record_dropped(record, unused_event):
     if ISCORMCourseInstance.providedBy(course):
         client = component.getUtility(ISCORMCloudClient)
         client.delete_enrollment_record(record)
+
+
+@component.adapter(ICoursesCollection)
+@interface.implementer(IAllCoursesCollectionAcceptsProvider)
+def _provide_courses_collection_accepts(collection):
+    pass
