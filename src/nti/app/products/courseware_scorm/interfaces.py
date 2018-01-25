@@ -17,6 +17,7 @@ from zope.location.interfaces import IContained
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.schema.field import DecodingValidTextLine as ValidTextLine
+from nti.schema.field import ListOrTuple
 
 
 class ISCORMCourseInstance(ICourseInstance):
@@ -95,3 +96,59 @@ class IScormIdentifier(interface.Interface):
         """
         Returns the SCORM identifier of the adapted course.
         """
+
+
+class IScormInstance(interface.Interface):
+    """
+    A registration instance in a SCORM course.
+    """
+
+    instance_id = ValidTextLine(title=u'The ID of the instance.',
+                                required=True)
+
+    course_version = ValidTextLine(title=u'The course version.')
+
+    update_date = ValidTextLine(title=u'The update date.')
+
+
+class IScormRegistration(interface.Interface):
+    """
+    A learner registration in a SCORM course.
+    """
+
+    app_id = ValidTextLine(title=u'The app ID.',
+                           required=True)
+
+    course_id = ValidTextLine(title=u'The course ID.',
+                              required=True)
+
+    registration_id = ValidTextLine(title=u'The registration ID.',
+                                    required=True)
+
+    completed_date = ValidTextLine(title=u'The date the registration was \
+            completed.')
+
+    course_title = ValidTextLine(title=u'The course title.')
+
+    create_date = ValidTextLine(title=u'The date the registration was created.')
+
+    email = ValidTextLine(title=u'The registered email.')
+
+    first_access_date = ValidTextLine(title=u'The date the registration was \
+        first accessed.')
+
+    instances = ListOrTuple(title=u'The registration instances.')
+
+    last_access_date = ValidTextLine(title=u'The date the registration was \
+        last accessed.')
+
+    last_course_version_launched = ValidTextLine(title=u'The last version of \
+        the course that was launched by this registration.')
+
+    learner_id = ValidTextLine(title=u'The ID of the registered learner.')
+
+    learner_first_name = ValidTextLine(title=u'The first name of the \
+        registered learner.')
+
+    learner_last_name = ValidTextLine(title=u'The last name of the registered \
+        learner.')
