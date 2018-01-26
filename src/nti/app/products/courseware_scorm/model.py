@@ -8,6 +8,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+from zope import component
 from zope import interface
 
 from nti.app.products.courseware_scorm.interfaces import IScormInstance
@@ -17,6 +18,7 @@ from nti.scorm_cloud.client.registration import Instance
 from nti.scorm_cloud.client.registration import Registration
 
 
+@component.adapter(Instance)
 @interface.implementer(IScormInstance)
 class ScormInstance(object):
 
@@ -28,6 +30,7 @@ class ScormInstance(object):
         self.instance_id = instance.instanceId
         self.update_date = instance.updateDate
 
+@component.adapter(Registration)
 @interface.implementer(IScormRegistration)
 class ScormRegistration(object):
 
