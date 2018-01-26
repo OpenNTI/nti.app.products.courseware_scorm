@@ -71,7 +71,9 @@
 	<include package="nti.externalization" />
 
 	<ext:registerAutoPackageIO
-					root_interfaces=".interfaces.ISCORMCourseMetadata"
-					modules=".courses" />
+					root_interfaces=".interfaces.ISCORMCourseMetadata
+													 .interfaces.IScormInstance
+													 .interfaces.IScormRegistration"
+					modules=".courses .model" />
 
 </configure>
