@@ -10,15 +10,15 @@ from __future__ import absolute_import
 
 from zope import interface
 
-from nti.app.products.courseware_scorm import IScormInstance
-from nti.app.products.courseware_scorm import IScormRegistration
+from nti.app.products.courseware_scorm.interfaces import IScormInstance
+from nti.app.products.courseware_scorm.interfaces import IScormRegistration
 
 from nti.scorm_cloud.client.registration import Instance
 from nti.scorm_cloud.client.registration import Registration
 
 
 @interface.implementer(IScormInstance)
-class ScormInstance(Object):
+class ScormInstance(object):
 
     def __init__(self, instance):
         """
@@ -29,7 +29,7 @@ class ScormInstance(Object):
         self.update_date = instance.updateDate
 
 @interface.implementer(IScormRegistration)
-class ScormRegistration(Object):
+class ScormRegistration(object):
 
     def __init__(self, registration):
         """
