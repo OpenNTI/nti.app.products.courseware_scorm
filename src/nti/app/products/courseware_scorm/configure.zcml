@@ -29,6 +29,14 @@
 			 for="nti.contenttypes.courses.interfaces.ICourseInstanceEnrollmentRecord"
 			 provides=".interfaces.IScormIdentifier" />
 
+	<adapter factory=".model.ScormInstance"
+ 			 for="nti.scorm_cloud.client.registration.Instance"
+ 			 provides=".interfaces.IScormInstance" />
+
+	<adapter factory=".model.ScormRegistration"
+			 for="nti.scorm_cloud.client.registration.Registration"
+			 provides=".interfaces.IScormRegistration" />
+
 	<!-- Subscribers -->
 	<subscriber handler=".subscribers._enrollment_record_created" />
 	<subscriber handler=".subscribers._enrollment_record_dropped" />
@@ -63,7 +71,9 @@
 	<include package="nti.externalization" />
 
 	<ext:registerAutoPackageIO
-					root_interfaces=".interfaces.ISCORMCourseMetadata"
-					modules=".courses" />
+					root_interfaces=".interfaces.ISCORMCourseMetadata
+													 .interfaces.IScormInstance
+													 .interfaces.IScormRegistration"
+					modules=".courses .model" />
 
 </configure>

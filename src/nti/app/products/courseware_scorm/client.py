@@ -23,6 +23,7 @@ from nti.app.products.courseware_scorm.interfaces import IScormIdentifier
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
+from nti.app.products.courseware_scorm.interfaces import IScormRegistration
 
 from nti.contenttypes.courses.utils import get_enrollment_record
 
@@ -165,3 +166,15 @@ class SCORMCloudClient(object):
         # pylint: disable=too-many-function-args
         registration_id = IScormIdentifier(enrollment).get_id()
         return service.launch(registration_id, redirect_url)
+
+    def get_registration_list(self, course):
+        service = self.cloud.get_registration_service()
+        course_id = IScormIdentifier(course).get_id()
+        reg_list = service.getRegistrationList(courseid=course_id)
+        return [IScormRegistration(reg) for reg in reg_list]
+
+    def delete_all_registrations(self, course):
+        service = self.cloud.get_registration_service()
+        registration_list = self.get_registration_list(course)
+        for registration in registration_list:
+            service.deleteRegistration(registration.registrationId)
