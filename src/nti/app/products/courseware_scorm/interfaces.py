@@ -86,7 +86,6 @@ class ISCORMCloudClient(interface.Interface):
         """
 
 
-
 class IScormIdentifier(interface.Interface):
     """
     Provides SCORM identifiers for importing courses.
@@ -125,8 +124,7 @@ class IScormRegistration(interface.Interface):
     registration_id = ValidTextLine(title=u'The registration ID.',
                                     required=True)
 
-    completed_date = ValidTextLine(title=u'The date the registration was \
-            completed.')
+    completed_date = ValidTextLine(title=u'The date the registration was completed.')
 
     course_title = ValidTextLine(title=u'The course title.')
 
@@ -134,21 +132,17 @@ class IScormRegistration(interface.Interface):
 
     email = ValidTextLine(title=u'The registered email.')
 
-    first_access_date = ValidTextLine(title=u'The date the registration was \
-        first accessed.')
+    first_access_date = ValidTextLine(title=u'The date the registration was first accessed.')
 
     instances = ListOrTuple(title=u'The registration instances.')
 
-    last_access_date = ValidTextLine(title=u'The date the registration was \
-        last accessed.')
+    last_access_date = ValidTextLine(title=u'The date the registration was last accessed.')
 
-    last_course_version_launched = ValidTextLine(title=u'The last version of \
-        the course that was launched by this registration.')
+    last_course_version_launched = ValidTextLine(title=u'The last version of the course '
+                                                 u'that was launched by this registration.')
 
     learner_id = ValidTextLine(title=u'The ID of the registered learner.')
 
-    learner_first_name = ValidTextLine(title=u'The first name of the \
-        registered learner.')
+    learner_first_name = ValidTextLine(title=u'The first name of the registered learner.')
 
-    learner_last_name = ValidTextLine(title=u'The last name of the registered \
-        learner.')
+    learner_last_name = ValidTextLine(title=u'The last name of the registered learner.')

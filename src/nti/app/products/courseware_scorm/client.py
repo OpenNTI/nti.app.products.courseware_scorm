@@ -169,12 +169,13 @@ class SCORMCloudClient(object):
 
     def get_registration_list(self, course):
         service = self.cloud.get_registration_service()
+        # pylint: disable=too-many-function-args
         course_id = IScormIdentifier(course).get_id()
         reg_list = service.getRegistrationList(courseid=course_id)
-        return [IScormRegistration(reg) for reg in reg_list]
+        return [IScormRegistration(reg) for reg in reg_list or ()]
 
     def delete_all_registrations(self, course):
         service = self.cloud.get_registration_service()
         registration_list = self.get_registration_list(course)
-        for registration in registration_list:
+        for registration in registration_list or ():
             service.deleteRegistration(registration.registrationId)

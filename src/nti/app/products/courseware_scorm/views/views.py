@@ -24,9 +24,9 @@ from nti.app.products.courseware_scorm.views import LAUNCH_SCORM_COURSE_VIEW_NAM
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
-from nti.contenttypes.courses.utils import get_enrollment_record
 from nti.contenttypes.courses.utils import is_course_editor
 from nti.contenttypes.courses.utils import is_course_instructor
+from nti.contenttypes.courses.utils import get_enrollment_record
 
 from nti.dataserver import authorization as nauth
 
@@ -48,7 +48,7 @@ class LaunchSCORMCourseView(AbstractAuthenticatedView):
             and not is_course_editor(self.context, self.remoteUser) \
             and not is_course_instructor(self.context, self.remoteUser) \
             and not nauth.is_admin_or_site_admin(self.remoteUser):
-            return hexc.HTTPForbidden(_("You do not have access to this SCORM content."))
+            return hexc.HTTPForbidden(_(u"You do not have access to this SCORM content."))
         client = component.getUtility(ISCORMCloudClient)
         launch_url = client.launch(self.context, self.remoteUser, u'message')
         return hexc.HTTPSeeOther(location=launch_url)

@@ -18,8 +18,8 @@ from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 
-from nti.app.products.courseware_scorm.views import DELETE_ALL_REGISTRATIONS_VIEW_NAME
 from nti.app.products.courseware_scorm.views import GET_REGISTRATION_LIST_VIEW_NAME
+from nti.app.products.courseware_scorm.views import DELETE_ALL_REGISTRATIONS_VIEW_NAME
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
@@ -32,13 +32,15 @@ ITEMS = StandardExternalFields.ITEMS
 TOTAL = StandardExternalFields.TOTAL
 ITEM_COUNT = StandardExternalFields.ITEM_COUNT
 
+logger = __import__('logging').getLogger(__name__)
+
 
 @view_config(route_name='objects.generic.traversal',
-renderer='rest',
-context=ICourseInstance,
-request_method='GET',
-permission=nauth.ACT_NTI_ADMIN,
-name=DELETE_ALL_REGISTRATIONS_VIEW_NAME)
+             renderer='rest',
+             context=ICourseInstance,
+             request_method='GET',
+             permission=nauth.ACT_NTI_ADMIN,
+             name=DELETE_ALL_REGISTRATIONS_VIEW_NAME)
 class DeleteAllRegistrationsView(AbstractAuthenticatedView):
     """
     A view which allows admins to delete all SCORM registrations.
@@ -66,7 +68,5 @@ class GetRegistrationListView(AbstractAuthenticatedView):
         registration_list = client.get_registration_list(self.context)
         result = LocatedExternalDict()
         result[ITEMS] = registration_list
-        count = len(registration_list)
-        result[TOTAL] = count
-        result[ITEM_COUNT] = count
+        result[ITEM_COUNT] = result[TOTAL] = len(registration_list)
         return result
