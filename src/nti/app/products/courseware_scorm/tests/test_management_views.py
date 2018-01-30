@@ -99,8 +99,7 @@ class TestManagementViews(ApplicationLayerTest):
 
         new_course = new_course.json_body
         new_course_href = new_course['href']
-        course_delete_href = self.require_link_href_with_rel(new_course, 
-                                                             'delete')
+        course_delete_href = self.require_link_href_with_rel(new_course, 'delete')
         assert_that(new_course_href, not_none())
         assert_that(new_course[CLASS], is_('SCORMCourseInstance'))
         assert_that(new_course[MIMETYPE],
