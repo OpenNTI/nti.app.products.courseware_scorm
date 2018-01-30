@@ -30,6 +30,7 @@ class ScormInstance(object):
         self.instance_id = instance.instanceId
         self.update_date = instance.updateDate
 
+
 @component.adapter(Registration)
 @interface.implementer(IScormRegistration)
 class ScormRegistration(object):
@@ -46,7 +47,9 @@ class ScormRegistration(object):
         self.create_date = registration.createDate
         self.email = registration.email
         self.first_access_date = registration.firstAccessDate
-        self.instances = [ScormInstance(instance) for instance in registration.instances]
+        self.instances = [
+            ScormInstance(instance) for instance in registration.instances
+        ]
         self.last_access_date = registration.lastAccessDate
         self.last_course_version_launched = registration.lastCourseVersionLaunched
         self.learner_id = registration.learnerId
