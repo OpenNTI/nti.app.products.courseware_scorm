@@ -14,6 +14,7 @@ from zope import interface
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 
+from nti.app.products.courseware_scorm.views import IMPORT_SCORM_COURSE_VIEW_NAME
 from nti.app.products.courseware_scorm.views import LAUNCH_SCORM_COURSE_VIEW_NAME
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
@@ -29,6 +30,7 @@ from nti.traversal.traversal import find_interface
 
 LINKS = StandardExternalFields.LINKS
 
+IMPORT_REL = IMPORT_SCORM_COURSE_VIEW_NAME
 LAUNCH_REL = LAUNCH_SCORM_COURSE_VIEW_NAME
 
 logger = __import__('logging').getLogger(__name__)
@@ -43,6 +45,8 @@ class _SCORMCourseInstanceDecorator(Singleton):
         external.pop('Outline', None)
         metadata = ISCORMCourseMetadata(original, None)
         external['Metadata'] = metadata
+        _links = external.setdefault(LINKS, [])
+        _links.append(Link(original, rel=IMPORT_REL, elements=(IMPORT_REL,)))
 
 
 @component.adapter(ISCORMCourseMetadata)
