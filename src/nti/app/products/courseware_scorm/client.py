@@ -126,12 +126,20 @@ class SCORMCloudClient(object):
             human_name = HumanName(named.realname)
             first_name = human_name.first
             last_name = human_name.last
+        self._create_registration(course_id,
+                                  reg_id,
+                                  first_name,
+                                  last_name,
+                                  learner_id)
+
+    def _create_registration(self, course_id, registration_id,
+                             first_name, last_name, learner_id):
+        logger.info("Creating SCORM registration: courseid=%s reg_id=%s fname=%s lname=%s learnerid=%s",
+                    course_id, registration_id, first_name, last_name, learner_id)
         service = self.cloud.get_registration_service()
-        logger.info("Syncing enrollment record: courseid=%s reg_id=%s fname=%s lname=%s learnerid=%s",
-                    course_id, reg_id, first_name, last_name, learner_id)
         try:
             service.createRegistration(courseid=course_id,
-                                       regid=reg_id,
+                                       regid=registration_id,
                                        fname=first_name,
                                        lname=last_name,
                                        learnerid=learner_id)
