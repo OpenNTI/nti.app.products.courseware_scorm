@@ -15,7 +15,7 @@ from zope import interface
 
 from zope.intid.interfaces import IIntIdAddedEvent
 
-from nti.app.products.courseware.interfaces import ICoursesCollection
+from nti.app.products.courseware.interfaces import IAllCoursesCollection
 from nti.app.products.courseware.interfaces import IAllCoursesCollectionAcceptsProvider
 
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
@@ -42,7 +42,7 @@ def _enrollment_record_dropped(record, unused_event):
         client.delete_enrollment_record(record)
 
 
-@component.adapter(ICoursesCollection)
+@component.adapter(IAllCoursesCollection)
 @interface.implementer(IAllCoursesCollectionAcceptsProvider)
 def _provide_courses_collection_accepts(collection):
     pass
