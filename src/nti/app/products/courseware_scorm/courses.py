@@ -39,6 +39,8 @@ class SCORMCourseInstance(CourseInstance):
 
     mime_type = mimeType = SCORM_COURSE_MIME_TYPE
 
+    __external_can_create__ = True
+
 
 @component.adapter(ISCORMCourseInstance)
 @interface.implementer(ISCORMCourseMetadata)

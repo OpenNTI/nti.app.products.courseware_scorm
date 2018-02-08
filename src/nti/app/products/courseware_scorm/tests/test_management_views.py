@@ -91,10 +91,11 @@ class TestManagementViews(ApplicationLayerTest):
         assert_that(courses.json_body, does_not(has_item(new_course_key)))
 
         # Create course
-        create_course_href = new_admin_href + '/' + CREATE_SCORM_COURSE_VIEW_NAME
+        create_course_href = new_admin_href
         new_course = self.testapp.post_json(create_course_href,
                                             {'course': new_course_key,
                                              'title': new_course_key,
+                                             MIMETYPE: SCORM_COURSE_MIME_TYPE,
                                              'ProviderUniqueID': new_course_key})
 
         new_course = new_course.json_body
