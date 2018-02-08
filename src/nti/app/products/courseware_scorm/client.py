@@ -26,9 +26,13 @@ from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 from nti.app.products.courseware_scorm.interfaces import IScormRegistration
 
+from nti.contenttypes.courses.utils import is_course_editor
+from nti.contenttypes.courses.utils import is_course_instructor
 from nti.contenttypes.courses.utils import get_enrollment_record
 
 from nti.dataserver.users.interfaces import IFriendlyNamed
+
+from nti.dataserver import authorization as nauth
 
 from nti.dataserver.users.users import User
 
@@ -179,9 +183,14 @@ class SCORMCloudClient(object):
 
     def launch(self, course, user, redirect_url):
         service = self.cloud.get_registration_service()
-        enrollment = get_enrollment_record(course, user)
-        # pylint: disable=too-many-function-args
-        registration_id = IScormIdentifier(enrollment).get_id()
+        if  is_course_editor(course, user) \
+            or is_course_instructor(course, user) \
+            or nauth.is_admin_or_site_admin(user):
+            registration_id = ADMIN_REGISTRATION_ID
+        else:
+            enrollment = get_enrollment_record(course, user)
+            # pylint: disable=too-many-function-args
+            registration_id = IScormIdentifier(enrollment).get_id()
         return service.launch(registration_id, redirect_url)
 
     def get_registration_list(self, course):
