@@ -41,6 +41,9 @@
 	<subscriber handler=".subscribers._enrollment_record_created" />
 	<subscriber handler=".subscribers._enrollment_record_dropped" />
 
+	<subscriber factory=".subscribers.SCORMAllCoursesCollectionAcceptsProvider"
+				provides="nti.app.products.courseware.interfaces.IAllCoursesCollectionAcceptsProvider" />
+
 	<!-- Client -->
 	<include package="." file="meta.zcml" />
 
