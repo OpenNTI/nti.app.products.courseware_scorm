@@ -24,8 +24,6 @@ from nti.app.products.courseware_admin import VIEW_COURSE_ADMIN_LEVELS
 
 from nti.app.products.courseware_scorm.courses import SCORM_COURSE_MIME_TYPE
 
-from nti.app.products.courseware_scorm.views import CREATE_SCORM_COURSE_VIEW_NAME
-
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
 from nti.app.testing.decorators import WithSharedApplicationMockDS

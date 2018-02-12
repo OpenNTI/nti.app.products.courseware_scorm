@@ -54,5 +54,4 @@ class SCORMAllCoursesCollectionAcceptsProvider(object):
     def __iter__(self):
         if component.queryUtility(ISCORMCloudClient) is not None:
             return iter([SCORM_COURSE_MIME_TYPE])
-        else:
-            return iter([])
+        return iter(())

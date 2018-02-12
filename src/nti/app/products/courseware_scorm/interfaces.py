@@ -16,8 +16,8 @@ from zope.location.interfaces import IContained
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
-from nti.schema.field import DecodingValidTextLine as ValidTextLine
 from nti.schema.field import ListOrTuple
+from nti.schema.field import DecodingValidTextLine as ValidTextLine
 
 
 class ISCORMCourseInstance(ICourseInstance):
