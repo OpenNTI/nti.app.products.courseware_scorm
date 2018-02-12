@@ -52,7 +52,6 @@ class SCORMAllCoursesCollectionAcceptsProvider(object):
         self.courses_collection = courses_collection
 
     def __iter__(self):
-        from IPython.terminal.debugger import set_trace;set_trace()
         if component.queryUtility(ISCORMCloudClient) is not None:
             return iter([SCORM_COURSE_MIME_TYPE])
         else:
