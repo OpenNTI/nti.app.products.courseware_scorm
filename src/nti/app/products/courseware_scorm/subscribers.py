@@ -46,8 +46,13 @@ def _enrollment_record_dropped(record, unused_event):
 
 @component.adapter(IAllCoursesCollection)
 @interface.implementer(IAllCoursesCollectionAcceptsProvider)
-def _provide_courses_collection_accepts(collection):
-    if component.queryUtility(ISCORMCloudClient) is not None:
-        return iter([SCORM_COURSE_MIME_TYPE])
-    else:
-        return iter([])
+class SCORMAllCoursesCollectionAcceptsProvider(object):
+
+    def __init__(self, courses_collection):
+        self.courses_collection = courses_collection
+
+    def __iter__(self):
+        if component.queryUtility(ISCORMCloudClient) is not None:
+            return iter([SCORM_COURSE_MIME_TYPE])
+        else:
+            return iter([])
