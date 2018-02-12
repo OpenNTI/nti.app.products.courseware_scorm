@@ -21,9 +21,9 @@ from nti.app.products.courseware_scorm import MessageFactory as _
 
 from nti.app.products.courseware_scorm.interfaces import IScormIdentifier
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
+from nti.app.products.courseware_scorm.interfaces import IScormRegistration
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
-from nti.app.products.courseware_scorm.interfaces import IScormRegistration
 
 from nti.contenttypes.courses.utils import get_enrollment_record
 
@@ -142,8 +142,7 @@ class SCORMCloudClient(object):
                 # appid
                 raise ScormCourseNotFoundError()
             if error.code == 2:
-                # Registration already exists
-                pass
+                logger.debug("Registration already exists for course %s", course_id)
             if error.code == 3:
                 # Postback URL login name specified without password
                 raise ScormCourseNoPasswordError()
