@@ -16,6 +16,7 @@ from zope.location.interfaces import IContained
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
+from nti.schema.field import Number
 from nti.schema.field import ListOrTuple
 from nti.schema.field import DecodingValidTextLine as ValidTextLine
 
@@ -146,3 +147,18 @@ class IScormRegistration(interface.Interface):
     learner_first_name = ValidTextLine(title=u'The first name of the registered learner.')
 
     learner_last_name = ValidTextLine(title=u'The last name of the registered learner.')
+
+
+class ISCORMProgress(interface.Interface):
+    """
+    An object containing high-level information about a registration result.
+    """
+
+    complete = ValidTextLine(title=u'Whether the registration has been completed.')
+
+    success = ValidTextLine(title=u'Whether the registration has been passed or failed.')
+
+    score = Number(title=u'The score, from 0 to 100.')
+
+    totaltime = Number(title=u'The total time tracked by the content player in seconds; \
+                                that is, how long the learner had the course open.')
