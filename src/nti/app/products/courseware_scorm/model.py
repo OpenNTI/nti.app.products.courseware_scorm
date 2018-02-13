@@ -67,4 +67,4 @@ class SCORMProgress(object):
         self.complete = registration_report.complete
         self.success = registration_report.success
         self.score = registration_report.score
-        self.totaltime = registration_report.totaltime
+        self.total_time = registration_report.totaltime

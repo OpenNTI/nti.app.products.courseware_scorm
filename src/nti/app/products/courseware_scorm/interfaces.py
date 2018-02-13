@@ -160,5 +160,5 @@ class ISCORMProgress(interface.Interface):
 
     score = Number(title=u'The score, from 0 to 100.')
 
-    totaltime = Number(title=u'The total time tracked by the content player in seconds; \
+    total_time = Number(title=u'The total time tracked by the content player in seconds; \
                                 that is, how long the learner had the course open.')
