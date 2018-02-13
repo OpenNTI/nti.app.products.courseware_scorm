@@ -12,10 +12,12 @@ from zope import component
 from zope import interface
 
 from nti.app.products.courseware_scorm.interfaces import IScormInstance
+from nti.app.products.courseware_scorm.interfaces import ISCORMProgress
 from nti.app.products.courseware_scorm.interfaces import IScormRegistration
 
 from nti.scorm_cloud.client.registration import Instance
 from nti.scorm_cloud.client.registration import Registration
+from nti.scorm_cloud.client.registration import RegistrationReport
 
 
 @component.adapter(Instance)
@@ -55,3 +57,14 @@ class ScormRegistration(object):
         self.learner_id = registration.learnerId
         self.learner_first_name = registration.learnerFirstName
         self.learner_last_name = registration.learnerLastName
+
+
+@component.adapter(RegistrationReport)
+@interface.implementer(ISCORMProgress)
+class SCORMProgress(object):
+
+    def __init__(self, registration_report):
+        self.complete = registration_report.complete
+        self.success = registration_report.success
+        self.score = registration_report.score
+        self.totaltime = registration_report.totaltime
