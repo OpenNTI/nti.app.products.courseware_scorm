@@ -66,5 +66,11 @@ class SCORMProgress(object):
     def __init__(self, registration_report):
         self.complete = registration_report.complete
         self.success = registration_report.success
-        self.score = registration_report.score
-        self.total_time = registration_report.totaltime
+        try:
+            self.score = int(registration_report.score)
+        except:
+            self.score = -1
+        try:
+            self.total_time = int(registration_report.totaltime)
+        except:
+            self.total_time = -1
