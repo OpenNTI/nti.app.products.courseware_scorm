@@ -20,6 +20,7 @@ from nti.app.externalization.error import raise_json_error
 from nti.app.products.courseware_scorm import MessageFactory as _
 from nti.app.products.courseware_scorm import ADMIN_REGISTRATION_ID
 
+from nti.app.products.courseware_scorm.interfaces import ISCORMProgress
 from nti.app.products.courseware_scorm.interfaces import IScormIdentifier
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 from nti.app.products.courseware_scorm.interfaces import IScormRegistration
@@ -208,3 +209,8 @@ class SCORMCloudClient(object):
         registration_list = self.get_registration_list(course)
         for registration in registration_list or ():
             service.deleteRegistration(registration.registrationId)
+
+    def get_registration_progress(self, course, user):
+        registration_id = self._get_registration_id(course, user)
+        service = self.cloud.get_registration_service()
+        return ISCORMProgress(service.get_registration_result(registration_id))
