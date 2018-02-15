@@ -76,6 +76,7 @@ class ISCORMCloudClient(interface.Interface):
         :redirect_url: The URL upon which to redirect when the registration
                         has completed.
         """
+
     def get_registration_list(course):
         """
         Returns the list of registrations for the given course.
@@ -84,6 +85,11 @@ class ISCORMCloudClient(interface.Interface):
     def delete_all_registrations(course):
         """
         Deletes all SCORM Cloud registrations for the specified course.
+        """
+
+    def get_registration_progress(course, user):
+        """
+        Returns progress for the registration of the specified user and course.
         """
 
 
