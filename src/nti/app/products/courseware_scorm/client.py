@@ -182,6 +182,10 @@ class SCORMCloudClient(object):
 
     def launch(self, course, user, redirect_url):
         service = self.cloud.get_registration_service()
+        registration_id = self._get_registration_id(course, user)
+        return service.launch(registration_id, redirect_url)
+
+    def _get_registration_id(self, course, user):
         if  is_course_editor(course, user) \
             or is_course_instructor(course, user) \
             or nauth.is_admin_or_site_admin(user):
