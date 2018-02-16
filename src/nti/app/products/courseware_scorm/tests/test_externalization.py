@@ -37,24 +37,26 @@ class TestExternal(ApplicationLayerTest):
         progress = ISCORMProgress(report, None)
         assert_that(progress, is_not(none()))
         assert_that(progress,
-                    externalizes(has_entries(u'complete', u'incomplete',
-                                             u'success', u'failure',
+                    externalizes(has_entries(u'complete', False,
+                                             u'success', False,
                                              u'total_time', 3,
                                              u'score', -1)))
         report.score=None
         progress = ISCORMProgress(report, None)
         assert_that(progress, is_not(none()))
         assert_that(progress,
-                    externalizes(has_entries(u'complete', u'incomplete',
-                                             u'success', u'failure',
+                    externalizes(has_entries(u'complete', False,
+                                             u'success', False,
                                              u'total_time', 3,
                                              u'score', -1)))
         report.score=u'100'
+        report.complete = u'complete'
+        report.success = u'passed'
         progress = ISCORMProgress(report, None)
         assert_that(progress, is_not(none()))
         assert_that(progress,
-                    externalizes(has_entries(u'complete', u'incomplete',
-                                             u'success', u'failure',
+                    externalizes(has_entries(u'complete', True,
+                                             u'success', True,
                                              u'total_time', 3,
                                              u'score', 100)))
 

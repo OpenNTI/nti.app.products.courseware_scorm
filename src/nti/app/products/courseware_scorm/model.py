@@ -64,8 +64,8 @@ class ScormRegistration(object):
 class SCORMProgress(object):
 
     def __init__(self, registration_report):
-        self.complete = registration_report.complete
-        self.success = registration_report.success
+        self.complete = registration_report.complete == u'complete'
+        self.success = registration_report.success == u'passed'
         try:
             self.score = int(registration_report.score)
         except (TypeError, ValueError):
