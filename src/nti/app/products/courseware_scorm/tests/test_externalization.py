@@ -41,6 +41,23 @@ class TestExternal(ApplicationLayerTest):
                                              u'success', u'failure',
                                              u'total_time', 3,
                                              u'score', -1)))
+        report.score=None
+        progress = ISCORMProgress(report, None)
+        assert_that(progress, is_not(none()))
+        assert_that(progress,
+                    externalizes(has_entries(u'complete', u'incomplete',
+                                             u'success', u'failure',
+                                             u'total_time', 3,
+                                             u'score', -1)))
+        report.score=u'100'
+        progress = ISCORMProgress(report, None)
+        assert_that(progress, is_not(none()))
+        assert_that(progress,
+                    externalizes(has_entries(u'complete', u'incomplete',
+                                             u'success', u'failure',
+                                             u'total_time', 3,
+                                             u'score', 100)))
+
 
     def test_scorm_registration(self):
         mock_instance = Instance(instanceId='instanceId',

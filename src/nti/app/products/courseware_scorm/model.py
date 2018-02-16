@@ -68,9 +68,9 @@ class SCORMProgress(object):
         self.success = registration_report.success
         try:
             self.score = int(registration_report.score)
-        except:
+        except (TypeError, ValueError):
             self.score = -1
         try:
             self.total_time = int(registration_report.totaltime)
-        except:
+        except ValueError:
             self.total_time = -1
