@@ -14,6 +14,7 @@ from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import has_entries
 
+from nti.app.products.courseware_scorm.interfaces import ISCORMProgress
 from nti.app.products.courseware_scorm.interfaces import IScormRegistration
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
@@ -22,24 +23,58 @@ from nti.externalization.testing import externalizes
 
 from nti.scorm_cloud.client.registration import Instance
 from nti.scorm_cloud.client.registration import Registration
+from nti.scorm_cloud.client.registration import RegistrationReport
 
 
 class TestExternal(ApplicationLayerTest):
 
+    def test_scorm_progress(self):
+        report = RegistrationReport(format_=u'course',
+                                    complete=u'incomplete',
+                                    success=u'failure',
+                                    totaltime=3,
+                                    score=u'unknown')
+        progress = ISCORMProgress(report, None)
+        assert_that(progress, is_not(none()))
+        assert_that(progress,
+                    externalizes(has_entries(u'complete', False,
+                                             u'success', False,
+                                             u'total_time', 3,
+                                             u'score', None)))
+        report.score=None
+        progress = ISCORMProgress(report, None)
+        assert_that(progress, is_not(none()))
+        assert_that(progress,
+                    externalizes(has_entries(u'complete', False,
+                                             u'success', False,
+                                             u'total_time', 3,
+                                             u'score', None)))
+        report.score=u'100'
+        report.complete = u'complete'
+        report.success = u'passed'
+        progress = ISCORMProgress(report, None)
+        assert_that(progress, is_not(none()))
+        assert_that(progress,
+                    externalizes(has_entries(u'complete', True,
+                                             u'success', True,
+                                             u'total_time', 3,
+                                             u'score', 100)))
+
+
     def test_scorm_registration(self):
-        mock_instance = Instance(instanceId='instanceId', 
-                                 courseVersion='version', 
+        mock_instance = Instance(instanceId='instanceId',
+                                 courseVersion='version',
                                  updateDate='updateDate')
         mock_reg = Registration(appId='appId', registrationId='regId', courseId='courseId',
                                 courseTitle='Title', lastCourseVersionLaunched='lastVersion',
-                                learnerId='learnerId', learnerFirstName='learnerFirst', 
+                                learnerId='learnerId', learnerFirstName='learnerFirst',
                                 learnerLastName='learnerLast', email='email',
-                                createDate='createDate', firstAccessDate='firstAccess', 
-                                lastAccessDate='lastAccess', completedDate='completedDate', 
+                                createDate='createDate', firstAccessDate='firstAccess',
+                                lastAccessDate='lastAccess', completedDate='completedDate',
                                 instances=[mock_instance])
         reg = IScormRegistration(mock_reg, None)
         assert_that(reg, is_not(none()))
-        assert_that(reg, 
+        assert_that(reg,
                     externalizes(has_entries('app_id', 'appId',
                                              'registration_id', 'regId',
                                              'course_id', 'courseId',

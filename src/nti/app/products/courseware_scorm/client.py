@@ -20,6 +20,7 @@ from nti.app.externalization.error import raise_json_error
 from nti.app.products.courseware_scorm import MessageFactory as _
 from nti.app.products.courseware_scorm import ADMIN_REGISTRATION_ID
 
+from nti.app.products.courseware_scorm.interfaces import ISCORMProgress
 from nti.app.products.courseware_scorm.interfaces import IScormIdentifier
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 from nti.app.products.courseware_scorm.interfaces import IScormRegistration
@@ -182,6 +183,10 @@ class SCORMCloudClient(object):
 
     def launch(self, course, user, redirect_url):
         service = self.cloud.get_registration_service()
+        registration_id = self._get_registration_id(course, user)
+        return service.launch(registration_id, redirect_url)
+
+    def _get_registration_id(self, course, user):
         if  is_course_editor(course, user) \
             or is_course_instructor(course, user) \
             or nauth.is_admin_or_site_admin(user):
@@ -190,7 +195,7 @@ class SCORMCloudClient(object):
             enrollment = get_enrollment_record(course, user)
             # pylint: disable=too-many-function-args
             registration_id = IScormIdentifier(enrollment).get_id()
-        return service.launch(registration_id, redirect_url)
+        return registration_id
 
     def get_registration_list(self, course):
         service = self.cloud.get_registration_service()
@@ -204,3 +209,8 @@ class SCORMCloudClient(object):
         registration_list = self.get_registration_list(course)
         for registration in registration_list or ():
             service.deleteRegistration(registration.registrationId)
+
+    def get_registration_progress(self, course, user):
+        registration_id = self._get_registration_id(course, user)
+        service = self.cloud.get_registration_service()
+        return ISCORMProgress(service.get_registration_result(registration_id))

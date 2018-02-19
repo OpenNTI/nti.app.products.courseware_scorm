@@ -20,6 +20,7 @@ from nti.app.products.courseware_scorm import MessageFactory as _
 
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 
+from nti.app.products.courseware_scorm.views import SCORM_PROGRESS_VIEW_NAME
 from nti.app.products.courseware_scorm.views import LAUNCH_SCORM_COURSE_VIEW_NAME
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
@@ -52,3 +53,23 @@ class LaunchSCORMCourseView(AbstractAuthenticatedView):
         client = component.getUtility(ISCORMCloudClient)
         launch_url = client.launch(self.context, self.remoteUser, u'message')
         return hexc.HTTPSeeOther(location=launch_url)
+
+
+@view_config(route_name='objects.generic.traversal',
+             renderer='rest',
+             context=ICourseInstance,
+             request_method='GET',
+             name=SCORM_PROGRESS_VIEW_NAME)
+class SCORMProgressView(AbstractAuthenticatedView):
+    """
+    A view for observing SCORM registration progress.
+    """
+
+    def __call__(self):
+        if      get_enrollment_record(self.context, self.remoteUser) is None \
+            and not is_course_editor(self.context, self.remoteUser) \
+            and not is_course_instructor(self.context, self.remoteUser) \
+            and not nauth.is_admin_or_site_admin(self.remoteUser):
+            return hexc.HTTPForbidden(_(u"You do not have access to this SCORM content."))
+        client = component.getUtility(ISCORMCloudClient)
+        return client.get_registration_progress(self.context, self.remoteUser)

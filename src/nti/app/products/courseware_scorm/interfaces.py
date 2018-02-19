@@ -16,6 +16,8 @@ from zope.location.interfaces import IContained
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
+from nti.schema.field import Bool
+from nti.schema.field import Number
 from nti.schema.field import ListOrTuple
 from nti.schema.field import DecodingValidTextLine as ValidTextLine
 
@@ -75,6 +77,7 @@ class ISCORMCloudClient(interface.Interface):
         :redirect_url: The URL upon which to redirect when the registration
                         has completed.
         """
+
     def get_registration_list(course):
         """
         Returns the list of registrations for the given course.
@@ -83,6 +86,11 @@ class ISCORMCloudClient(interface.Interface):
     def delete_all_registrations(course):
         """
         Deletes all SCORM Cloud registrations for the specified course.
+        """
+
+    def get_registration_progress(course, user):
+        """
+        Returns progress for the registration of the specified user and course.
         """
 
 
@@ -146,3 +154,18 @@ class IScormRegistration(interface.Interface):
     learner_first_name = ValidTextLine(title=u'The first name of the registered learner.')
 
     learner_last_name = ValidTextLine(title=u'The last name of the registered learner.')
+
+
+class ISCORMProgress(interface.Interface):
+    """
+    An object containing high-level information about a registration result.
+    """
+
+    complete = Bool(title=u'Whether the registration has been completed.')
+
+    success = Bool(title=u'Whether the registration has been passed or failed.')
+
+    score = Number(title=u'The score, from 0 to 100.')
+
+    total_time = Number(title=u'The total time tracked by the content player in seconds; \
+                                that is, how long the learner had the course open.')
