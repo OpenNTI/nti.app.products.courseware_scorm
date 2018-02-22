@@ -12,6 +12,8 @@ from pyramid import httpexceptions as hexc
 
 from pyramid.view import view_config
 
+from requests.structures import CaseInsensitiveDict
+
 from zope import component
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
@@ -50,8 +52,10 @@ class LaunchSCORMCourseView(AbstractAuthenticatedView):
             and not is_course_instructor(self.context, self.remoteUser) \
             and not nauth.is_admin_or_site_admin(self.remoteUser):
             return hexc.HTTPForbidden(_(u"You do not have access to this SCORM content."))
+        redirect_url = CaseInsensitiveDict(self.request.params).get(u'redirecturl',
+                                                                    u'message')
         client = component.getUtility(ISCORMCloudClient)
-        launch_url = client.launch(self.context, self.remoteUser, u'message')
+        launch_url = client.launch(self.context, self.remoteUser, redirect_url)
         return hexc.HTTPSeeOther(location=launch_url)
 
 
