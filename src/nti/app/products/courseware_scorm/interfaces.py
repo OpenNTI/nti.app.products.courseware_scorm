@@ -102,6 +102,15 @@ class ISCORMCloudClient(interface.Interface):
         """
         Returns whether a registration with the given ID exists.
         """
+    def get_archive(course):
+        """
+        Returns the SCORM archive for the specified course.
+        """
+
+    def get_metadata(course):
+        """
+        Returns the SCORM metadata associated with the specified course.
+        """
 
 
 class ISCORMIdentifier(interface.Interface):
