@@ -8,6 +8,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+import StringIO
+
 from pyramid import httpexceptions as hexc
 
 from pyramid.view import view_config
@@ -18,6 +20,7 @@ from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 
+from nti.app.products.courseware_scorm.views import GET_SCORM_ARCHIVE_VIEW_NAME
 from nti.app.products.courseware_scorm.views import GET_REGISTRATION_LIST_VIEW_NAME
 from nti.app.products.courseware_scorm.views import DELETE_ALL_REGISTRATIONS_VIEW_NAME
 
@@ -70,3 +73,34 @@ class GetRegistrationListView(AbstractAuthenticatedView):
         result[ITEMS] = registration_list
         result[ITEM_COUNT] = result[TOTAL] = len(registration_list)
         return result
+
+
+@view_config(route_name='objects.generic.traversal',
+             renderer='rest',
+             context=ICourseInstance,
+             request_method='GET',
+             permission=nauth.ACT_NTI_ADMIN,
+             name=GET_SCORM_ARCHIVE_VIEW_NAME)
+class GetArchiveView(AbstractAuthenticatedView):
+    """
+    A view which returns the SCORM course archive.
+    """
+
+    def __call__(self):
+        client = component.getUtility(ISCORMCloudClient)
+        result = client.get_archive(self.context)
+        zip_bytes = result
+        metadata = client.get_metadata(self.context)
+        return self._export_archive(zip_bytes, metadata, self.request.response)
+
+    def _export_archive(self, zip_bytes, metadata, response):
+        # TODO: Encapsulate title logic
+        title = metadata.documentElement.getElementsByTagName('object')[0].getAttribute('title')
+        filename = '%s.zip' % title
+        response.content_encoding = 'identity'
+        response.content_type = 'application/zip; charset=UTF-8'
+        content_disposition = 'attachment; filename="%s"' % filename
+        response.content_disposition = str(content_disposition)
+        zip_io = StringIO.StringIO(zip_bytes)
+        response.body_file = zip_io
+        return response
