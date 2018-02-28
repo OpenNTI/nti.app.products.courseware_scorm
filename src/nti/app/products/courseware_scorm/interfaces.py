@@ -93,6 +93,16 @@ class ISCORMCloudClient(interface.Interface):
         Returns progress for the registration of the specified user and course.
         """
 
+    def get_archive(course):
+        """
+        Returns the SCORM archive for the specified course.
+        """
+
+    def get_metadata(course):
+        """
+        Returns the SCORM metadata associated with the specified course.
+        """
+
 
 class IScormIdentifier(interface.Interface):
     """
