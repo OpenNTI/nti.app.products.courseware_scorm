@@ -31,6 +31,8 @@ from nti.dataserver import authorization as nauth
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
 
+from nti.scorm_cloud.client.course import Metadata
+
 ITEMS = StandardExternalFields.ITEMS
 TOTAL = StandardExternalFields.TOTAL
 ITEM_COUNT = StandardExternalFields.ITEM_COUNT
@@ -94,9 +96,7 @@ class GetArchiveView(AbstractAuthenticatedView):
         return self._export_archive(zip_bytes, metadata, self.request.response)
 
     def _export_archive(self, zip_bytes, metadata, response):
-        # TODO: Encapsulate title logic
-        title = metadata.documentElement.getElementsByTagName('object')[0].getAttribute('title')
-        filename = '%s.zip' % title
+        filename = '%s.zip' % metadata.title
         response.content_encoding = 'identity'
         response.content_type = 'application/zip; charset=UTF-8'
         content_disposition = 'attachment; filename="%s"' % filename
