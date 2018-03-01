@@ -121,10 +121,15 @@ class SCORMCloudClient(object):
         Syncs a course enrollment record with SCORM Cloud.
         """
         # pylint: disable=too-many-function-args
-        course_id = IScormIdentifier(course).get_id()
         user = User.get_user(enrollment_record.Principal.id)
-        learner_id = IScormIdentifier(user).get_id()
         reg_id = IScormIdentifier(enrollment_record).get_id()
+        self.create_registration(reg_id,
+                                 user,
+                                 course)
+
+    def create_registration(self, registration_id, user, course):
+        course_id = IScormIdentifier(course).get_id()
+        learner_id = IScormIdentifier(user).get_id()
         named = IFriendlyNamed(user)
         last_name = first_name = ''
         if named and named.realname:
@@ -132,7 +137,7 @@ class SCORMCloudClient(object):
             first_name = human_name.first
             last_name = human_name.last
         self._create_registration(course_id,
-                                  reg_id,
+                                  registration_id,
                                   first_name,
                                   last_name,
                                   learner_id)
