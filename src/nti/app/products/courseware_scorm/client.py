@@ -18,7 +18,6 @@ from zope import interface
 from nti.app.externalization.error import raise_json_error
 
 from nti.app.products.courseware_scorm import MessageFactory as _
-from nti.app.products.courseware_scorm import ADMIN_REGISTRATION_ID
 
 from nti.app.products.courseware_scorm.interfaces import ISCORMProgress
 from nti.app.products.courseware_scorm.interfaces import IScormIdentifier
@@ -102,14 +101,6 @@ class SCORMCloudClient(object):
 
         metadata = ISCORMCourseMetadata(context)
         metadata.scorm_id = scorm_id
-
-        # Create registration for use by admins/instructors to access content
-        course_id = IScormIdentifier(context).get_id()
-        self._create_registration(course_id=course_id,
-                                  registration_id=ADMIN_REGISTRATION_ID,
-                                  first_name=u'Admin',
-                                  last_name=u'Admin',
-                                  learner_id=ADMIN_REGISTRATION_ID)
 
         return context
 
