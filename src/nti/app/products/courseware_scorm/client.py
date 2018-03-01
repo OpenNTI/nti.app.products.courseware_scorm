@@ -122,7 +122,7 @@ class SCORMCloudClient(object):
         """
         # pylint: disable=too-many-function-args
         user = User.get_user(enrollment_record.Principal.id)
-        reg_id = ISCORMIdentifier(enrollment_record).get_id()
+        reg_id = self._get_registration_id(course, user)
         self.create_registration(reg_id,
                                  user,
                                  course)
@@ -167,7 +167,9 @@ class SCORMCloudClient(object):
 
     def delete_enrollment_record(self, enrollment_record):
         # pylint: disable=too-many-function-args
-        reg_id = ISCORMIdentifier(enrollment_record).get_id()
+        course = enrollment_record.CourseInstance
+        user = User.get_user(enrollment_record.Principal.id)
+        reg_id = self._get_registration_id(course, user)
         service = self.cloud.get_registration_service()
         logger.info("Deleting enrollment record: reg_id=%s",
                     reg_id)
@@ -189,15 +191,8 @@ class SCORMCloudClient(object):
         return service.launch(registration_id, redirect_url)
 
     def _get_registration_id(self, course, user):
-        if self._is_course_admin(user, course):
-            user_id = ISCORMIdentifier(user).get_id()
-            course_id = ISCORMIdentifier(course).get_id()
-            registration_id = u'-'.join([user_id, course_id])
-        else:
-            enrollment = get_enrollment_record(course, user)
-            # pylint: disable=too-many-function-args
-            registration_id = ISCORMIdentifier(enrollment).get_id()
-        return registration_id
+        identifier = component.getMultiAdapter((user, course), ISCORMIdentifier)
+        return identifier.get_id()
 
     def _is_course_admin(self, user, course):
         return is_course_editor(course, user) \
