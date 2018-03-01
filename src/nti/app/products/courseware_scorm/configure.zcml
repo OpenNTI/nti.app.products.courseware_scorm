@@ -17,17 +17,17 @@
 
 	<adapter factory=".courses.SCORMCourseInstanceMetadataFactory" />
 
-	<adapter factory=".courses.ScormIdentifier"
+	<adapter factory=".courses.SCORMIdentifier"
 			 for="nti.contenttypes.courses.interfaces.ICourseInstance"
-			 provides=".interfaces.IScormIdentifier" />
+			 provides=".interfaces.ISCORMIdentifier" />
 
-	<adapter factory=".courses.ScormIdentifier"
+	<adapter factory=".courses.SCORMIdentifier"
 			 for="nti.dataserver.interfaces.IUser"
-			 provides=".interfaces.IScormIdentifier" />
+			 provides=".interfaces.ISCORMIdentifier" />
 
-	<adapter factory=".courses.ScormIdentifier"
+	<adapter factory=".courses.SCORMIdentifier"
 			 for="nti.contenttypes.courses.interfaces.ICourseInstanceEnrollmentRecord"
-			 provides=".interfaces.IScormIdentifier" />
+			 provides=".interfaces.ISCORMIdentifier" />
 
 	<adapter factory=".model.ScormInstance"
  			 for="nti.scorm_cloud.client.registration.Instance"

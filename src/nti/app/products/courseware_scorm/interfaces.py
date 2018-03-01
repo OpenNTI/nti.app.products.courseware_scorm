@@ -99,7 +99,7 @@ class ISCORMCloudClient(interface.Interface):
         """
 
 
-class IScormIdentifier(interface.Interface):
+class ISCORMIdentifier(interface.Interface):
     """
     Provides SCORM identifiers for importing courses.
     """

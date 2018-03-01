@@ -19,7 +19,7 @@ from zope.container.contained import Contained
 
 from zope.intid.interfaces import IIntIds
 
-from nti.app.products.courseware_scorm.interfaces import IScormIdentifier
+from nti.app.products.courseware_scorm.interfaces import ISCORMIdentifier
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 
@@ -55,8 +55,8 @@ SCORMCourseInstanceMetadataFactory = an_factory(SCORMCourseMetadata,
                                                 SCORM_COURSE_METADATA_KEY)
 
 
-@interface.implementer(IScormIdentifier)
-class ScormIdentifier(object):
+@interface.implementer(ISCORMIdentifier)
+class SCORMIdentifier(object):
 
     def __init__(self, obj):
         self.object = obj
