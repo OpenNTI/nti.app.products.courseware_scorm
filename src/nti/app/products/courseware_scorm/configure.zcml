@@ -29,6 +29,10 @@
 			 for="nti.contenttypes.courses.interfaces.ICourseInstanceEnrollmentRecord"
 			 provides=".interfaces.ISCORMIdentifier" />
 
+	 <adapter factory=".courses.SCORMRegistrationIdentifier"
+ 			 for="nti.dataserver.interfaces.IUser nti.contenttypes.courses.interfaces.ICourseInstance"
+ 			 provides=".interfaces.ISCORMIdentifier" />
+
 	<adapter factory=".model.ScormInstance"
  			 for="nti.scorm_cloud.client.registration.Instance"
  			 provides=".interfaces.IScormInstance" />

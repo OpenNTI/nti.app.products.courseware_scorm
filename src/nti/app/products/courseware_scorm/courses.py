@@ -65,3 +65,17 @@ class SCORMIdentifier(object):
         # NTIIDs contain characters invalid for SCORM IDs, so use IntId
         intids = component.getUtility(IIntIds)
         return str(intids.getId(self.object))
+
+
+@interface.implementer(ISCORMIdentifier)
+class SCORMRegistrationIdentifier(object):
+
+    def __init__(self, user, course):
+        self.user = user
+        self.course = course
+
+    def get_id(self):
+        intids = component.getUtility(IIntIds)
+        user_id = str(intids.getId(self.user))
+        course_id = str(intids.getId(self.course))
+        return u'-'.join([user_id, course_id])
