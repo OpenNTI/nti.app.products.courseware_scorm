@@ -183,8 +183,10 @@ class SCORMCloudClient(object):
         return service.launch(registration_id, redirect_url)
 
     def _get_registration_id(self, course, user):
-            registration_id = ADMIN_REGISTRATION_ID
         if self._is_course_admin(user, course):
+            user_id = IScormIdentifier(user).get_id()
+            course_id = IScormIdentifier(course).get_id()
+            registration_id = u'-'.join([user_id, course_id])
         else:
             enrollment = get_enrollment_record(course, user)
             # pylint: disable=too-many-function-args
