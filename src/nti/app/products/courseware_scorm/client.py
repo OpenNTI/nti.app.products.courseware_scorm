@@ -180,6 +180,12 @@ class SCORMCloudClient(object):
     def launch(self, course, user, redirect_url):
         service = self.cloud.get_registration_service()
         registration_id = self._get_registration_id(course, user)
+        if      self._is_course_admin(user, course) \
+            and not self.registration_exists(registration_id):
+            course_id = IScormIdentifier(course).get_id()
+            self.create_registration(registration_id=registration_id,
+                                     user=user,
+                                     course=course)
         return service.launch(registration_id, redirect_url)
 
     def _get_registration_id(self, course, user):
