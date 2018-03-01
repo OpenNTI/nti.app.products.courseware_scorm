@@ -93,6 +93,11 @@ class ISCORMCloudClient(interface.Interface):
         Returns progress for the registration of the specified user and course.
         """
 
+    def registration_exists(registration_id):
+        """
+        Returns whether a registration with the given ID exists.
+        """
+
 
 class IScormIdentifier(interface.Interface):
     """

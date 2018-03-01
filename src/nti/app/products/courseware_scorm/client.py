@@ -214,3 +214,7 @@ class SCORMCloudClient(object):
         registration_id = self._get_registration_id(course, user)
         service = self.cloud.get_registration_service()
         return ISCORMProgress(service.get_registration_result(registration_id))
+
+    def registration_exists(self, registration_id):
+        service = self.cloud.get_registration_service()
+        return service.exists(registration_id)
