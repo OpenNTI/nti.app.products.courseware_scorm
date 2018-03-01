@@ -183,15 +183,18 @@ class SCORMCloudClient(object):
         return service.launch(registration_id, redirect_url)
 
     def _get_registration_id(self, course, user):
-        if  is_course_editor(course, user) \
-            or is_course_instructor(course, user) \
-            or nauth.is_admin_or_site_admin(user):
             registration_id = ADMIN_REGISTRATION_ID
+        if self._is_course_admin(user, course):
         else:
             enrollment = get_enrollment_record(course, user)
             # pylint: disable=too-many-function-args
             registration_id = IScormIdentifier(enrollment).get_id()
         return registration_id
+
+    def _is_course_admin(self, user, course):
+        return is_course_editor(course, user) \
+            or is_course_instructor(course, user) \
+            or nauth.is_admin_or_site_admin(user)
 
     def get_registration_list(self, course):
         service = self.cloud.get_registration_service()
