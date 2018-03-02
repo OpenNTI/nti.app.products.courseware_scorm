@@ -18,22 +18,19 @@ from zope import interface
 from nti.app.externalization.error import raise_json_error
 
 from nti.app.products.courseware_scorm import MessageFactory as _
-from nti.app.products.courseware_scorm import ADMIN_REGISTRATION_ID
+
+from nti.app.products.courseware_scorm.courses import is_course_admin
 
 from nti.app.products.courseware_scorm.interfaces import ISCORMProgress
-from nti.app.products.courseware_scorm.interfaces import IScormIdentifier
+from nti.app.products.courseware_scorm.interfaces import ISCORMIdentifier
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 from nti.app.products.courseware_scorm.interfaces import IScormRegistration
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 
-from nti.contenttypes.courses.utils import is_course_editor
-from nti.contenttypes.courses.utils import is_course_instructor
 from nti.contenttypes.courses.utils import get_enrollment_record
 
 from nti.dataserver.users.interfaces import IFriendlyNamed
-
-from nti.dataserver import authorization as nauth
 
 from nti.dataserver.users.users import User
 
@@ -86,7 +83,7 @@ class SCORMCloudClient(object):
         """
         cloud_service = self.cloud.get_course_service()
         # pylint: disable=too-many-function-args
-        scorm_id = IScormIdentifier(context).get_id()
+        scorm_id = ISCORMIdentifier(context).get_id()
         logger.info("Importing course using: app_id=%s scorm_id=%s",
                     self.app_id, scorm_id)
         if scorm_id is None:
@@ -102,14 +99,6 @@ class SCORMCloudClient(object):
 
         metadata = ISCORMCourseMetadata(context)
         metadata.scorm_id = scorm_id
-
-        # Create registration for use by admins/instructors to access content
-        course_id = IScormIdentifier(context).get_id()
-        self._create_registration(course_id=course_id,
-                                  registration_id=ADMIN_REGISTRATION_ID,
-                                  first_name=u'Admin',
-                                  last_name=u'Admin',
-                                  learner_id=ADMIN_REGISTRATION_ID)
 
         return context
 
@@ -130,10 +119,15 @@ class SCORMCloudClient(object):
         Syncs a course enrollment record with SCORM Cloud.
         """
         # pylint: disable=too-many-function-args
-        course_id = IScormIdentifier(course).get_id()
         user = User.get_user(enrollment_record.Principal.id)
-        learner_id = IScormIdentifier(user).get_id()
-        reg_id = IScormIdentifier(enrollment_record).get_id()
+        reg_id = self._get_registration_id(course, user)
+        self.create_registration(reg_id,
+                                 user,
+                                 course)
+
+    def create_registration(self, registration_id, user, course):
+        course_id = ISCORMIdentifier(course).get_id()
+        learner_id = ISCORMIdentifier(user).get_id()
         named = IFriendlyNamed(user)
         last_name = first_name = ''
         if named and named.realname:
@@ -141,7 +135,7 @@ class SCORMCloudClient(object):
             first_name = human_name.first
             last_name = human_name.last
         self._create_registration(course_id,
-                                  reg_id,
+                                  registration_id,
                                   first_name,
                                   last_name,
                                   learner_id)
@@ -171,7 +165,9 @@ class SCORMCloudClient(object):
 
     def delete_enrollment_record(self, enrollment_record):
         # pylint: disable=too-many-function-args
-        reg_id = IScormIdentifier(enrollment_record).get_id()
+        course = enrollment_record.CourseInstance
+        user = User.get_user(enrollment_record.Principal.id)
+        reg_id = self._get_registration_id(course, user)
         service = self.cloud.get_registration_service()
         logger.info("Deleting enrollment record: reg_id=%s",
                     reg_id)
@@ -184,23 +180,22 @@ class SCORMCloudClient(object):
     def launch(self, course, user, redirect_url):
         service = self.cloud.get_registration_service()
         registration_id = self._get_registration_id(course, user)
+        if      is_course_admin(user, course) \
+            and not self.registration_exists(registration_id):
+            course_id = ISCORMIdentifier(course).get_id()
+            self.create_registration(registration_id=registration_id,
+                                     user=user,
+                                     course=course)
         return service.launch(registration_id, redirect_url)
 
     def _get_registration_id(self, course, user):
-        if  is_course_editor(course, user) \
-            or is_course_instructor(course, user) \
-            or nauth.is_admin_or_site_admin(user):
-            registration_id = ADMIN_REGISTRATION_ID
-        else:
-            enrollment = get_enrollment_record(course, user)
-            # pylint: disable=too-many-function-args
-            registration_id = IScormIdentifier(enrollment).get_id()
-        return registration_id
+        identifier = component.getMultiAdapter((user, course), ISCORMIdentifier)
+        return identifier.get_id()
 
     def get_registration_list(self, course):
         service = self.cloud.get_registration_service()
         # pylint: disable=too-many-function-args
-        course_id = IScormIdentifier(course).get_id()
+        course_id = ISCORMIdentifier(course).get_id()
         reg_list = service.getRegistrationList(courseid=course_id)
         return [IScormRegistration(reg) for reg in reg_list or ()]
 
@@ -214,3 +209,7 @@ class SCORMCloudClient(object):
         registration_id = self._get_registration_id(course, user)
         service = self.cloud.get_registration_service()
         return ISCORMProgress(service.get_registration_result(registration_id))
+
+    def registration_exists(self, registration_id):
+        service = self.cloud.get_registration_service()
+        return service.exists(registration_id)

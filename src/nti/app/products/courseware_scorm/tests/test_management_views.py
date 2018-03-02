@@ -7,11 +7,16 @@ from __future__ import absolute_import
 
 # pylint: disable=protected-access,too-many-public-methods
 
+import fudge
+
 from hamcrest import is_
+from hamcrest import none
 from hamcrest import is_not
 from hamcrest import has_item
 from hamcrest import not_none
+from hamcrest import has_entry
 from hamcrest import assert_that
+from hamcrest import has_entries
 does_not = is_not
 
 import shutil
@@ -23,6 +28,10 @@ from nti.app.products.courseware.tests import PersistentInstructedCourseApplicat
 from nti.app.products.courseware_admin import VIEW_COURSE_ADMIN_LEVELS
 
 from nti.app.products.courseware_scorm.courses import SCORM_COURSE_MIME_TYPE
+
+from nti.app.products.courseware_scorm.tests import CoursewareSCORMTestLayer
+
+from nti.app.products.courseware_scorm.views import LAUNCH_SCORM_COURSE_VIEW_NAME
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
@@ -37,12 +46,15 @@ from nti.externalization.interfaces import StandardExternalFields
 
 ITEMS = StandardExternalFields.ITEMS
 CLASS = StandardExternalFields.CLASS
+LINKS = StandardExternalFields.LINKS
 MIMETYPE = StandardExternalFields.MIMETYPE
+
+LAUNCH_REL = LAUNCH_SCORM_COURSE_VIEW_NAME
 
 
 class TestManagementViews(ApplicationLayerTest):
 
-    layer = PersistentInstructedCourseApplicationTestLayer
+    layer = CoursewareSCORMTestLayer
 
     default_origin = 'http://janux.ou.edu'
 
@@ -68,10 +80,13 @@ class TestManagementViews(ApplicationLayerTest):
         return admin_href
 
     @WithSharedApplicationMockDS(testapp=True, users=True)
-    def test_create_SCORM_course_view(self):
+    @fudge.patch('nti.app.products.courseware_scorm.courses.SCORMCourseMetadata.has_scorm_package')
+    def test_create_SCORM_course_view(self, mock_has_scorm):
         """
         Validates SCORM course creation.
         """
+        mock_has_scorm.is_callable().returns(False)
+
         admin_href = self._get_admin_href()
 
         # Create admin level
@@ -105,6 +120,19 @@ class TestManagementViews(ApplicationLayerTest):
                     is_(SCORM_COURSE_MIME_TYPE))
         assert_that(new_course['NTIID'], not_none())
         assert_that(new_course['TotalEnrolledCount'], is_(0))
+
+        metadata = new_course[u'Metadata']
+        assert_that(metadata, is_not(none()))
+        assert_that(metadata[u'scorm_id'], is_(none()))
+        assert_that(metadata, does_not(has_item(LINKS)))
+
+        mock_has_scorm.is_callable().returns(True)
+
+        new_course = self.testapp.get(new_course_href).json_body
+        metadata = new_course[u'Metadata']
+        assert_that(metadata, is_not(none()))
+
+        assert_that(metadata,has_entry(LINKS, has_item(has_entry('rel', LAUNCH_REL))))
 
         catalog = self.testapp.get('%s/CourseCatalogEntry' % new_course_href)
         catalog = catalog.json_body

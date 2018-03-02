@@ -34,7 +34,12 @@ class ISCORMCourseMetadata(IContained):
     """
 
     scorm_id = ValidTextLine(title=u"The SCORM ID",
-                             required=True)
+                             required=False)
+
+    def has_scorm_package():
+        """
+        Whether a SCORM package has been uploaded to the course.
+        """
 
 
 class ISCORMCloudClient(interface.Interface):
@@ -93,8 +98,13 @@ class ISCORMCloudClient(interface.Interface):
         Returns progress for the registration of the specified user and course.
         """
 
+    def registration_exists(registration_id):
+        """
+        Returns whether a registration with the given ID exists.
+        """
 
-class IScormIdentifier(interface.Interface):
+
+class ISCORMIdentifier(interface.Interface):
     """
     Provides SCORM identifiers for importing courses.
     """

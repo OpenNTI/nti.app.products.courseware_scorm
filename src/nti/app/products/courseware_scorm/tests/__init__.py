@@ -7,6 +7,8 @@ from __future__ import absolute_import
 
 # pylint: disable=protected-access,too-many-public-methods,arguments-differ
 
+from nti.app.products.courseware.tests import PersistentInstructedCourseApplicationTestLayer
+
 from nti.testing.layers import find_test
 from nti.testing.layers import GCLayerMixin
 from nti.testing.layers import ZopeComponentLayer
@@ -49,3 +51,23 @@ import unittest
 class CoursewareSCORMLayerTest(unittest.TestCase):
 
     layer = SharedConfiguringTestLayer
+
+
+class CoursewareSCORMTestLayer(PersistentInstructedCourseApplicationTestLayer):
+
+    set_up_packages = ('nti.dataserver', 'nti.app.products.courseware_scorm')
+
+    @classmethod
+    def setUp(cls):
+        PersistentInstructedCourseApplicationTestLayer.setUp()
+        # We need to use configure_packages instead of setUpPackages
+        # to avoid having zope.eventtesting.events.append duplicated
+        # as a handler. This is poorly documented in nti.testing 1.0.0.
+        # Passing in our context is critical.
+        cls.configure_packages(set_up_packages=cls.set_up_packages,
+                               features=cls.features,
+                               context=cls.configuration_context)
+
+    @classmethod
+    def testSetUp(cls):
+        pass
