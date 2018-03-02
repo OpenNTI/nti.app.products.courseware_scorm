@@ -11,11 +11,15 @@ from __future__ import absolute_import
 from zope import component
 from zope import interface
 
+from nti.app.products.courseware_scorm.courses import is_course_admin
+
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 
 from nti.app.products.courseware_scorm.views import IMPORT_SCORM_COURSE_VIEW_NAME
 from nti.app.products.courseware_scorm.views import LAUNCH_SCORM_COURSE_VIEW_NAME
+
+from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
@@ -38,15 +42,16 @@ logger = __import__('logging').getLogger(__name__)
 
 @component.adapter(ISCORMCourseInstance)
 @interface.implementer(IExternalObjectDecorator)
-class _SCORMCourseInstanceDecorator(Singleton):
+class _SCORMCourseInstanceDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
     def decorateExternalObject(self, original, external):
         # The Outline isn't needed; SCORM Cloud provides its own viewer
         external.pop('Outline', None)
         metadata = ISCORMCourseMetadata(original, None)
         external['Metadata'] = metadata
-        _links = external.setdefault(LINKS, [])
-        _links.append(Link(original, rel=IMPORT_REL, elements=(IMPORT_REL,)))
+        if is_course_admin(self.remoteUser, original):
+            _links = external.setdefault(LINKS, [])
+            _links.append(Link(original, rel=IMPORT_REL, elements=(IMPORT_REL,)))
 
 
 @component.adapter(ISCORMCourseMetadata)
