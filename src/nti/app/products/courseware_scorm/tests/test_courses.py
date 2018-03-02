@@ -8,6 +8,7 @@ from __future__ import absolute_import
 # pylint: disable=protected-access,too-many-public-methods
 
 from hamcrest import none
+from hamcrest import is_
 from hamcrest import is_not
 from hamcrest import assert_that
 
@@ -25,6 +26,9 @@ class TestCourses(CoursewareSCORMLayerTest):
         course_instance = SCORMCourseInstance()
         meta = ISCORMCourseMetadata(course_instance, None)
         assert_that(meta, is_not(none()))
+        assert_that(meta.has_scorm_package(), is_(False))
+        meta.scorm_id = u'12345678'
+        assert_that(meta.has_scorm_package(), is_(True))
 
     def test_scorm_identifier(self):
         course_instance = SCORMCourseInstance()
