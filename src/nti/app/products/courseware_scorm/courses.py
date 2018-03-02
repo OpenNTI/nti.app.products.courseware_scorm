@@ -49,7 +49,10 @@ class SCORMCourseMetadata(Persistent, Contained):
     A metadata object for a SCORM course instance.
     """
 
-    scorm_id = u''
+    scorm_id = None
+
+    def has_scorm_package(self):
+        return self.scorm_id is not None
 
 SCORMCourseInstanceMetadataFactory = an_factory(SCORMCourseMetadata,
                                                 SCORM_COURSE_METADATA_KEY)

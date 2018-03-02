@@ -34,7 +34,12 @@ class ISCORMCourseMetadata(IContained):
     """
 
     scorm_id = ValidTextLine(title=u"The SCORM ID",
-                             required=True)
+                             required=False)
+
+    def has_scorm_package():
+        """
+        Whether a SCORM package has been uploaded to the course.
+        """
 
 
 class ISCORMCloudClient(interface.Interface):
