@@ -19,6 +19,8 @@ from nti.app.externalization.error import raise_json_error
 
 from nti.app.products.courseware_scorm import MessageFactory as _
 
+from nti.app.products.courseware_scorm import is_course_admin
+
 from nti.app.products.courseware_scorm.interfaces import ISCORMProgress
 from nti.app.products.courseware_scorm.interfaces import ISCORMIdentifier
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
@@ -26,13 +28,9 @@ from nti.app.products.courseware_scorm.interfaces import IScormRegistration
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 
-from nti.contenttypes.courses.utils import is_course_editor
-from nti.contenttypes.courses.utils import is_course_instructor
 from nti.contenttypes.courses.utils import get_enrollment_record
 
 from nti.dataserver.users.interfaces import IFriendlyNamed
-
-from nti.dataserver import authorization as nauth
 
 from nti.dataserver.users.users import User
 
@@ -182,7 +180,7 @@ class SCORMCloudClient(object):
     def launch(self, course, user, redirect_url):
         service = self.cloud.get_registration_service()
         registration_id = self._get_registration_id(course, user)
-        if      self._is_course_admin(user, course) \
+        if      is_course_admin(user, course) \
             and not self.registration_exists(registration_id):
             course_id = ISCORMIdentifier(course).get_id()
             self.create_registration(registration_id=registration_id,
@@ -193,11 +191,6 @@ class SCORMCloudClient(object):
     def _get_registration_id(self, course, user):
         identifier = component.getMultiAdapter((user, course), ISCORMIdentifier)
         return identifier.get_id()
-
-    def _is_course_admin(self, user, course):
-        return is_course_editor(course, user) \
-            or is_course_instructor(course, user) \
-            or nauth.is_admin_or_site_admin(user)
 
     def get_registration_list(self, course):
         service = self.cloud.get_registration_service()

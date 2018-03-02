@@ -25,10 +25,21 @@ from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 
 from nti.contenttypes.courses.courses import CourseInstance
 
+from nti.contenttypes.courses.utils import is_course_editor
+from nti.contenttypes.courses.utils import is_course_instructor
+
+from nti.dataserver import authorization as nauth
+
 SCORM_COURSE_METADATA_KEY = 'nti.app.produts.courseware_scorm.courses.metadata'
 SCORM_COURSE_MIME_TYPE = 'application/vnd.nextthought.courses.scormcourseinstance'
 
 logger = __import__('logging').getLogger(__name__)
+
+
+def is_course_admin(self, user, course):
+    return is_course_editor(course, user) \
+        or is_course_instructor(course, user) \
+        or nauth.is_admin_or_site_admin(user)
 
 
 @interface.implementer(ISCORMCourseInstance)
