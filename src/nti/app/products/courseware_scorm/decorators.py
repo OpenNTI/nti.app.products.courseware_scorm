@@ -54,6 +54,8 @@ class _SCORMCourseInstanceDecorator(Singleton):
 class _SCORMCourseInstanceMetadataDecorator(Singleton):
 
     def decorateExternalObject(self, original, external):
-        _links = external.setdefault(LINKS, [])
-        course = find_interface(original, ICourseInstance, strict=True)
-        _links.append(Link(course, rel=LAUNCH_REL, elements=(LAUNCH_REL,)))
+        if original.has_scorm_package():
+            _links = external.setdefault(LINKS, [])
+            from IPython.terminal.debugger import set_trace;set_trace()
+            course = find_interface(original, ICourseInstance, strict=True)
+            _links.append(Link(course, rel=LAUNCH_REL, elements=(LAUNCH_REL,)))
