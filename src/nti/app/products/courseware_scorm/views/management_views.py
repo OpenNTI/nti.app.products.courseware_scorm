@@ -29,6 +29,7 @@ from nti.app.products.courseware_scorm.courses import SCORMCourseInstance
 
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 
+from nti.app.products.courseware_scorm.views import UPDATE_SCORM_VIEW_NAME
 from nti.app.products.courseware_scorm.views import CREATE_SCORM_COURSE_VIEW_NAME
 from nti.app.products.courseware_scorm.views import IMPORT_SCORM_COURSE_VIEW_NAME
 from nti.app.products.courseware_scorm.views import UPLOAD_SCORM_COURSE_VIEW_NAME
@@ -122,6 +123,43 @@ class ImportSCORMCourseView(AbstractAdminScormCourseView,
         enrollments = ICourseEnrollments(self.context)
         for record in enrollments.iter_enrollments():
             client.sync_enrollment_record(record, self.context)
+
+        return hexc.HTTPNoContent()
+
+    def _handle_multipart(self, sources):
+        """
+        Returns a file source from the sources sent in a multi-part request.
+        """
+        for key in sources:
+            raw_source = sources.get(key)
+            source = get_source(raw_source)
+            if source:
+                break
+        return source
+
+
+@view_config(route_name='objects.generic.traversal',
+             renderer='rest',
+             context=ICourseInstance,
+             request_method='POST',
+             permission=nauth.ACT_NTI_ADMIN,
+             name=UPDATE_SCORM_VIEW_NAME)
+class UpdateSCORMView(AbstractAuthenticatedView,
+                      ModeledContentUploadRequestUtilsMixin):
+
+    def __call__(self):
+        sources = get_all_sources(self.request)
+        if sources:
+            source = self._handle_multipart(sources)
+        if not source:
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                 'message': _(u"No SCORM zip file was included with request."),
+                             },
+                             None)
+        client = component.getUtility(ISCORMCloudClient)
+        client.update_assets(self.context, source)
 
         return hexc.HTTPNoContent()
 
