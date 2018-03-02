@@ -73,7 +73,7 @@
 	<!-- Decorators -->
 	<subscriber factory=".decorators._SCORMCourseInstanceDecorator"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"
-				for=".interfaces.ISCORMCourseInstance" />
+				for=".interfaces.ISCORMCourseInstance pyramid.interfaces.IRequest" />
 
 	<subscriber factory=".decorators._SCORMCourseInstanceMetadataDecorator"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"

@@ -44,7 +44,7 @@ logger = __import__('logging').getLogger(__name__)
 @interface.implementer(IExternalObjectDecorator)
 class _SCORMCourseInstanceDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
-    def decorateExternalObject(self, original, external):
+    def _do_decorate_external(self, original, external):
         # The Outline isn't needed; SCORM Cloud provides its own viewer
         external.pop('Outline', None)
         metadata = ISCORMCourseMetadata(original, None)
