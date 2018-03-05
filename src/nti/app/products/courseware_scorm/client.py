@@ -158,8 +158,9 @@ class SCORMCloudClient(object):
                 # appid
                 raise ScormCourseNotFoundError()
             if error.code == 2:
-                logger.debug("Registration already exists for course %s", course_id)
             if error.code == 3:
+                logger.warning("Registration already exists for course %s",
+                               course_id)
                 # Postback URL login name specified without password
                 raise ScormCourseNoPasswordError()
 
