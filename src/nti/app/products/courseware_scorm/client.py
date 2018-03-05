@@ -153,16 +153,18 @@ class SCORMCloudClient(object):
                                        learnerid=learner_id)
         except ScormCloudError as error:
             logger.warning(error)
-            if error.code == 1:
+            if error.code == u'1':
                 # Couldn’t find the course specified by courseid belonging to
                 # appid
                 raise ScormCourseNotFoundError()
-            if error.code == 2:
-            if error.code == 3:
+            elif error.code == u'2':
                 logger.warning("Registration already exists for course %s",
                                course_id)
+            elif error.code == u'3':
                 # Postback URL login name specified without password
                 raise ScormCourseNoPasswordError()
+            else:
+                raise error
 
     def delete_enrollment_record(self, enrollment_record):
         # pylint: disable=too-many-function-args
