@@ -43,9 +43,13 @@ class IRegisterSCORMCloudClient(interface.Interface):
                            required=False,
                            default=u'')
 
+    service_url = fields.TextLine(title=u'The SCORM Cloud service URL.',
+                                  required=False,
+                                  default=u'')
 
-def registerSCORMCloudClient(_context, app_id=u'', secret_key=u'', name=u''):
-    factory = partial(SCORMCloudClient, app_id=app_id, secret_key=secret_key)
+
+def registerSCORMCloudClient(_context, app_id=u'', secret_key=u'', service_url=u'', name=u''):
+    factory = partial(SCORMCloudClient, app_id=app_id, secret_key=secret_key, service_url=service_url)
     utility(_context, provides=ISCORMCloudClient, factory=factory, name=name)
 
 
