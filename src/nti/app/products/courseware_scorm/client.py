@@ -65,13 +65,13 @@ class SCORMCloudClient(object):
     The default SCORM client.
     """
 
-    def __init__(self, app_id, secret_key):
+    def __init__(self, app_id, secret_key, service_url):
         self.app_id = app_id
         self.secret_key = secret_key
         origin = ScormCloudUtilities.get_canonical_origin_string('NextThought',
                                                                  'Platform', '1.0')
         service = component.getUtility(IScormCloudService)
-        self.cloud = service.withargs(app_id, secret_key, SERVICE_URL, origin)
+        self.cloud = service.withargs(app_id, secret_key, service_url, origin)
 
     def import_course(self, context, source, request=None):
         """
