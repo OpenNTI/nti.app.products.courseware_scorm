@@ -178,7 +178,12 @@ class SCORMCloudClient(object):
             service.deleteRegistration(reg_id)
         except ScormCloudError as error:
             logger.warning(error)
-            raise error
+            if error.code == u'1':
+                # The registration specified by regid does not exist
+                logger.warning("The regid specified for deletion does not exist: %s",
+                               reg_id)
+            else:
+                raise error
 
     def launch(self, course, user, redirect_url):
         service = self.cloud.get_registration_service()
