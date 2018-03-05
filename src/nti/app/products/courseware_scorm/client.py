@@ -209,7 +209,6 @@ class SCORMCloudClient(object):
         registration_id = self._get_registration_id(course, user)
         if      is_course_admin(user, course) \
             and not self.registration_exists(registration_id):
-            # course_id = ISCORMIdentifier(course).get_id()
             self.create_registration(registration_id=registration_id,
                                      user=user,
                                      course=course)
