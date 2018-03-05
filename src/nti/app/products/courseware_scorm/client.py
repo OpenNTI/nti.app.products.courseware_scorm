@@ -213,6 +213,7 @@ class SCORMCloudClient(object):
             self.create_registration(registration_id=registration_id,
                                      user=user,
                                      course=course)
+        logger.info("Launching registration: regid=%s", registration_id)
         return service.launch(registration_id, redirect_url)
 
     def _get_registration_id(self, course, user):
