@@ -152,7 +152,7 @@ class SCORMCloudClient(object):
                                        lname=last_name,
                                        learnerid=learner_id)
         except ScormCloudError as error:
-            logger.info(error)
+            logger.warning(error)
             if error.code == 1:
                 # Couldn’t find the course specified by courseid belonging to
                 # appid
@@ -174,7 +174,7 @@ class SCORMCloudClient(object):
         try:
             service.deleteRegistration(reg_id)
         except ScormCloudError as error:
-            logger.info(error)
+            logger.warning(error)
             raise error
 
     def launch(self, course, user, redirect_url):
