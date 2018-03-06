@@ -14,6 +14,7 @@ from zope import interface
 
 from zope.location.interfaces import IContained
 
+from nti.contenttypes.courses.interfaces import INonExportable
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.schema.field import Bool
@@ -22,7 +23,7 @@ from nti.schema.field import ListOrTuple
 from nti.schema.field import DecodingValidTextLine as ValidTextLine
 
 
-class ISCORMCourseInstance(ICourseInstance):
+class ISCORMCourseInstance(ICourseInstance, INonExportable):
     """
     A concrete instance of a SCORM course.
     """
@@ -101,6 +102,15 @@ class ISCORMCloudClient(interface.Interface):
     def registration_exists(registration_id):
         """
         Returns whether a registration with the given ID exists.
+        """
+    def get_archive(course):
+        """
+        Returns the SCORM archive for the specified course.
+        """
+
+    def get_metadata(course):
+        """
+        Returns the SCORM metadata associated with the specified course.
         """
 
 
