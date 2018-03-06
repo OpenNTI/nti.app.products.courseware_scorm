@@ -14,6 +14,7 @@ from zope import interface
 
 from zope.location.interfaces import IContained
 
+from nti.contenttypes.courses.interfaces import INonExportable
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.schema.field import Bool
@@ -22,7 +23,7 @@ from nti.schema.field import ListOrTuple
 from nti.schema.field import DecodingValidTextLine as ValidTextLine
 
 
-class ISCORMCourseInstance(ICourseInstance):
+class ISCORMCourseInstance(ICourseInstance, INonExportable):
     """
     A concrete instance of a SCORM course.
     """
