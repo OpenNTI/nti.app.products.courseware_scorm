@@ -152,16 +152,19 @@ class SCORMCloudClient(object):
                                        lname=last_name,
                                        learnerid=learner_id)
         except ScormCloudError as error:
-            logger.info(error)
-            if error.code == 1:
+            logger.warning(error)
+            if error.code == u'1':
                 # Couldn’t find the course specified by courseid belonging to
                 # appid
                 raise ScormCourseNotFoundError()
-            if error.code == 2:
-                logger.debug("Registration already exists for course %s", course_id)
-            if error.code == 3:
+            elif error.code == u'2':
+                logger.warning("Registration already exists for course %s",
+                               course_id)
+            elif error.code == u'3':
                 # Postback URL login name specified without password
                 raise ScormCourseNoPasswordError()
+            else:
+                raise error
 
     def delete_enrollment_record(self, enrollment_record):
         # pylint: disable=too-many-function-args
@@ -174,8 +177,13 @@ class SCORMCloudClient(object):
         try:
             service.deleteRegistration(reg_id)
         except ScormCloudError as error:
-            logger.info(error)
-            raise error
+            logger.warning(error)
+            if error.code == u'1':
+                # The registration specified by regid does not exist
+                logger.warning("The regid specified for deletion does not exist: %s",
+                               reg_id)
+            else:
+                raise error
 
     def launch(self, course, user, redirect_url):
         service = self.cloud.get_registration_service()
