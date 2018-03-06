@@ -39,7 +39,7 @@ logger = __import__('logging').getLogger(__name__)
 def is_course_admin(user, course):
     return is_course_editor(course, user) \
         or is_course_instructor(course, user) \
-        or nauth.is_admin_or_site_admin(user)
+        or nauth.is_admin_or_content_admin_or_site_admin(user)
 
 
 @interface.implementer(ISCORMCourseInstance)
