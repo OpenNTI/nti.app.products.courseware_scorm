@@ -18,6 +18,10 @@ from zope import component
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
+from nti.app.products.courseware_scorm import MessageFactory as _
+
+from nti.app.products.courseware_scorm.courses import is_course_admin
+
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 
 from nti.app.products.courseware_scorm.views import GET_SCORM_ARCHIVE_VIEW_NAME
@@ -81,7 +85,6 @@ class GetRegistrationListView(AbstractAuthenticatedView):
              renderer='rest',
              context=ICourseInstance,
              request_method='GET',
-             permission=nauth.ACT_NTI_ADMIN,
              name=GET_SCORM_ARCHIVE_VIEW_NAME)
 class GetArchiveView(AbstractAuthenticatedView):
     """
@@ -89,6 +92,8 @@ class GetArchiveView(AbstractAuthenticatedView):
     """
 
     def __call__(self):
+        if not is_course_admin(user=self.remoteUser, course=self.context):
+            return hexc.HTTPForbidden(_(u"You do not have access to this SCORM content."))
         client = component.getUtility(ISCORMCloudClient)
         result = client.get_archive(self.context)
         zip_bytes = result
