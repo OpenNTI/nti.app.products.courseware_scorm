@@ -224,11 +224,11 @@ class SCORMCloudClient(object):
 
     def get_archive(self, course):
         service = self.cloud.get_course_service()
-        course_id = IScormIdentifier(course).get_id()
+        course_id = ISCORMIdentifier(course).get_id()
         archive = service.get_assets(course_id)
         return archive
 
     def get_metadata(self, course):
         service = self.cloud.get_course_service()
-        course_id = IScormIdentifier(course).get_id()
+        course_id = ISCORMIdentifier(course).get_id()
         return service.get_metadata(course_id)
