@@ -16,6 +16,7 @@ from nti.app.products.courseware_scorm.courses import is_course_admin
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 
+from nti.app.products.courseware_scorm.views import GET_SCORM_ARCHIVE_VIEW_NAME
 from nti.app.products.courseware_scorm.views import IMPORT_SCORM_COURSE_VIEW_NAME
 from nti.app.products.courseware_scorm.views import LAUNCH_SCORM_COURSE_VIEW_NAME
 
@@ -34,6 +35,7 @@ from nti.traversal.traversal import find_interface
 
 LINKS = StandardExternalFields.LINKS
 
+ARCHIVE_REL = GET_SCORM_ARCHIVE_VIEW_NAME
 IMPORT_REL = IMPORT_SCORM_COURSE_VIEW_NAME
 LAUNCH_REL = LAUNCH_SCORM_COURSE_VIEW_NAME
 
@@ -52,6 +54,8 @@ class _SCORMCourseInstanceDecorator(AbstractAuthenticatedRequestAwareDecorator):
         if is_course_admin(self.remoteUser, original):
             _links = external.setdefault(LINKS, [])
             _links.append(Link(original, rel=IMPORT_REL, elements=(IMPORT_REL,)))
+            if metadata.has_scorm_package():
+                _links.append(Link(original, rel=ARCHIVE_REL, elements=(ARCHIVE_REL,)))
 
 
 @component.adapter(ISCORMCourseMetadata)

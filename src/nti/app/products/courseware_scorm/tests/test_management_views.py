@@ -31,6 +31,8 @@ from nti.app.products.courseware_scorm.courses import SCORM_COURSE_MIME_TYPE
 
 from nti.app.products.courseware_scorm.tests import CoursewareSCORMTestLayer
 
+from nti.app.products.courseware_scorm.views import GET_SCORM_ARCHIVE_VIEW_NAME
+from nti.app.products.courseware_scorm.views import IMPORT_SCORM_COURSE_VIEW_NAME
 from nti.app.products.courseware_scorm.views import LAUNCH_SCORM_COURSE_VIEW_NAME
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
@@ -49,6 +51,8 @@ CLASS = StandardExternalFields.CLASS
 LINKS = StandardExternalFields.LINKS
 MIMETYPE = StandardExternalFields.MIMETYPE
 
+ARCHIVE_REL = GET_SCORM_ARCHIVE_VIEW_NAME
+IMPORT_REL = IMPORT_SCORM_COURSE_VIEW_NAME
 LAUNCH_REL = LAUNCH_SCORM_COURSE_VIEW_NAME
 
 
@@ -120,6 +124,7 @@ class TestManagementViews(ApplicationLayerTest):
                     is_(SCORM_COURSE_MIME_TYPE))
         assert_that(new_course['NTIID'], not_none())
         assert_that(new_course['TotalEnrolledCount'], is_(0))
+        assert_that(new_course, has_entry(LINKS, has_item(has_entry('rel', IMPORT_REL))))
 
         metadata = new_course[u'Metadata']
         assert_that(metadata, is_not(none()))
@@ -129,10 +134,11 @@ class TestManagementViews(ApplicationLayerTest):
         mock_has_scorm.is_callable().returns(True)
 
         new_course = self.testapp.get(new_course_href).json_body
+        assert_that(new_course, has_entry(LINKS, has_item(has_entry('rel', ARCHIVE_REL))))
+
         metadata = new_course[u'Metadata']
         assert_that(metadata, is_not(none()))
-
-        assert_that(metadata,has_entry(LINKS, has_item(has_entry('rel', LAUNCH_REL))))
+        assert_that(metadata, has_entry(LINKS, has_item(has_entry('rel', LAUNCH_REL))))
 
         catalog = self.testapp.get('%s/CourseCatalogEntry' % new_course_href)
         catalog = catalog.json_body
