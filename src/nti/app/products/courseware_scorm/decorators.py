@@ -29,8 +29,6 @@ from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalObjectDecorator
 
-from nti.externalization.singleton import Singleton
-
 from nti.links.links import Link
 
 from nti.traversal.traversal import find_interface
@@ -64,8 +62,12 @@ class _SCORMCourseInstanceDecorator(AbstractAuthenticatedRequestAwareDecorator):
 @interface.implementer(IExternalObjectDecorator)
 class _SCORMCourseInstanceMetadataDecorator(PreviewCourseAccessPredicateDecorator):
 
+    @property
+    def course(self):
+        # TODO: Adapter
+        return find_interface(self.context, ICourseInstance, strict=True)
+
     def _do_decorate_external(self, original, external):
         if original.has_scorm_package():
             _links = external.setdefault(LINKS, [])
-            course = find_interface(original, ICourseInstance, strict=True)
-            _links.append(Link(course, rel=LAUNCH_REL, elements=(LAUNCH_REL,)))
+            _links.append(Link(self.course, rel=LAUNCH_REL, elements=(LAUNCH_REL,)))
