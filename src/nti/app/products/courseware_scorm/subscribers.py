@@ -32,16 +32,18 @@ logger = __import__('logging').getLogger(__name__)
 def _enrollment_record_created(record, unused_event):
     course = record.CourseInstance
     if ISCORMCourseInstance.providedBy(course):
-        client = component.getUtility(ISCORMCloudClient)
-        client.sync_enrollment_record(record, course)
+        client = component.queryUtility(ISCORMCloudClient)
+        if client is not None:
+            client.sync_enrollment_record(record, course)
 
 
 @component.adapter(ICourseInstanceEnrollmentRecord, IBeforeIdRemovedEvent)
 def _enrollment_record_dropped(record, unused_event):
     course = record.CourseInstance
     if ISCORMCourseInstance.providedBy(course):
-        client = component.getUtility(ISCORMCloudClient)
-        client.delete_enrollment_record(record)
+        client = component.queryUtility(ISCORMCloudClient)
+        if client is not None:
+            client.delete_enrollment_record(record)
 
 
 @component.adapter(IAllCoursesCollection)
