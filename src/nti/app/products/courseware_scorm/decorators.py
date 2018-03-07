@@ -11,6 +11,8 @@ from __future__ import absolute_import
 from zope import component
 from zope import interface
 
+from nti.app.products.courseware.utils import PreviewCourseAccessPredicateDecorator
+
 from nti.app.products.courseware_scorm.courses import is_course_admin
 
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
@@ -60,9 +62,9 @@ class _SCORMCourseInstanceDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
 @component.adapter(ISCORMCourseMetadata)
 @interface.implementer(IExternalObjectDecorator)
-class _SCORMCourseInstanceMetadataDecorator(Singleton):
+class _SCORMCourseInstanceMetadataDecorator(PreviewCourseAccessPredicateDecorator):
 
-    def decorateExternalObject(self, original, external):
+    def _do_decorate_external(self, original, external):
         if original.has_scorm_package():
             _links = external.setdefault(LINKS, [])
             course = find_interface(original, ICourseInstance, strict=True)
