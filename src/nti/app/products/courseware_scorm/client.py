@@ -126,9 +126,11 @@ class SCORMCloudClient(object):
         cloud_service.update_assets(course_id, source)
 
     def delete_course(self, course):
-        course_id = ISCORMIdentifier(course).get_id()
-        service = self.cloud.get_course_service()
-        return service.delete_course(course_id)
+        metadata = ISCORMCourseMetadata(course)
+        if metadata is not None:
+            course_id = metadata.scorm_id
+            service = self.cloud.get_course_service()
+            return service.delete_course(course_id)
 
     def sync_enrollment_record(self, enrollment_record, course):
         """
