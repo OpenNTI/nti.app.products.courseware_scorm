@@ -84,8 +84,9 @@ class TestManagementViews(ApplicationLayerTest):
         return admin_href
 
     @WithSharedApplicationMockDS(testapp=True, users=True)
-    @fudge.patch('nti.app.products.courseware_scorm.courses.SCORMCourseMetadata.has_scorm_package')
-    def test_create_SCORM_course_view(self, mock_has_scorm):
+    @fudge.patch('nti.app.products.courseware_scorm.courses.SCORMCourseMetadata.has_scorm_package',
+                 'nti.app.products.courseware_scorm.client.SCORMCloudClient.delete_course')
+    def test_create_SCORM_course_view(self, mock_has_scorm, mock_delete_course):
         """
         Validates SCORM course creation.
         """
@@ -151,6 +152,7 @@ class TestManagementViews(ApplicationLayerTest):
         assert_that(catalog['ProviderUniqueID'], is_(new_course_key))
 
         # Delete
+        mock_delete_course.expects_call()
         self.testapp.delete(course_delete_href)
         self.testapp.get(new_course_href, status=404)
         courses = self.testapp.get(new_admin_href)
