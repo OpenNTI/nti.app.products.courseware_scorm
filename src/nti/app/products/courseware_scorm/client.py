@@ -125,6 +125,11 @@ class SCORMCloudClient(object):
                              None)
         cloud_service.update_assets(course_id, source)
 
+    def delete_course(self, course):
+        course_id = ISCORMIdentifier(course).get_id()
+        service = self.cloud.get_course_service()
+        return service.delete_course(course_id)
+
     def sync_enrollment_record(self, enrollment_record, course):
         """
         Syncs a course enrollment record with SCORM Cloud.
