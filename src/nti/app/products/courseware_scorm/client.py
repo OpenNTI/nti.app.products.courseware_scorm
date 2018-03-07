@@ -128,9 +128,27 @@ class SCORMCloudClient(object):
     def delete_course(self, course):
         metadata = ISCORMCourseMetadata(course)
         course_id = metadata.scorm_id
-        if course_id is not None:
+        if course_id is None:
+            return
+        try:
             service = self.cloud.get_course_service()
             return service.delete_course(course_id)
+        except ScormCloudError as error:
+            logger.warning(error)
+            if error.code == u'1':
+                # This should be OK so don't raise an exception
+                logger.warning(u"Couldn't find course to delete with courseid=%s",
+                               course_id)
+            elif error.code == u'2':
+                logger.warning(u"Deleting the files associated with this course\
+                               caused an internal security exception: courseid=%s",
+                               course_id)
+                raise error
+            else:
+                logger.warning(u"Unknown error occurred while deleting course:\
+                               code=%s, courseid=%s",
+                               error.code, course_id)
+                raise error
 
     def sync_enrollment_record(self, enrollment_record, course):
         """
