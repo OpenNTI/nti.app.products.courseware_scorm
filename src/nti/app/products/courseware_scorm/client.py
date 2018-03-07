@@ -127,8 +127,8 @@ class SCORMCloudClient(object):
 
     def delete_course(self, course):
         metadata = ISCORMCourseMetadata(course)
-        if metadata is not None:
-            course_id = metadata.scorm_id
+        course_id = metadata.scorm_id
+        if course_id is not None:
             service = self.cloud.get_course_service()
             return service.delete_course(course_id)
 
