@@ -74,11 +74,13 @@
 	<!-- Decorators -->
 	<subscriber factory=".decorators._SCORMCourseInstanceDecorator"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"
-				for=".interfaces.ISCORMCourseInstance pyramid.interfaces.IRequest" />
+				for=".interfaces.ISCORMCourseInstance
+				     pyramid.interfaces.IRequest" />
 
 	<subscriber factory=".decorators._SCORMCourseInstanceMetadataDecorator"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"
-				for=".interfaces.ISCORMCourseMetadata" />
+				for=".interfaces.ISCORMCourseMetadata
+				     pyramid.interfaces.IRequest" />
 
 	<!-- Externalization -->
 	<include package="nti.externalization" file="meta.zcml" />
