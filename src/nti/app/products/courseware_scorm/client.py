@@ -112,6 +112,21 @@ class SCORMCloudClient(object):
         cloud_upload_link = upload_service.get_upload_url(redirect_url)
         return hexc.HTTPFound(location=cloud_upload_link)
 
+    def update_assets(self, course, source):
+        cloud_service = self.cloud.get_course_service()
+        # pylint: disable=too-many-function-args
+        course_id = ISCORMIdentifier(course).get_id()
+        logger.info("Updating SCORM assets using: app_id=%s course_id=%s",
+                    self.app_id, course_id)
+        if course_id is None:
+            raise_json_error(request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                 'message': _(u"Uploading SCORM to a non-persistent course is forbidden."),
+                             },
+                             None)
+        cloud_service.update_assets(course_id, source)
+
     def sync_enrollment_record(self, enrollment_record, course):
         """
         Syncs a course enrollment record with SCORM Cloud.
@@ -194,10 +209,10 @@ class SCORMCloudClient(object):
         registration_id = self._get_registration_id(course, user)
         if      is_course_admin(user, course) \
             and not self.registration_exists(registration_id):
-            # course_id = ISCORMIdentifier(course).get_id()
             self.create_registration(registration_id=registration_id,
                                      user=user,
                                      course=course)
+        logger.info("Launching registration: regid=%s", registration_id)
         return service.launch(registration_id, redirect_url)
 
     def _get_registration_id(self, course, user):

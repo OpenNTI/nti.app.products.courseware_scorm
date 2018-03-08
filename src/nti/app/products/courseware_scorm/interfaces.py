@@ -64,6 +64,14 @@ class ISCORMCloudClient(interface.Interface):
             the upload completes.
         """
 
+    def update_assets(course, source):
+        """
+        Updates the existing SCORM package with assets from a new package.
+
+        :param course: The course whose package should be updated.
+        :param source: The new package used to update the existing package.
+        """
+
     def sync_enrollment_record(enrollment_record, course):
         """
         Syncs a course enrollment record with SCORM Cloud.
