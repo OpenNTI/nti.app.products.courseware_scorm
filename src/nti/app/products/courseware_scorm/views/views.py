@@ -28,6 +28,8 @@ from nti.app.products.courseware_scorm.views import PREVIEW_SCORM_COURSE_VIEW_NA
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
+from nti.contenttypes.courses.utils import is_course_instructor_or_editor
+
 from nti.dataserver.authorization import ACT_READ
 from nti.dataserver.authorization import is_admin_or_content_admin_or_site_admin
 
@@ -88,7 +90,8 @@ class PreviewSCORMCourseVIew(AbstractSCORMLaunchView):
         return client.preview(self.context, redirect_url or u'message')
 
     def _before_launch(self):
-        if not is_admin_or_content_admin_or_site_admin(self.remoteUser):
+        if not is_admin_or_content_admin_or_site_admin(self.remoteUser) \
+           and not is_course_instructor_or_editor(self.context, self.remoteUser):
             raise hexc.HTTPForbidden()
         
 
