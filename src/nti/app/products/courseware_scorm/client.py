@@ -124,6 +124,7 @@ class SCORMCloudClient(object):
                                  course)
 
     def create_registration(self, registration_id, user, course):
+        # pylint: disable=too-many-function-args
         course_id = ISCORMIdentifier(course).get_id()
         learner_id = ISCORMIdentifier(user).get_id()
         named = IFriendlyNamed(user)
@@ -188,14 +189,15 @@ class SCORMCloudClient(object):
         registration_id = self._get_registration_id(course, user)
         if      is_course_admin(user, course) \
             and not self.registration_exists(registration_id):
-            course_id = ISCORMIdentifier(course).get_id()
+            # course_id = ISCORMIdentifier(course).get_id()
             self.create_registration(registration_id=registration_id,
                                      user=user,
                                      course=course)
         return service.launch(registration_id, redirect_url)
 
     def _get_registration_id(self, course, user):
-        identifier = component.getMultiAdapter((user, course), ISCORMIdentifier)
+        identifier = component.getMultiAdapter((user, course),
+                                               ISCORMIdentifier)
         return identifier.get_id()
 
     def get_registration_list(self, course):
@@ -222,11 +224,13 @@ class SCORMCloudClient(object):
 
     def get_archive(self, course):
         service = self.cloud.get_course_service()
+        # pylint: disable=too-many-function-args
         course_id = ISCORMIdentifier(course).get_id()
         archive = service.get_assets(course_id)
         return archive
 
     def get_metadata(self, course):
         service = self.cloud.get_course_service()
+        # pylint: disable=too-many-function-args
         course_id = ISCORMIdentifier(course).get_id()
         return service.get_metadata(course_id)
