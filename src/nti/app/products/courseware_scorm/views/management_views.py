@@ -41,6 +41,7 @@ from nti.contenttypes.courses.interfaces import ICourseAdministrativeLevel
 from nti.dataserver.authorization import is_admin_or_content_admin_or_site_admin
 
 from nti.scorm_cloud.client.mixins import get_source
+from nti.contenttypes.courses.utils import is_course_instructor_or_editor
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -61,7 +62,8 @@ class CreateSCORMCourseView(CreateCourseView):
 class AbstractAdminScormCourseView(AbstractAuthenticatedView):
 
     def _check_access(self):
-        if not is_admin_or_content_admin_or_site_admin(self.remoteUser):
+        if      not is_admin_or_content_admin_or_site_admin(self.remoteUser) \
+            and not is_course_instructor_or_editor(self.remoteUser):
             raise_json_error(self.request,
                              hexc.HTTPForbidden,
                              {
@@ -142,12 +144,11 @@ class ImportSCORMCourseView(AbstractAdminScormCourseView,
              renderer='rest',
              context=ICourseInstance,
              request_method='POST',
-             permission=nauth.ACT_NTI_ADMIN,
              name=UPDATE_SCORM_VIEW_NAME)
-class UpdateSCORMView(AbstractAuthenticatedView,
+class UpdateSCORMView(AbstractAdminScormCourseView,
                       ModeledContentUploadRequestUtilsMixin):
 
-    def __call__(self):
+    def _do_call(self):
         sources = get_all_sources(self.request)
         if sources:
             source = self._handle_multipart(sources)
