@@ -8,7 +8,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-import StringIO
+from six import StringIO
 
 from pyramid import httpexceptions as hexc
 
@@ -34,8 +34,6 @@ from nti.dataserver import authorization as nauth
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
-
-from nti.scorm_cloud.client.course import Metadata
 
 ITEMS = StandardExternalFields.ITEMS
 TOTAL = StandardExternalFields.TOTAL
@@ -106,6 +104,6 @@ class GetArchiveView(AbstractAuthenticatedView):
         response.content_type = 'application/zip; charset=UTF-8'
         content_disposition = 'attachment; filename="%s"' % filename
         response.content_disposition = str(content_disposition)
-        zip_io = StringIO.StringIO(zip_bytes)
+        zip_io = StringIO(zip_bytes)
         response.body_file = zip_io
         return response
