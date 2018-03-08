@@ -22,10 +22,13 @@ from nti.app.products.courseware_scorm.views import UPDATE_SCORM_VIEW_NAME
 from nti.app.products.courseware_scorm.views import GET_SCORM_ARCHIVE_VIEW_NAME
 from nti.app.products.courseware_scorm.views import IMPORT_SCORM_COURSE_VIEW_NAME
 from nti.app.products.courseware_scorm.views import LAUNCH_SCORM_COURSE_VIEW_NAME
+from nti.app.products.courseware_scorm.views import PREVIEW_SCORM_COURSE_VIEW_NAME
 
 from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
+
+from nti.dataserver.authorization import is_admin_or_content_admin_or_site_admin
 
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalObjectDecorator
@@ -79,6 +82,10 @@ class _SCORMCourseInstanceMetadataDecorator(PreviewCourseAccessPredicateDecorato
     def _do_decorate_external(self, original, external):
         if original.has_scorm_package():
             _links = external.setdefault(LINKS, [])
+            element = LAUNCH_SCORM_COURSE_VIEW_NAME
+            if is_admin_or_content_admin_or_site_admin(self.remoteUser):
+                element = PREVIEW_SCORM_COURSE_VIEW_NAME
+            
             _links.append(
-                Link(self.course, rel=LAUNCH_REL, elements=(LAUNCH_REL,))
+                Link(self.course, rel=LAUNCH_REL, elements=(element,))
             )
