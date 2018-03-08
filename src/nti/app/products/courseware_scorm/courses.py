@@ -26,7 +26,6 @@ from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 from nti.contenttypes.courses.courses import CourseInstance
 
 from nti.contenttypes.courses.utils import is_course_editor
-from nti.contenttypes.courses.utils import is_course_instructor
 
 from nti.dataserver import authorization as nauth
 
@@ -38,7 +37,6 @@ logger = __import__('logging').getLogger(__name__)
 
 def is_course_admin(user, course):
     return is_course_editor(course, user) \
-        or is_course_instructor(course, user) \
         or nauth.is_admin_or_content_admin_or_site_admin(user)
 
 
