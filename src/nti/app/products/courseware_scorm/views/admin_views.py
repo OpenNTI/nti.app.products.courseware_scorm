@@ -8,7 +8,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-from six import StringIO
+from six.moves import cStringIO
 
 from pyramid import httpexceptions as hexc
 
@@ -104,6 +104,6 @@ class GetArchiveView(AbstractAuthenticatedView):
         response.content_type = 'application/zip; charset=UTF-8'
         content_disposition = 'attachment; filename="%s"' % filename
         response.content_disposition = str(content_disposition)
-        zip_io = StringIO(zip_bytes)
+        zip_io = cStringIO(zip_bytes)
         response.body_file = zip_io
         return response
