@@ -14,6 +14,8 @@ from pyramid.view import view_config
 
 from requests.structures import CaseInsensitiveDict
 
+from six.moves import urllib_parse
+
 from zope import component
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
@@ -41,11 +43,36 @@ class LaunchSCORMCourseView(AbstractAuthenticatedView):
     A view for launching a course on SCORM Cloud.
     """
 
+    def _redirect_uri(self):
+        return  CaseInsensitiveDict(self.request.params).get(u'redirecturl')
+
+    def _redirect_on_error(self, redirect_url, e):
+        if not redirect_url:
+            return None
+        
+        # Be really careful here that we don't clobber
+        # query params that may have been provided
+        url_parts = list(urllib_parse.urlparse(redirect_url))
+        query = dict(urllib_parse.parse_qsl(url_parts[4]))
+        query.update({"error": str(e)})
+
+        url_parts[4] = urllib_parse.urlencode(query)
+        return urllib_parse.urlunparse(url_parts)
+
     def __call__(self):
-        redirect_url = CaseInsensitiveDict(self.request.params).get(u'redirecturl',
-                                                                    u'message')
-        client = component.getUtility(ISCORMCloudClient)
-        launch_url = client.launch(self.context, self.remoteUser, redirect_url)
+        try:
+            redirect_url = self._redirect_uri()
+            client = component.getUtility(ISCORMCloudClient)
+            launch_url = client.launch(self.context, self.remoteUser, redirect_url or u'message')
+        except Exception as e:
+            logger.exception('Unable to generate scorm cloud launch url')
+            # This is a fairly wide catch but this view is intended to be browser rendered
+            # so if we get an error we can detect send them back to the redirect with an error
+            # param.  If they didn't pass a redirect_url just reraise
+            on_error_redirect = self._redirect_on_error(redirect_url, e)
+            if on_error_redirect:
+                return hexc.HTTPSeeOther(location=on_error_redirect)
+            raise
         return hexc.HTTPSeeOther(location=launch_url)
 
 
