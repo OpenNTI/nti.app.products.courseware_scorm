@@ -69,12 +69,13 @@ class SCORMCloudClient(object):
         service = component.getUtility(IScormCloudService)
         self.cloud = service.withargs(app_id, secret_key, service_url, origin)
 
-    def import_course(self, course, source, request=None):
+    def import_course(self, course, source, request=None, unregister=True):
         """
         Imports a SCORM course zip file into SCORM Cloud.
 
         :param course: The course under which to import the SCORM course.
         :param source: The zip file source of the course to import.
+        :param unregister: U users upon successful import.
         :returns: The result of the SCORM Cloud import operation.
         """
         cloud_service = self.cloud.get_course_service()
@@ -82,6 +83,8 @@ class SCORMCloudClient(object):
         scorm_id = self._get_course_id(course)
         logger.info("Importing course using: app_id=%s scorm_id=%s",
                     self.app_id, scorm_id)
+        metadata = ISCORMCourseMetadata(course)
+        unregister = metadata.has_scorm_package() and unregister
         if scorm_id is None:
             raise_json_error(request,
                              hexc.HTTPUnprocessableEntity,
@@ -93,9 +96,15 @@ class SCORMCloudClient(object):
         course = removeAllProxies(course)
         interface.alsoProvides(course, ISCORMCourseInstance)
 
-        metadata = ISCORMCourseMetadata(course)
         metadata.scorm_id = scorm_id
 
+        if unregister:
+            # Unregister users. We'll rely on launching to re-register users as
+            # needed.
+            service = self.cloud.get_registration_service()
+            registration_list = self.get_registration_list(course)
+            for registration in registration_list or ():
+                self._remove_registration(registration.registration_id, service)
         return course
 
     def upload_course(self, unused_source, redirect_url):
@@ -208,6 +217,23 @@ class SCORMCloudClient(object):
             else:
                 raise error
 
+    def _remove_registration(self, registration_id, service=None):
+        """
+        Unregister the give registration id.
+        """
+        if service is None:
+            service = self.cloud.get_registration_service()
+        logger.info("Unregistering: reg_id=%s", registration_id)
+        try:
+            service.deleteRegistration(registration_id)
+        except ScormCloudError as error:
+            if error.code == u'1':
+                logger.debug("The regid specified for deletion does not exist: %s",
+                               registration_id)
+            else:
+                logger.warning(error)
+                raise error
+
     def delete_enrollment_record(self, enrollment_record):
         # pylint: disable=too-many-function-args
         course = enrollment_record.CourseInstance
@@ -216,19 +242,7 @@ class SCORMCloudClient(object):
             return
         user = User.get_user(enrollment_record.Principal.id)
         reg_id = self._get_registration_id(course, user)
-        service = self.cloud.get_registration_service()
-        logger.info("Deleting enrollment record: reg_id=%s",
-                    reg_id)
-        try:
-            service.deleteRegistration(reg_id)
-        except ScormCloudError as error:
-            logger.warning(error)
-            if error.code == u'1':
-                # The registration specified by regid does not exist
-                logger.warning("The regid specified for deletion does not exist: %s",
-                               reg_id)
-            else:
-                raise error
+        self._remove_registration(reg_id)
 
     def launch(self, course, user, redirect_url):
         service = self.cloud.get_registration_service()
