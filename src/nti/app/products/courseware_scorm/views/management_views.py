@@ -46,7 +46,7 @@ from nti.dataserver.authorization import is_admin_or_content_admin_or_site_admin
 
 from nti.scorm_cloud.client.mixins import get_source
 from nti.contenttypes.courses.utils import is_course_instructor_or_editor
-from nti.common.string import is_false
+from nti.common.string import is_true
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -82,9 +82,8 @@ class AbstractAdminScormCourseView(AbstractAuthenticatedView,
         Defines whether we should unregister users when updating scorm content.
         Defaults to True.
         """
-        result = self._params.get('unregister')
-        result = not is_false(result)
-        return result
+        result = self._params.get('reset-registrations', False)
+        return is_true(result)
 
     def _check_access(self):
         if      not is_admin_or_content_admin_or_site_admin(self.remoteUser) \
