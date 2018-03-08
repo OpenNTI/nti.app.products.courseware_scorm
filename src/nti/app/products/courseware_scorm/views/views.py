@@ -18,8 +18,6 @@ from zope import component
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
-from nti.app.products.courseware_scorm import MessageFactory as _
-
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 
 from nti.app.products.courseware_scorm.views import SCORM_PROGRESS_VIEW_NAME
@@ -27,11 +25,7 @@ from nti.app.products.courseware_scorm.views import LAUNCH_SCORM_COURSE_VIEW_NAM
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
-from nti.contenttypes.courses.utils import is_course_editor
-from nti.contenttypes.courses.utils import is_course_instructor
-from nti.contenttypes.courses.utils import get_enrollment_record
-
-from nti.dataserver import authorization as nauth
+from nti.dataserver.authorization import ACT_READ
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -40,6 +34,7 @@ logger = __import__('logging').getLogger(__name__)
              renderer='rest',
              context=ICourseInstance,
              request_method='GET',
+             permission=ACT_READ,
              name=LAUNCH_SCORM_COURSE_VIEW_NAME)
 class LaunchSCORMCourseView(AbstractAuthenticatedView):
     """
@@ -47,11 +42,6 @@ class LaunchSCORMCourseView(AbstractAuthenticatedView):
     """
 
     def __call__(self):
-        if      get_enrollment_record(self.context, self.remoteUser) is None \
-            and not is_course_editor(self.context, self.remoteUser) \
-            and not is_course_instructor(self.context, self.remoteUser) \
-            and not nauth.is_admin_or_site_admin(self.remoteUser):
-            return hexc.HTTPForbidden(_(u"You do not have access to this SCORM content."))
         redirect_url = CaseInsensitiveDict(self.request.params).get(u'redirecturl',
                                                                     u'message')
         client = component.getUtility(ISCORMCloudClient)
@@ -63,6 +53,7 @@ class LaunchSCORMCourseView(AbstractAuthenticatedView):
              renderer='rest',
              context=ICourseInstance,
              request_method='GET',
+             permission=ACT_READ,
              name=SCORM_PROGRESS_VIEW_NAME)
 class SCORMProgressView(AbstractAuthenticatedView):
     """
@@ -70,10 +61,5 @@ class SCORMProgressView(AbstractAuthenticatedView):
     """
 
     def __call__(self):
-        if      get_enrollment_record(self.context, self.remoteUser) is None \
-            and not is_course_editor(self.context, self.remoteUser) \
-            and not is_course_instructor(self.context, self.remoteUser) \
-            and not nauth.is_admin_or_site_admin(self.remoteUser):
-            return hexc.HTTPForbidden(_(u"You do not have access to this SCORM content."))
         client = component.getUtility(ISCORMCloudClient)
         return client.get_registration_progress(self.context, self.remoteUser)
