@@ -129,8 +129,12 @@ class SCORMCloudClient(object):
         metadata = ISCORMCourseMetadata(course)
         course_id = metadata.scorm_id
         if course_id is None:
+            logger.info(u"No SCORM package to delete: app_id=%s",
+                        self.app_id)
             return
         try:
+            logger.info(u"Deleting course using: app_id=%s, course_id=%s",
+                        self.app_id, course_id)
             service = self.cloud.get_course_service()
             return service.delete_course(course_id)
         except ScormCloudError as error:
