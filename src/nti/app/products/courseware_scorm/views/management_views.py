@@ -22,7 +22,6 @@ from nti.app.externalization.error import raise_json_error
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
 from nti.app.products.courseware_admin.views.management_views import CreateCourseView
-from nti.app.products.courseware_admin.views.management_views import DeleteCourseView
 
 from nti.app.products.courseware_scorm import MessageFactory as _
 
