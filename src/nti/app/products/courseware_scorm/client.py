@@ -69,7 +69,7 @@ class SCORMCloudClient(object):
         service = component.getUtility(IScormCloudService)
         self.cloud = service.withargs(app_id, secret_key, service_url, origin)
 
-    def import_course(self, course, source, request=None, unregister=True):
+    def import_course(self, course, source, request=None, unregister=False):
         """
         Imports a SCORM course zip file into SCORM Cloud.
 
