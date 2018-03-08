@@ -36,7 +36,6 @@ from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 from nti.app.products.courseware_scorm.views import UPDATE_SCORM_VIEW_NAME
 from nti.app.products.courseware_scorm.views import CREATE_SCORM_COURSE_VIEW_NAME
 from nti.app.products.courseware_scorm.views import IMPORT_SCORM_COURSE_VIEW_NAME
-from nti.app.products.courseware_scorm.views import UPLOAD_SCORM_COURSE_VIEW_NAME
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseEnrollments
@@ -87,7 +86,7 @@ class AbstractAdminScormCourseView(AbstractAuthenticatedView,
 
     def _check_access(self):
         if      not is_admin_or_content_admin_or_site_admin(self.remoteUser) \
-            and not is_course_instructor_or_editor(self.remoteUser):
+            and not is_course_instructor_or_editor(self.context, self.remoteUser):
             raise_json_error(self.request,
                              hexc.HTTPForbidden,
                              {
@@ -98,25 +97,6 @@ class AbstractAdminScormCourseView(AbstractAuthenticatedView,
     def __call__(self):
         self._check_access()
         return self._do_call()
-
-
-@view_config(route_name='objects.generic.traversal',
-             renderer='rest',
-             context=ICourseAdministrativeLevel,
-             request_method='POST',
-             name=UPLOAD_SCORM_COURSE_VIEW_NAME)
-class UploadSCORMCourseView(AbstractAdminScormCourseView):
-    """
-    A view for uploading SCORM course zip archives to SCORM Cloud.
-    """
-
-    def _handle_multipart(self, sources):
-        raise NotImplementedError()
-
-    def _do_call(self):
-        sources = get_all_sources(self.request)
-        if sources:
-            self._handle_multipart(sources)
 
 
 @view_config(route_name='objects.generic.traversal',
