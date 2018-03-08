@@ -18,6 +18,7 @@ from nti.app.products.courseware_scorm.courses import is_course_admin
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 
+from nti.app.products.courseware_scorm.views import UPDATE_SCORM_VIEW_NAME
 from nti.app.products.courseware_scorm.views import GET_SCORM_ARCHIVE_VIEW_NAME
 from nti.app.products.courseware_scorm.views import IMPORT_SCORM_COURSE_VIEW_NAME
 from nti.app.products.courseware_scorm.views import LAUNCH_SCORM_COURSE_VIEW_NAME
@@ -59,8 +60,10 @@ class _SCORMCourseInstanceDecorator(AbstractAuthenticatedRequestAwareDecorator):
             )
             # pylint: disable=too-many-function-args
             if metadata.has_scorm_package():
-                _links.append(Link(original, rel=ARCHIVE_REL,
-                                   elements=(ARCHIVE_REL,)))
+                for rel in (ARCHIVE_REL, UPDATE_SCORM_VIEW_NAME):
+                    _links.append(Link(original,
+                                       rel=rel,
+                                       elements=(rel,)))
 
 
 @component.adapter(ISCORMCourseMetadata)

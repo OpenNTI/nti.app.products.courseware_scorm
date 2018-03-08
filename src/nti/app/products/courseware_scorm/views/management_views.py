@@ -160,7 +160,7 @@ class UpdateSCORMView(AbstractAdminScormCourseView,
                              },
                              None)
         client = component.getUtility(ISCORMCloudClient)
-        client.update_assets(self.context, source)
+        client.update_assets(self.context, source, self.request)
 
         return hexc.HTTPNoContent()
 

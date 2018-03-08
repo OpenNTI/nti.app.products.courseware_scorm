@@ -112,7 +112,7 @@ class SCORMCloudClient(object):
         cloud_upload_link = upload_service.get_upload_url(redirect_url)
         return hexc.HTTPFound(location=cloud_upload_link)
 
-    def update_assets(self, course, source):
+    def update_assets(self, course, source, request=None):
         cloud_service = self.cloud.get_course_service()
         # pylint: disable=too-many-function-args
         course_id = ISCORMIdentifier(course).get_id()
