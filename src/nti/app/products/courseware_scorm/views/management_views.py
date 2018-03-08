@@ -126,7 +126,7 @@ class ImportSCORMCourseView(AbstractAdminScormCourseView,
         for record in enrollments.iter_enrollments():
             client.sync_enrollment_record(record, self.context)
 
-        return hexc.HTTPNoContent()
+        return self.context
 
     def _handle_multipart(self, sources):
         """
@@ -162,7 +162,7 @@ class UpdateSCORMView(AbstractAdminScormCourseView,
         client = component.getUtility(ISCORMCloudClient)
         client.update_assets(self.context, source, self.request)
 
-        return hexc.HTTPNoContent()
+        return self.context
 
     def _handle_multipart(self, sources):
         """
