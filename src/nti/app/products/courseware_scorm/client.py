@@ -254,6 +254,11 @@ class SCORMCloudClient(object):
         logger.info("Launching registration: regid=%s", registration_id)
         return service.launch(registration_id, redirect_url)
 
+    def preview(self, course, redirect_url):
+        course_id = self._get_course_id(course)
+        service = self.cloud.get_course_service()
+        return service.get_preview_url(course_id, redirect_url)
+
     def _get_course_id(self, course):
         return ISCORMIdentifier(course).get_id()
 
