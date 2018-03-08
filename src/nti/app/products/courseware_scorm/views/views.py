@@ -44,12 +44,12 @@ class LaunchSCORMCourseView(AbstractAuthenticatedView):
     """
 
     def _redirect_uri(self):
-        return  CaseInsensitiveDict(self.request.params).get(u'redirecturl')
+        return CaseInsensitiveDict(self.request.params).get(u'redirecturl')
 
     def _redirect_on_error(self, redirect_url, e):
         if not redirect_url:
             return None
-        
+
         # Be really careful here that we don't clobber
         # query params that may have been provided
         url_parts = list(urllib_parse.urlparse(redirect_url))
