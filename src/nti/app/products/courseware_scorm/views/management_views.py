@@ -29,6 +29,7 @@ from nti.app.products.courseware_admin.views.management_views import CreateCours
 
 from nti.app.products.courseware_scorm import MessageFactory as _
 
+from nti.app.products.courseware_scorm.courses import is_course_admin
 from nti.app.products.courseware_scorm.courses import SCORMCourseInstance
 
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
@@ -37,15 +38,12 @@ from nti.app.products.courseware_scorm.views import UPDATE_SCORM_VIEW_NAME
 from nti.app.products.courseware_scorm.views import CREATE_SCORM_COURSE_VIEW_NAME
 from nti.app.products.courseware_scorm.views import IMPORT_SCORM_COURSE_VIEW_NAME
 
+from nti.common.string import is_true
+
 from nti.contenttypes.courses.interfaces import ICourseInstance
-from nti.contenttypes.courses.interfaces import ICourseEnrollments
 from nti.contenttypes.courses.interfaces import ICourseAdministrativeLevel
 
-from nti.dataserver.authorization import is_admin_or_content_admin_or_site_admin
-
 from nti.scorm_cloud.client.mixins import get_source
-from nti.contenttypes.courses.utils import is_course_instructor_or_editor
-from nti.common.string import is_true
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -85,8 +83,7 @@ class AbstractAdminScormCourseView(AbstractAuthenticatedView,
         return is_true(result)
 
     def _check_access(self):
-        if      not is_admin_or_content_admin_or_site_admin(self.remoteUser) \
-            and not is_course_instructor_or_editor(self.context, self.remoteUser):
+        if not is_course_admin(self.remoteUser, self.context):
             raise_json_error(self.request,
                              hexc.HTTPForbidden,
                              {
