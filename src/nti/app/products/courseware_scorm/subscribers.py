@@ -22,7 +22,9 @@ from nti.app.products.courseware_scorm.courses import SCORM_COURSE_MIME_TYPE
 
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
+from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 
+from nti.contenttypes.courses.interfaces import ICourseInstanceRemovedEvent
 from nti.contenttypes.courses.interfaces import ICourseInstanceEnrollmentRecord
 
 logger = __import__('logging').getLogger(__name__)
@@ -44,6 +46,14 @@ def _enrollment_record_dropped(record, unused_event):
         client = component.queryUtility(ISCORMCloudClient)
         if client is not None:
             client.delete_enrollment_record(record)
+
+
+@component.adapter(ISCORMCourseInstance, ICourseInstanceRemovedEvent)
+def _on_course_instance_removed(course, event):
+    metadata = ISCORMCourseMetadata(course, None)
+    if metadata is not None and metadata.has_scorm_package():
+        client = component.getUtility(ISCORMCloudClient)
+        client.delete_course(course)
 
 
 @component.adapter(IAllCoursesCollection)

@@ -69,17 +69,17 @@ class SCORMCloudClient(object):
         service = component.getUtility(IScormCloudService)
         self.cloud = service.withargs(app_id, secret_key, service_url, origin)
 
-    def import_course(self, context, source, request=None):
+    def import_course(self, course, source, request=None):
         """
         Imports a SCORM course zip file into SCORM Cloud.
 
-        :param context: The course context under which to import the SCORM course.
+        :param course: The course under which to import the SCORM course.
         :param source: The zip file source of the course to import.
         :returns: The result of the SCORM Cloud import operation.
         """
         cloud_service = self.cloud.get_course_service()
         # pylint: disable=too-many-function-args
-        scorm_id = ISCORMIdentifier(context).get_id()
+        scorm_id = self._get_course_id(course)
         logger.info("Importing course using: app_id=%s scorm_id=%s",
                     self.app_id, scorm_id)
         if scorm_id is None:
@@ -90,13 +90,13 @@ class SCORMCloudClient(object):
                              },
                              None)
         cloud_service.import_uploaded_course(scorm_id, source)
-        context = removeAllProxies(context)
-        interface.alsoProvides(context, ISCORMCourseInstance)
+        course = removeAllProxies(course)
+        interface.alsoProvides(course, ISCORMCourseInstance)
 
-        metadata = ISCORMCourseMetadata(context)
+        metadata = ISCORMCourseMetadata(course)
         metadata.scorm_id = scorm_id
 
-        return context
+        return course
 
     def upload_course(self, unused_source, redirect_url):
         """
@@ -125,6 +125,35 @@ class SCORMCloudClient(object):
                              None)
         cloud_service.update_assets(course_id, source)
 
+    def delete_course(self, course):
+        metadata = ISCORMCourseMetadata(course)
+        course_id = metadata.scorm_id
+        if course_id is None:
+            logger.info(u"No SCORM package to delete: app_id=%s",
+                        self.app_id)
+            return
+        try:
+            logger.info(u"Deleting course using: app_id=%s, course_id=%s",
+                        self.app_id, course_id)
+            service = self.cloud.get_course_service()
+            return service.delete_course(course_id)
+        except ScormCloudError as error:
+            logger.warning(error)
+            if error.code == u'1':
+                # This should be OK so don't raise an exception
+                logger.warning(u"Couldn't find course to delete with courseid=%s",
+                               course_id)
+            elif error.code == u'2':
+                logger.warning(u"Deleting the files associated with this course\
+                               caused an internal security exception: courseid=%s",
+                               course_id)
+                raise error
+            else:
+                logger.warning(u"Unknown error occurred while deleting course:\
+                               code=%s, courseid=%s",
+                               error.code, course_id)
+                raise error
+
     def sync_enrollment_record(self, enrollment_record, course):
         """
         Syncs a course enrollment record with SCORM Cloud.
@@ -139,8 +168,7 @@ class SCORMCloudClient(object):
                                      course)
 
     def create_registration(self, registration_id, user, course):
-        # pylint: disable=too-many-function-args
-        course_id = ISCORMIdentifier(course).get_id()
+        course_id = self._get_course_id(course)
         learner_id = ISCORMIdentifier(user).get_id()
         named = IFriendlyNamed(user)
         last_name = first_name = ''
@@ -212,6 +240,9 @@ class SCORMCloudClient(object):
         logger.info("Launching registration: regid=%s", registration_id)
         return service.launch(registration_id, redirect_url)
 
+    def _get_course_id(self, course):
+        return ISCORMIdentifier(course).get_id()
+
     def _get_registration_id(self, course, user):
         identifier = component.getMultiAdapter((user, course),
                                                ISCORMIdentifier)
@@ -220,7 +251,7 @@ class SCORMCloudClient(object):
     def get_registration_list(self, course):
         service = self.cloud.get_registration_service()
         # pylint: disable=too-many-function-args
-        course_id = ISCORMIdentifier(course).get_id()
+        course_id = self._get_course_id(course)
         reg_list = service.getRegistrationList(courseid=course_id)
         return [IScormRegistration(reg) for reg in reg_list or ()]
 
@@ -241,8 +272,7 @@ class SCORMCloudClient(object):
 
     def get_archive(self, course):
         service = self.cloud.get_course_service()
-        # pylint: disable=too-many-function-args
-        course_id = ISCORMIdentifier(course).get_id()
+        course_id = self._get_course_id(course)
         archive = service.get_assets(course_id)
         return archive
 

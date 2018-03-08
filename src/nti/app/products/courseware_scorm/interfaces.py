@@ -72,6 +72,13 @@ class ISCORMCloudClient(interface.Interface):
         :param source: The new package used to update the existing package.
         """
 
+    def delete_course(course):
+        """
+        Deletes the SCORM package associated with the given ISCORMCourseInstance.
+
+        :param course: The course for which to delete the associated SCORM package.
+        """
+
     def sync_enrollment_record(enrollment_record, course):
         """
         Syncs a course enrollment record with SCORM Cloud.
