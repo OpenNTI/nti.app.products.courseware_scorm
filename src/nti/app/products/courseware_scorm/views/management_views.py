@@ -147,11 +147,6 @@ class ImportSCORMCourseView(AbstractAdminScormCourseView):
                              request=self.request,
                              unregister=self.unregister_users)
 
-        # pylint: disable=too-many-function-args
-        enrollments = ICourseEnrollments(self.context)
-        for record in enrollments.iter_enrollments():
-            client.sync_enrollment_record(record, self.context)
-
         return self.context
 
     def _handle_multipart(self, sources):

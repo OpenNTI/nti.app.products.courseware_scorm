@@ -46,7 +46,6 @@
  			 provides=".interfaces.ISCORMProgress" />
 
 	<!-- Subscribers -->
-	<subscriber handler=".subscribers._enrollment_record_created" />
 	<subscriber handler=".subscribers._enrollment_record_dropped" />
 	<subscriber handler=".subscribers._on_course_instance_removed" />
 
