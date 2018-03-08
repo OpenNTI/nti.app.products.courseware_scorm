@@ -117,11 +117,13 @@ class SCORMCloudClient(object):
         Syncs a course enrollment record with SCORM Cloud.
         """
         # pylint: disable=too-many-function-args
-        user = User.get_user(enrollment_record.Principal.id)
-        reg_id = self._get_registration_id(course, user)
-        self.create_registration(reg_id,
-                                 user,
-                                 course)
+        metadata = ISCORMCourseMetadata(course)
+        if metadata.has_scorm_package():
+            user = User.get_user(enrollment_record.Principal.id)
+            reg_id = self._get_registration_id(course, user)
+            self.create_registration(reg_id,
+                                     user,
+                                     course)
 
     def create_registration(self, registration_id, user, course):
         # pylint: disable=too-many-function-args
@@ -168,6 +170,9 @@ class SCORMCloudClient(object):
     def delete_enrollment_record(self, enrollment_record):
         # pylint: disable=too-many-function-args
         course = enrollment_record.CourseInstance
+        metadata = ISCORMCourseMetadata(course)
+        if not metadata.has_scorm_package():
+            return
         user = User.get_user(enrollment_record.Principal.id)
         reg_id = self._get_registration_id(course, user)
         service = self.cloud.get_registration_service()
