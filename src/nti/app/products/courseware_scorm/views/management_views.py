@@ -38,7 +38,7 @@ from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseEnrollments
 from nti.contenttypes.courses.interfaces import ICourseAdministrativeLevel
 
-from nti.dataserver import authorization as nauth
+from nti.dataserver.authorization import is_admin_or_content_admin_or_site_admin
 
 from nti.scorm_cloud.client.mixins import get_source
 
@@ -49,7 +49,6 @@ logger = __import__('logging').getLogger(__name__)
              renderer='rest',
              context=ICourseAdministrativeLevel,
              request_method='POST',
-             permission=nauth.ACT_NTI_ADMIN,
              name=CREATE_SCORM_COURSE_VIEW_NAME)
 class CreateSCORMCourseView(CreateCourseView):
     """
@@ -59,19 +58,28 @@ class CreateSCORMCourseView(CreateCourseView):
     _COURSE_INSTANCE_FACTORY = SCORMCourseInstance
 
 
-class DeleteSCORMCourseView(DeleteCourseView):
-    """
-    A view for deleting SCORM courses.
-    """
+class AbstractAdminScormCourseView(AbstractAuthenticatedView):
+
+    def _check_access(self):
+        if not is_admin_or_content_admin_or_site_admin(self.remoteUser):
+            raise_json_error(self.request,
+                             hexc.HTTPForbidden,
+                             {
+                                 'message': _(u"Cannot administer scorm courses."),
+                             },
+                             None)
+
+    def __call__(self):
+        self._check_access()
+        return self._do_call()
 
 
 @view_config(route_name='objects.generic.traversal',
              renderer='rest',
              context=ICourseAdministrativeLevel,
              request_method='POST',
-             permission=nauth.ACT_NTI_ADMIN,
              name=UPLOAD_SCORM_COURSE_VIEW_NAME)
-class UploadSCORMCourseView(AbstractAuthenticatedView,
+class UploadSCORMCourseView(AbstractAdminScormCourseView,
                             ModeledContentUploadRequestUtilsMixin):
     """
     A view for uploading SCORM course zip archives to SCORM Cloud.
@@ -80,7 +88,7 @@ class UploadSCORMCourseView(AbstractAuthenticatedView,
     def _handle_multipart(self, sources):
         raise NotImplementedError()
 
-    def __call__(self):
+    def _do_call(self):
         sources = get_all_sources(self.request)
         if sources:
             self._handle_multipart(sources)
@@ -90,15 +98,14 @@ class UploadSCORMCourseView(AbstractAuthenticatedView,
              renderer='rest',
              context=ICourseInstance,
              request_method='POST',
-             permission=nauth.ACT_NTI_ADMIN,
              name=IMPORT_SCORM_COURSE_VIEW_NAME)
-class ImportSCORMCourseView(AbstractAuthenticatedView,
+class ImportSCORMCourseView(AbstractAdminScormCourseView,
                             ModeledContentUploadRequestUtilsMixin):
     """
     A view for importing uploaded SCORM courses to SCORM Cloud.
     """
 
-    def __call__(self):
+    def _do_call(self):
         sources = get_all_sources(self.request)
         if sources:
             source = self._handle_multipart(sources)
