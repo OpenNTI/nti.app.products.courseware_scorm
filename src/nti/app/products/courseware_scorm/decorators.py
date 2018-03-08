@@ -46,6 +46,7 @@ logger = __import__('logging').getLogger(__name__)
 @interface.implementer(IExternalObjectDecorator)
 class _SCORMCourseInstanceDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
+    # pylint: disable=arguments-differ
     def _do_decorate_external(self, original, external):
         # The Outline isn't needed; SCORM Cloud provides its own viewer
         external.pop('Outline', None)
@@ -53,9 +54,13 @@ class _SCORMCourseInstanceDecorator(AbstractAuthenticatedRequestAwareDecorator):
         external['Metadata'] = metadata
         if is_course_admin(self.remoteUser, original):
             _links = external.setdefault(LINKS, [])
-            _links.append(Link(original, rel=IMPORT_REL, elements=(IMPORT_REL,)))
+            _links.append(
+                Link(original, rel=IMPORT_REL, elements=(IMPORT_REL,))
+            )
+            # pylint: disable=too-many-function-args
             if metadata.has_scorm_package():
-                _links.append(Link(original, rel=ARCHIVE_REL, elements=(ARCHIVE_REL,)))
+                _links.append(Link(original, rel=ARCHIVE_REL,
+                                   elements=(ARCHIVE_REL,)))
 
 
 @component.adapter(ISCORMCourseMetadata)
@@ -67,7 +72,10 @@ class _SCORMCourseInstanceMetadataDecorator(PreviewCourseAccessPredicateDecorato
         # TODO: Adapter
         return find_interface(self.context, ICourseInstance, strict=True)
 
+    # pylint: disable=arguments-differ
     def _do_decorate_external(self, original, external):
         if original.has_scorm_package():
             _links = external.setdefault(LINKS, [])
-            _links.append(Link(self.course, rel=LAUNCH_REL, elements=(LAUNCH_REL,)))
+            _links.append(
+                Link(self.course, rel=LAUNCH_REL, elements=(LAUNCH_REL,))
+            )
