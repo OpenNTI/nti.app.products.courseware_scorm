@@ -19,8 +19,6 @@ from nti.app.externalization.error import raise_json_error
 
 from nti.app.products.courseware_scorm import MessageFactory as _
 
-from nti.app.products.courseware_scorm.courses import is_course_admin
-
 from nti.app.products.courseware_scorm.interfaces import ISCORMProgress
 from nti.app.products.courseware_scorm.interfaces import ISCORMIdentifier
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
@@ -207,8 +205,7 @@ class SCORMCloudClient(object):
     def launch(self, course, user, redirect_url):
         service = self.cloud.get_registration_service()
         registration_id = self._get_registration_id(course, user)
-        if      is_course_admin(user, course) \
-            and not self.registration_exists(registration_id):
+        if not self.registration_exists(registration_id):
             self.create_registration(registration_id=registration_id,
                                      user=user,
                                      course=course)
