@@ -45,6 +45,8 @@ from nti.contenttypes.courses.interfaces import ICourseAdministrativeLevel
 
 from nti.scorm_cloud.client.mixins import get_source
 
+from nti.scorm_cloud.client.request import ScormCloudError
+
 logger = __import__('logging').getLogger(__name__)
 
 
@@ -118,11 +120,18 @@ class ImportSCORMCourseView(AbstractAdminScormCourseView):
                              },
                              None)
         client = component.getUtility(ISCORMCloudClient)
-        client.import_course(self.context,
-                             source,
-                             request=self.request,
-                             unregister=self.unregister_users)
-
+        try:
+            client.import_course(self.context,
+                                 source,
+                                 request=self.request,
+                                 unregister=self.unregister_users)
+        except ScormCloudError as exc:
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                 'message': exc.message,
+                             },
+                             None)
         return self.context
 
     def _handle_multipart(self, sources):
@@ -156,7 +165,15 @@ class UpdateSCORMView(AbstractAdminScormCourseView):
                              },
                              None)
         client = component.getUtility(ISCORMCloudClient)
-        client.update_assets(self.context, source, self.request)
+        try:
+            client.update_assets(self.context, source, self.request)
+        except ScormCloudError as exc:
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                 'message': exc.message,
+                             },
+                             None)
 
         return self.context
 
