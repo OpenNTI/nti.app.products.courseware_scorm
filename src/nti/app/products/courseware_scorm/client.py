@@ -278,7 +278,7 @@ class SCORMCloudClient(object):
         service = self.cloud.get_registration_service()
         registration_list = self.get_registration_list(course)
         for registration in registration_list or ():
-            service.deleteRegistration(registration.registrationId)
+            service.deleteRegistration(registration.registration_id)
 
     def get_registration_progress(self, course, user):
         registration_id = self._get_registration_id(course, user)
