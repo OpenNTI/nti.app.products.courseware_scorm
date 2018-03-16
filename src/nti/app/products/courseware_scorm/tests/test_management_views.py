@@ -16,15 +16,11 @@ from hamcrest import has_item
 from hamcrest import not_none
 from hamcrest import has_entry
 from hamcrest import assert_that
-from hamcrest import has_entries
-from whoosh.util.loading import find_object
 does_not = is_not
 
 import shutil
 
 from zope import component
-
-from nti.app.products.courseware.tests import PersistentInstructedCourseApplicationTestLayer
 
 from nti.app.products.courseware_admin import VIEW_COURSE_ADMIN_LEVELS
 
@@ -46,7 +42,6 @@ from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contentlibrary.interfaces import IDelimitedHierarchyContentPackageEnumeration
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
-from nti.contenttypes.courses.interfaces import ICourseEnrollments
 from nti.contenttypes.courses.interfaces import ICourseEnrollmentManager
 
 from nti.dataserver.users.users import User
@@ -169,20 +164,17 @@ class TestManagementViews(ApplicationLayerTest):
         
         with mock_dataserver.mock_db_trans():
             self._create_user(u'CapnCook')
-        
+            
+        # Check for SCORM progress Link on enrollment records
         with mock_dataserver.mock_db_trans(site_name='alpha.nextthought.com'):
             capnCook = User.get_user(u'CapnCook')
             entry = find_object_with_ntiid(course_ntiid)
             course = ICourseInstance(entry)
             
             enrollment_manager = ICourseEnrollmentManager(course)
-            enrollment = enrollment_manager.enroll(capnCook)
-#             assert_that(enroll_result, is_(True))
-#             
-#             enrollments = ICourseEnrollments(course)
-#             enrollment = enrollments.get_enrollment_for_principal(capnCook)
-            assert_that(enrollment, is_not(none()))
-            assert_that(enrollment,
+            enrollment_record = enrollment_manager.enroll(capnCook)
+            assert_that(enrollment_record, is_not(none()))
+            assert_that(enrollment_record,
                         externalizes(has_entry(LINKS, has_item(has_entry('rel', PROGRESS_REL)))))
 
         # GUID NTIID
