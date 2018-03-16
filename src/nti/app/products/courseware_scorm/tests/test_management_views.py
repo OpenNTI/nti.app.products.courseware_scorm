@@ -17,6 +17,7 @@ from hamcrest import not_none
 from hamcrest import has_entry
 from hamcrest import assert_that
 from hamcrest import has_entries
+from whoosh.util.loading import find_object
 does_not = is_not
 
 import shutil
@@ -28,6 +29,8 @@ from nti.app.products.courseware.tests import PersistentInstructedCourseApplicat
 from nti.app.products.courseware_admin import VIEW_COURSE_ADMIN_LEVELS
 
 from nti.app.products.courseware_scorm.courses import SCORM_COURSE_MIME_TYPE
+
+from nti.app.products.courseware_scorm.decorators import PROGRESS_REL
 
 from nti.app.products.courseware_scorm.tests import CoursewareSCORMTestLayer
 
@@ -42,9 +45,19 @@ from nti.app.testing.decorators import WithSharedApplicationMockDS
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contentlibrary.interfaces import IDelimitedHierarchyContentPackageEnumeration
 
+from nti.contenttypes.courses.interfaces import ICourseInstance
+from nti.contenttypes.courses.interfaces import ICourseEnrollments
+from nti.contenttypes.courses.interfaces import ICourseEnrollmentManager
+
+from nti.dataserver.users.users import User
+
 from nti.dataserver.tests import mock_dataserver
 
 from nti.externalization.interfaces import StandardExternalFields
+
+from nti.externalization.testing import externalizes
+
+from nti.ntiids.ntiids import find_object_with_ntiid
 
 ITEMS = StandardExternalFields.ITEMS
 CLASS = StandardExternalFields.CLASS
@@ -60,14 +73,14 @@ class TestManagementViews(ApplicationLayerTest):
 
     layer = CoursewareSCORMTestLayer
 
-    default_origin = 'http://janux.ou.edu'
+    default_origin = 'http://alpha.nextthought.com'
 
     @WithSharedApplicationMockDS(testapp=True, users=True)
     def tearDown(self):
         """
         Our janux.ou.edu site should have no courses in it.
         """
-        with mock_dataserver.mock_db_trans(site_name='janux.ou.edu'):
+        with mock_dataserver.mock_db_trans(site_name='alpha.nextthought.com'):
             library = component.getUtility(IContentPackageLibrary)
             enumeration = IDelimitedHierarchyContentPackageEnumeration(library)
             # pylint: disable=no-member
@@ -85,12 +98,14 @@ class TestManagementViews(ApplicationLayerTest):
 
     @WithSharedApplicationMockDS(testapp=True, users=True)
     @fudge.patch('nti.app.products.courseware_scorm.courses.SCORMCourseMetadata.has_scorm_package',
-                 'nti.app.products.courseware_scorm.client.SCORMCloudClient.delete_course')
-    def test_create_SCORM_course_view(self, mock_has_scorm, mock_delete_course):
+                 'nti.app.products.courseware_scorm.client.SCORMCloudClient.delete_course',
+                 'nti.app.products.courseware_scorm.client.SCORMCloudClient.enrollment_registration_exists')
+    def test_create_SCORM_course_view(self, mock_has_scorm, mock_delete_course, mock_has_enrollment_reg):
         """
         Validates SCORM course creation.
         """
         mock_has_scorm.is_callable().returns(False)
+        mock_has_enrollment_reg.is_callable().returns(True)
 
         admin_href = self._get_admin_href()
 
@@ -145,6 +160,26 @@ class TestManagementViews(ApplicationLayerTest):
         catalog = catalog.json_body
         entry_ntiid = catalog['NTIID']
         assert_that(entry_ntiid, not_none())
+        
+        course_ntiid = new_course['NTIID']
+        
+        with mock_dataserver.mock_db_trans():
+            self._create_user(u'CapnCook')
+        
+        with mock_dataserver.mock_db_trans(site_name='alpha.nextthought.com'):
+            capnCook = User.get_user(u'CapnCook')
+            entry = find_object_with_ntiid(course_ntiid)
+            course = ICourseInstance(entry)
+            
+            enrollment_manager = ICourseEnrollmentManager(course)
+            enrollment = enrollment_manager.enroll(capnCook)
+#             assert_that(enroll_result, is_(True))
+#             
+#             enrollments = ICourseEnrollments(course)
+#             enrollment = enrollments.get_enrollment_for_principal(capnCook)
+            assert_that(enrollment, is_not(none()))
+            assert_that(enrollment,
+                        externalizes(has_entry(LINKS, has_item(has_entry('rel', PROGRESS_REL)))))
 
         # GUID NTIID
         assert_that(entry_ntiid,
