@@ -27,6 +27,7 @@ from nti.app.products.courseware_scorm.views import LAUNCH_SCORM_COURSE_VIEW_NAM
 from nti.app.products.courseware_scorm.views import PREVIEW_SCORM_COURSE_VIEW_NAME
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
+from nti.contenttypes.courses.interfaces import ICourseInstanceEnrollmentRecord
 
 from nti.contenttypes.courses.utils import is_course_instructor_or_editor
 
@@ -112,7 +113,7 @@ class LaunchSCORMCourseView(AbstractSCORMLaunchView):
     
 @view_config(route_name='objects.generic.traversal',
              renderer='rest',
-             context=ICourseInstance,
+             context=ICourseInstanceEnrollmentRecord,
              request_method='GET',
              permission=ACT_READ,
              name=SCORM_PROGRESS_VIEW_NAME)
@@ -123,4 +124,4 @@ class SCORMProgressView(AbstractAuthenticatedView):
 
     def __call__(self):
         client = component.getUtility(ISCORMCloudClient)
-        return client.get_registration_progress(self.context, self.remoteUser)
+        return client.get_registration_progress(self.context)
