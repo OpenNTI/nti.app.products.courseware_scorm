@@ -56,6 +56,25 @@ class ISCORMCourseMetadata(IContained, IAttributeAnnotatable):
         Whether a SCORM package has been uploaded to the course.
         """
 
+class IPostBackURLUtility(interface.Interface):
+
+    def url_for_registration_postback(enrollment_record, request=None):
+        """
+        Returns a url that should be used for registration result postbacks
+        """
+    
+class IPostBackPasswordUtility(interface.Interface):
+
+    def credentials_for_enrollment(reg_id):
+        """
+        Returns a tuple of username, passworod credentials to be used for this
+        enrollment.
+        """
+
+    def validate_credentials_for_enrollment(reg_id, username, password):
+        """
+        Returns true if the username and password is correct for the enrollment.
+        """
 
 class ISCORMCloudClient(interface.Interface):
     """
@@ -65,7 +84,7 @@ class ISCORMCloudClient(interface.Interface):
     def import_course(context, source):
         """
         Imports into SCORM Cloud a SCORM course from a zip file source.
-        :param context: The course context under which to import the SCORM course.
+        :param context: The course cotext under which to import the SCORM course.
         :param source: The SCORM course zip file source.
         """
 

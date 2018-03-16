@@ -17,16 +17,20 @@ from requests.structures import CaseInsensitiveDict
 from six.moves import urllib_parse
 
 from zope import component
+from zope import interface
 
+from nti.app.base.abstract_views import AbstractView
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
 
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
+from nti.app.products.courseware_scorm.interfaces import IPostBackPasswordUtility
 
 from nti.app.products.courseware_scorm.views import SCORM_PROGRESS_VIEW_NAME
 from nti.app.products.courseware_scorm.views import LAUNCH_SCORM_COURSE_VIEW_NAME
 from nti.app.products.courseware_scorm.views import PREVIEW_SCORM_COURSE_VIEW_NAME
+from nti.app.products.courseware_scorm.views import REGISTRATION_RESULT_POSTBACK_VIEW_NAME
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
@@ -132,3 +136,33 @@ class SCORMProgressView(AbstractAuthenticatedView):
         client = component.getUtility(ISCORMCloudClient)
         user = User.get_user(self.context.Username) 
         return client.get_registration_progress(self.context.CourseInstance, user, self._results_format())
+
+
+
+@view_config(route_name='objects.generic.traversal',
+             renderer='rest',
+             context=ICourseInstanceEnrollment,
+             request_method='POST',
+             name=REGISTRATION_RESULT_POSTBACK_VIEW_NAME)
+class SCORMRegistrationResultPostBack(AbstractView):
+
+    def __call__(self):
+        username = self.request.params.get('username', None)
+        password = self.request.params.get('password', None)
+        data = self.request.params.get('data', None)
+
+        if not username or not password or not data:
+            raise hexc.HTTPBadRequest()
+
+        password_manager = component.getUtility(IPostBackPasswordUtility)
+        try:
+            password_manager.validate_credentials_for_enrollment(self.context, username, password)
+        except ValueError:
+            raise hexc.HTTPForbidden()
+
+        # TODO do something with the data here.  Parse it and store completion information
+        # on the course
+
+        return hexc.HTTPNoContent()
+
+        

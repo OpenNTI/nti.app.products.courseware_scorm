@@ -8,29 +8,45 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+import hashlib
+
 from nameparser import HumanName
 
 from pyramid import httpexceptions as hexc
+
+from pyramid.threadlocal import get_current_request
 
 from zope import component
 from zope import interface
 
 from nti.app.externalization.error import raise_json_error
 
+from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
+
 from nti.app.products.courseware_scorm import MessageFactory as _
 
+from nti.app.products.courseware_scorm.interfaces import IPostBackURLUtility
+from nti.app.products.courseware_scorm.interfaces import ISCORMProgress
 from nti.app.products.courseware_scorm.interfaces import ISCORMIdentifier
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 from nti.app.products.courseware_scorm.interfaces import IScormRegistration
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
+from nti.app.products.courseware_scorm.interfaces import IPostBackPasswordUtility
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 from nti.app.products.courseware_scorm.interfaces import ISCORMRegistrationReport
+
+from nti.app.products.courseware_scorm.views import REGISTRATION_RESULT_POSTBACK_VIEW_NAME
+
+from nti.dataserver.interfaces import ILinkExternalHrefOnly
 
 from nti.dataserver.users.interfaces import IFriendlyNamed
 
 from nti.dataserver.users.users import User
 
 from nti.externalization.proxy import removeAllProxies
+
+from nti.links.links import Link
+from nti.links.externalization import render_link
 
 from nti.scorm_cloud.client import ScormCloudUtilities
 
@@ -55,6 +71,64 @@ class ScormCourseNoPasswordError(Exception):
     """
     An error raised when a postback URL login name is specified without password.
     """
+
+@interface.implementer(IPostBackURLUtility)
+class PostBackURLGenerator(object):
+
+    def url_for_registration_postback(self, enrollment, request=None):
+        if request is None:
+            request = get_current_request()
+        link = Link(enrollment, elements=('@@'+REGISTRATION_RESULT_POSTBACK_VIEW_NAME,))
+        interface.alsoProvides(link, ILinkExternalHrefOnly)
+        url = render_link(link)
+        return request.relative_url(url)
+
+    
+@interface.implementer(IPostBackURLUtility)
+class DevModePostbackURLGenerator(PostBackURLGenerator):
+    """
+    An IPostbackURLUtility that logs but doesn't return the postback url.
+    SCORM cloud makes a dns request at registration time to validate the provided url
+    which obviously doesn't work for non public facing hosts.
+    """
+    def url_for_registration_postback(self, enrollment_record, request=None):
+        url = super(DevModePostbackURLGenerator, self).url_for_registration_postback(enrollment_record, request=request)
+        logger.debug('postback url doesnt work in devmode. %s', url)
+        return None
+
+    
+_USER_SECRET = 'R9P3KouL>FQW?qjYxYQDgYDRetpMVV'
+_PASS_SECRET = '6AUyRy%mRX{RcqcXwcebHTc7VtFQKa'
+
+@interface.implementer(IPostBackPasswordUtility)
+class PostBackPasswordUtility(object):
+    
+    def _compute_hash(self, parts):
+        m = hashlib.sha256()
+        for part in parts:
+            m.update(part)
+        return m.hexdigest()
+
+    def _get_registration_id(self, course, user):
+        identifier = component.getMultiAdapter((user, course),
+                                               ISCORMIdentifier)
+        return identifier.get_id()
+    
+    def credentials_for_enrollment(self, enrollment):
+        course = enrollment.CourseInstance
+        user = User.get_user(enrollment.Username)
+        reg_id = self._get_registration_id(course, user)
+        
+        username = self._compute_hash((reg_id, _USER_SECRET))
+        password = self._compute_hash((username, _PASS_SECRET))
+        
+        return username, password
+
+    def validate_credentials_for_enrollment(self, enrollment, username, password):
+        _user, _pass = self.credentials_for_enrollment(enrollment)
+        if _user != username or _pass != password:
+            raise ValueError('Bad Credentials')
+        return True
 
 
 @interface.implementer(ISCORMCloudClient)
@@ -187,14 +261,32 @@ class SCORMCloudClient(object):
             human_name = HumanName(named.realname)
             first_name = human_name.first
             last_name = human_name.last
+
+        enrollment = component.getMultiAdapter((course, user), ICourseInstanceEnrollment)
+
+        url_factory = component.getUtility(IPostBackURLUtility)
+        url = url_factory.url_for_registration_postback(enrollment)
+        user = None
+        password = None
+        if url:
+            password_manager = component.getUtility(IPostBackPasswordUtility)
+            user, password = password_manager.credentials_for_enrollment(enrollment)
+            
         self._create_registration(course_id,
                                   registration_id,
                                   first_name,
                                   last_name,
-                                  learner_id)
+                                  learner_id,
+                                  postbackurl=url,
+                                  authtype='form' if url else None,
+                                  urlname=user,
+                                  urlpass=password)
 
     def _create_registration(self, course_id, registration_id,
-                             first_name, last_name, learner_id):
+                             first_name, last_name, learner_id,
+                             postbackurl=None, authtype=None,
+                             urlname=None, urlpass=None,
+                             resultsformat=None):
         logger.info("Creating SCORM registration: courseid=%s reg_id=%s fname=%s lname=%s learnerid=%s",
                     course_id, registration_id, first_name, last_name, learner_id)
         service = self.cloud.get_registration_service()
@@ -203,7 +295,12 @@ class SCORMCloudClient(object):
                                        regid=registration_id,
                                        fname=first_name,
                                        lname=last_name,
-                                       learnerid=learner_id)
+                                       learnerid=learner_id,
+                                       postbackurl=postbackurl,
+                                       authtype=authtype,
+                                       urlname=urlname,
+                                       urlpass=urlpass,
+                                       resultsformat=resultsformat)
         except ScormCloudError as error:
             logger.warning(error)
             if error.code == u'1':
