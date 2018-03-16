@@ -99,13 +99,17 @@ class TestManagementViews(ApplicationLayerTest):
     @WithSharedApplicationMockDS(testapp=True, users=True)
     @fudge.patch('nti.app.products.courseware_scorm.courses.SCORMCourseMetadata.has_scorm_package',
                  'nti.app.products.courseware_scorm.client.SCORMCloudClient.delete_course',
-                 'nti.app.products.courseware_scorm.client.SCORMCloudClient.enrollment_registration_exists')
-    def test_create_SCORM_course_view(self, mock_has_scorm, mock_delete_course, mock_has_enrollment_reg):
+                 'nti.app.products.courseware_scorm.client.SCORMCloudClient.enrollment_registration_exists',
+                 'nti.app.products.courseware_scorm.tests.test_client.MockSCORMCloudService.get_registration_service')
+    def test_create_SCORM_course_view(self, mock_has_scorm, mock_delete_course, mock_has_enrollment_reg, mock_get_registration_service):
         """
         Validates SCORM course creation.
         """
         mock_has_scorm.is_callable().returns(False)
         mock_has_enrollment_reg.is_callable().returns(True)
+        
+        mock_registration_service = fudge.Fake()
+        mock_get_registration_service.is_callable().returns(mock_registration_service)
 
         admin_href = self._get_admin_href()
 
@@ -188,6 +192,7 @@ class TestManagementViews(ApplicationLayerTest):
 
         # Delete
         mock_delete_course.expects_call()
+        mock_registration_service.expects('deleteRegistration')
         self.testapp.delete(course_delete_href)
         self.testapp.get(new_course_href, status=404)
         courses = self.testapp.get(new_admin_href)
