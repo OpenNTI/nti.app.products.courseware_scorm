@@ -81,6 +81,11 @@
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"
 				for=".interfaces.ISCORMCourseMetadata
 				     pyramid.interfaces.IRequest" />
+	
+	<subscriber factory=".decorators._CourseInstanceEnrollmentRecordDecorator"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"
+				for=".interfaces.ICourseInstanceEnrollmentRecord
+				     pyramid.interfaces.IRequest" />
 
 	<!-- Externalization -->
 	<include package="nti.externalization" file="meta.zcml" />

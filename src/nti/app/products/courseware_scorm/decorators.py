@@ -15,10 +15,12 @@ from nti.app.products.courseware.utils import PreviewCourseAccessPredicateDecora
 
 from nti.app.products.courseware_scorm.courses import is_course_admin
 
+from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 
 from nti.app.products.courseware_scorm.views import UPDATE_SCORM_VIEW_NAME
+from nti.app.products.courseware_scorm.views import SCORM_PROGRESS_VIEW_NAME
 from nti.app.products.courseware_scorm.views import GET_SCORM_ARCHIVE_VIEW_NAME
 from nti.app.products.courseware_scorm.views import IMPORT_SCORM_COURSE_VIEW_NAME
 from nti.app.products.courseware_scorm.views import LAUNCH_SCORM_COURSE_VIEW_NAME
@@ -27,6 +29,7 @@ from nti.app.products.courseware_scorm.views import PREVIEW_SCORM_COURSE_VIEW_NA
 from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
+from nti.contenttypes.courses.interfaces import ICourseInstanceEnrollmentRecord
 
 from nti.contenttypes.courses.utils import is_course_instructor_or_editor
 
@@ -34,6 +37,8 @@ from nti.dataserver.authorization import is_admin_or_content_admin_or_site_admin
 
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalObjectDecorator
+
+from nti.links.externalization import render_link
 
 from nti.links.links import Link
 
@@ -44,6 +49,7 @@ LINKS = StandardExternalFields.LINKS
 ARCHIVE_REL = GET_SCORM_ARCHIVE_VIEW_NAME
 IMPORT_REL = IMPORT_SCORM_COURSE_VIEW_NAME
 LAUNCH_REL = LAUNCH_SCORM_COURSE_VIEW_NAME
+PROGRESS_REL = SCORM_PROGRESS_VIEW_NAME
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -93,3 +99,21 @@ class _SCORMCourseInstanceMetadataDecorator(PreviewCourseAccessPredicateDecorato
             _links.append(
                 Link(course, rel=LAUNCH_REL, elements=(element,))
             )
+
+
+@component.adapter(ICourseInstanceEnrollmentRecord)
+@interface.implementer(IExternalObjectDecorator)
+class _CourseInstanceEnrollmentRecordDecorator(AbstractAuthenticatedRequestAwareDecorator):
+    
+    def _predicate(self, original, unused_external):
+        client = component.getUtility(ISCORMCloudClient)
+        return client.enrollment_registration_exists(original)
+    
+    def _do_decorate_external(self, original, external):
+        _links = external.setdefault(LINKS, [])
+        logger.debug("_CourseInstanceEnrollmentRecordDecorator: %s", _links)
+        # Render link now because we're already in the second pass
+        _links.append(render_link(Link(original,
+                                      rel=PROGRESS_REL,
+                                      elements=(PROGRESS_REL,))))
+        
