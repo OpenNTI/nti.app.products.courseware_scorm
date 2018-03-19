@@ -35,6 +35,8 @@ from nti.contenttypes.courses.utils import is_course_instructor_or_editor
 from nti.dataserver.authorization import ACT_READ
 from nti.dataserver.authorization import is_admin_or_content_admin_or_site_admin
 
+from nti.dataserver.users.users import User 
+
 logger = __import__('logging').getLogger(__name__)
 
 
@@ -128,4 +130,5 @@ class SCORMProgressView(AbstractAuthenticatedView):
 
     def __call__(self):
         client = component.getUtility(ISCORMCloudClient)
-        return client.get_registration_progress(self.context.CourseInstance, self.remoteUser, self._results_format())
+        user = User.get_user(self.context.Username) 
+        return client.get_registration_progress(self.context.CourseInstance, user, self._results_format())
