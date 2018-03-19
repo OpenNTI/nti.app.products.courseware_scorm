@@ -21,6 +21,7 @@ from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.schema.field import Bool
 from nti.schema.field import Number
+from nti.schema.field import ValidText
 from nti.schema.field import ListOrTuple
 from nti.schema.field import DecodingValidTextLine as ValidTextLine
 
@@ -212,3 +213,6 @@ class ISCORMProgress(interface.Interface):
 
     total_time = Number(title=u'The total time tracked by the content player in seconds; \
                                 that is, how long the learner had the course open.')
+    
+    activity = ValidText(title=u'A textual representation of registration activity in the course.',
+                         required=False)

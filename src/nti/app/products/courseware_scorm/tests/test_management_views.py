@@ -204,7 +204,8 @@ class TestManagementViews(ApplicationLayerTest):
         assert_that(progress, has_entries('complete', False,
                                           'score', None,
                                           'success', False,
-                                          'total_time', 0))
+                                          'total_time', 0,
+                                          'activity', None))
         self.progress_href = None
 
         # GUID NTIID

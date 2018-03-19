@@ -66,6 +66,10 @@ class ScormRegistration(object):
 class SCORMProgress(object):
 
     def __init__(self, registration_report):
+        if registration_report.activity is not None:
+            self.activity = registration_report.activity.__repr__()
+        else:
+            self.activity = None
         self.complete = registration_report.complete == u'complete'
         self.success = registration_report.success == u'passed'
         self.score = self._parse_int(registration_report.score, u'score')
