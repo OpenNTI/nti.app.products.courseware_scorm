@@ -52,8 +52,6 @@ IMPORT_REL = IMPORT_SCORM_COURSE_VIEW_NAME
 LAUNCH_REL = LAUNCH_SCORM_COURSE_VIEW_NAME
 PROGRESS_REL = SCORM_PROGRESS_VIEW_NAME
 
-logger = __import__('logging').getLogger(__name__)
-
 
 @component.adapter(ISCORMCourseInstance)
 @interface.implementer(IExternalObjectDecorator)
@@ -112,7 +110,6 @@ class _CourseInstanceEnrollmentDecorator(AbstractAuthenticatedRequestAwareDecora
     
     def _do_decorate_external(self, original, external):
         _links = external.setdefault(LINKS, [])
-        logger.debug("_CourseInstanceEnrollmentRecordDecorator: %s", _links)
         # Render link now because we're already in the second pass
         _links.append(render_link(Link(original,
                                       rel=PROGRESS_REL,
