@@ -14,9 +14,10 @@ from zope import interface
 
 from zope.location.interfaces import IContained
 
+from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
+
 from nti.contenttypes.courses.interfaces import INonExportable
 from nti.contenttypes.courses.interfaces import ICourseInstance
-from nti.contenttypes.courses.interfaces import ICourseInstanceEnrollmentRecord
 
 from nti.schema.field import Bool
 from nti.schema.field import Number
@@ -110,14 +111,14 @@ class ISCORMCloudClient(interface.Interface):
         Deletes all SCORM Cloud registrations for the specified course.
         """
 
-    def get_registration_progress(enrollment_record):
+    def get_registration_progress(course, user):
         """
         Returns progress for the registration of the specified user and course.
         """
         
-    def enrollment_registration_exists(enrollment_record):
+    def enrollment_registration_exists(course, user):
         """
-        Returns whether a registration exists for the given enrollment record.
+        Returns whether a registration exists for the given course and user.
         """
 
     def registration_exists(registration_id):

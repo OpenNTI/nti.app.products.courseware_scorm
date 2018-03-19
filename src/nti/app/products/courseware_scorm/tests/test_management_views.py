@@ -22,6 +22,8 @@ import shutil
 
 from zope import component
 
+from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
+
 from nti.app.products.courseware_admin import VIEW_COURSE_ADMIN_LEVELS
 
 from nti.app.products.courseware_scorm.courses import SCORM_COURSE_MIME_TYPE
@@ -173,8 +175,9 @@ class TestManagementViews(ApplicationLayerTest):
             
             enrollment_manager = ICourseEnrollmentManager(course)
             enrollment_record = enrollment_manager.enroll(capnCook)
-            assert_that(enrollment_record, is_not(none()))
-            assert_that(enrollment_record,
+            enrollment = ICourseInstanceEnrollment(enrollment_record)
+            assert_that(enrollment, is_not(none()))
+            assert_that(enrollment,
                         externalizes(has_entry(LINKS, has_item(has_entry('rel', PROGRESS_REL)))))
 
         # GUID NTIID

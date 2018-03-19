@@ -82,9 +82,9 @@
 				for=".interfaces.ISCORMCourseMetadata
 				     pyramid.interfaces.IRequest" />
 	
-	<subscriber factory=".decorators._CourseInstanceEnrollmentRecordDecorator"
+	<subscriber factory=".decorators._CourseInstanceEnrollmentDecorator"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"
-				for=".interfaces.ICourseInstanceEnrollmentRecord
+				for=".interfaces.ICourseInstanceEnrollment
 				     pyramid.interfaces.IRequest" />
 
 	<!-- Externalization -->

@@ -262,11 +262,6 @@ class SCORMCloudClient(object):
     def _get_course_id(self, course):
         return ISCORMIdentifier(course).get_id()
 
-    def _get_enrollment_registration_id(self, enrollment_record):
-        course = enrollment_record.CourseInstance
-        user = User.get_user(enrollment_record.Principal.id)
-        return self._get_registration_id(course, user)
-
     def _get_registration_id(self, course, user):
         identifier = component.getMultiAdapter((user, course),
                                                ISCORMIdentifier)
@@ -285,13 +280,13 @@ class SCORMCloudClient(object):
         for registration in registration_list or ():
             service.deleteRegistration(registration.registration_id)
 
-    def get_registration_progress(self, enrollment_record):
-        registration_id = self._get_enrollment_registration_id(enrollment_record)
+    def get_registration_progress(self, course, user):
+        registration_id = self._get_registration_id(course, user)
         service = self.cloud.get_registration_service()
         return ISCORMProgress(service.get_registration_result(registration_id))
 
-    def enrollment_registration_exists(self, enrollment_record):
-        registration_id = self._get_enrollment_registration_id(enrollment_record)
+    def enrollment_registration_exists(self, course, user):
+        registration_id = self._get_registration_id(course, user)
         return self.registration_exists(registration_id)
 
     def registration_exists(self, registration_id):

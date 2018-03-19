@@ -11,6 +11,8 @@ from __future__ import absolute_import
 from zope import component
 from zope import interface
 
+from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
+
 from nti.app.products.courseware.utils import PreviewCourseAccessPredicateDecorator
 
 from nti.app.products.courseware_scorm.courses import is_course_admin
@@ -29,7 +31,6 @@ from nti.app.products.courseware_scorm.views import PREVIEW_SCORM_COURSE_VIEW_NA
 from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
-from nti.contenttypes.courses.interfaces import ICourseInstanceEnrollmentRecord
 
 from nti.contenttypes.courses.utils import is_course_instructor_or_editor
 
@@ -101,13 +102,13 @@ class _SCORMCourseInstanceMetadataDecorator(PreviewCourseAccessPredicateDecorato
             )
 
 
-@component.adapter(ICourseInstanceEnrollmentRecord)
+@component.adapter(ICourseInstanceEnrollment)
 @interface.implementer(IExternalObjectDecorator)
-class _CourseInstanceEnrollmentRecordDecorator(AbstractAuthenticatedRequestAwareDecorator):
+class _CourseInstanceEnrollmentDecorator(AbstractAuthenticatedRequestAwareDecorator):
     
     def _predicate(self, original, unused_external):
         client = component.getUtility(ISCORMCloudClient)
-        return client.enrollment_registration_exists(original)
+        return client.enrollment_registration_exists(original.CourseInstance, self.remoteUser)
     
     def _do_decorate_external(self, original, external):
         _links = external.setdefault(LINKS, [])
