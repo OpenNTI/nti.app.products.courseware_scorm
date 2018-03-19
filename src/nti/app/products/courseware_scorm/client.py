@@ -34,6 +34,8 @@ from nti.externalization.proxy import removeAllProxies
 
 from nti.scorm_cloud.client import ScormCloudUtilities
 
+from nti.scorm_cloud.client.registration import RegistrationReport
+
 from nti.scorm_cloud.client.request import ScormCloudError
 
 from nti.scorm_cloud.interfaces import IScormCloudService
@@ -283,7 +285,17 @@ class SCORMCloudClient(object):
     def get_registration_progress(self, course, user, results_format=None):
         registration_id = self._get_registration_id(course, user)
         service = self.cloud.get_registration_service()
-        result = service.get_registration_result(registration_id, results_format)
+        try:
+            result = service.get_registration_result(registration_id, results_format)
+        except ScormCloudError as error:
+            logger.warning(error)
+            if error.code == u'1':
+                # The registration specified by the given regid does not exist
+                # Treat this like an existing registration with no progress
+                result = RegistrationReport(format_=results_format)
+            else:
+                # An unexpected error occurred
+                raise error
         return ISCORMProgress(result)
 
     def enrollment_registration_exists(self, course, user):
