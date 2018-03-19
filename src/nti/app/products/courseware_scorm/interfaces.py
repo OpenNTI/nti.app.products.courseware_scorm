@@ -112,7 +112,7 @@ class ISCORMCloudClient(interface.Interface):
         Deletes all SCORM Cloud registrations for the specified course.
         """
 
-    def get_registration_progress(course, user):
+    def get_registration_progress(course, user, results_format=None):
         """
         Returns progress for the registration of the specified user and course.
         """

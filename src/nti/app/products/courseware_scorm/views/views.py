@@ -122,7 +122,10 @@ class SCORMProgressView(AbstractAuthenticatedView):
     """
     A view for observing SCORM registration progress.
     """
+    
+    def _results_format(self):
+        return CaseInsensitiveDict(self.request.params).get(u'resultsFormat')
 
     def __call__(self):
         client = component.getUtility(ISCORMCloudClient)
-        return client.get_registration_progress(self.context.CourseInstance, self.remoteUser)
+        return client.get_registration_progress(self.context.CourseInstance, self.remoteUser, self._results_format())

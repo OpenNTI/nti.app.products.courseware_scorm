@@ -280,10 +280,11 @@ class SCORMCloudClient(object):
         for registration in registration_list or ():
             service.deleteRegistration(registration.registration_id)
 
-    def get_registration_progress(self, course, user):
+    def get_registration_progress(self, course, user, results_format=None):
         registration_id = self._get_registration_id(course, user)
         service = self.cloud.get_registration_service()
-        return ISCORMProgress(service.get_registration_result(registration_id))
+        result = service.get_registration_result(registration_id, results_format)
+        return ISCORMProgress(result)
 
     def enrollment_registration_exists(self, course, user):
         registration_id = self._get_registration_id(course, user)
