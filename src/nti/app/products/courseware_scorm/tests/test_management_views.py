@@ -16,6 +16,7 @@ from hamcrest import has_item
 from hamcrest import not_none
 from hamcrest import has_entry
 from hamcrest import assert_that
+from hamcrest import has_entries
 does_not = is_not
 
 import shutil
@@ -50,12 +51,17 @@ from nti.dataserver.users.users import User
 
 from nti.dataserver.tests import mock_dataserver
 
+from nti.externalization.externalization import toExternalObject
+
 from nti.externalization.interfaces import StandardExternalFields
 
 from nti.externalization.testing import externalizes
 
 from nti.ntiids.ntiids import find_object_with_ntiid
 
+from nti.scorm_cloud.client.registration import RegistrationReport
+
+HREF = StandardExternalFields().HREF
 ITEMS = StandardExternalFields.ITEMS
 CLASS = StandardExternalFields.CLASS
 LINKS = StandardExternalFields.LINKS
@@ -168,17 +174,38 @@ class TestManagementViews(ApplicationLayerTest):
             self._create_user(u'CapnCook')
             
         # Check for SCORM progress Link on enrollment records
+        self.progress_href = None
+        new_username = u'CapnCook'
         with mock_dataserver.mock_db_trans(site_name='alpha.nextthought.com'):
-            capnCook = User.get_user(u'CapnCook')
+            new_user = User.get_user(new_username)
             entry = find_object_with_ntiid(course_ntiid)
             course = ICourseInstance(entry)
             
             enrollment_manager = ICourseEnrollmentManager(course)
-            enrollment_record = enrollment_manager.enroll(capnCook)
+            enrollment_record = enrollment_manager.enroll(new_user)
             enrollment = ICourseInstanceEnrollment(enrollment_record)
             assert_that(enrollment, is_not(none()))
             assert_that(enrollment,
                         externalizes(has_entry(LINKS, has_item(has_entry('rel', PROGRESS_REL)))))
+            
+            ext_enrollment = toExternalObject(enrollment)
+            progress_link = next((link for link in ext_enrollment[LINKS] if link['rel'] == PROGRESS_REL), None)
+            assert_that(progress_link, is_not(none()))
+            self.progress_href = progress_link[HREF]
+        
+        assert_that(self.progress_href, is_not(none()))
+        self.testapp.get(self.progress_href, status=403)
+        
+        reg_report = RegistrationReport(format_='course')
+        mock_registration_service.expects('get_registration_result').returns(reg_report)
+        new_user_env = self._make_extra_environ(new_username)
+        progress = self.testapp.get(self.progress_href, extra_environ=new_user_env, status=200).json_body
+        assert_that(progress, is_not(none()))
+        assert_that(progress, has_entries('complete', False,
+                                          'score', None,
+                                          'success', False,
+                                          'total_time', 0))
+        self.progress_href = None
 
         # GUID NTIID
         assert_that(entry_ntiid,
