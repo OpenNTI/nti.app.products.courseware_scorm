@@ -105,8 +105,7 @@ class _SCORMCourseInstanceMetadataDecorator(PreviewCourseAccessPredicateDecorato
 class _CourseInstanceEnrollmentDecorator(AbstractAuthenticatedRequestAwareDecorator):
     
     def _predicate(self, original, unused_external):
-        client = component.getUtility(ISCORMCloudClient)
-        return client.enrollment_registration_exists(original.CourseInstance, self.remoteUser)
+        return ISCORMCourseInstance.providedBy(original.CourseInstance)
     
     def _do_decorate_external(self, original, external):
         _links = external.setdefault(LINKS, [])
