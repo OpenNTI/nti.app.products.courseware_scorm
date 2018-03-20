@@ -394,3 +394,30 @@ class ISCORMLearnerPreference(interface.Interface):
     audio_captioning = ValidTextLine(title=u'Specifies whether captioning text corresponding to audio is displayed.',
                                      required=False)
     
+    
+class ISCORMStatic(interface.Interface):
+    """
+    An object which represents static information about a SCORM runtime.
+    """
+    
+    learner_id = ValidTextLine(title=u'The learner ID.',
+                               required=False)
+    
+    launch_data = ValidTextLine(title=u'The launch data.',
+                                required=False)
+    
+    learner_name = ValidTextLine(title=u'The learner name.',
+                                 required=False)
+    
+    max_time_allowed = Number(title=u'The amount of accumulated time the learner is allowed to use an SCO.',
+                              required=False)
+    
+    time_limit_action = ValidTextLine(title=u'Indicates what the SCO should do when max_time_allowed is exceeded.',
+                                      required=False)
+    
+    completion_threshold = Number(title=u'Used to determine whether the SCO should be considered complete (in 0...1).',
+                                  required=False)
+    
+    scaled_passing_score = Number(title=u'Scaled passing score required to master the SCO (in -1...1).',
+                                  required=False)
+    
