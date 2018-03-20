@@ -377,3 +377,20 @@ class ISCORMInteraction(interface.Interface):
                                  required=True)
     
     
+class ISCORMLearnerPreference(interface.Interface):
+    """
+    An object which represents a learner's preferences in an SCO.
+    """
+    
+    language = ValidTextLine(title=u'The learner’s preferred language for SCOs with multilingual capability.',
+                             required=False)
+    
+    audio_level = Number(title=u'Specifies an intended change in perceived audio level.',
+                         required=False)
+    
+    delivery_speed = Number(title=u'The learner’s preferred relative speed of content delivery.',
+                            required=False)
+    
+    audio_captioning = ValidTextLine(title=u'Specifies whether captioning text corresponding to audio is displayed.',
+                                     required=False)
+    
