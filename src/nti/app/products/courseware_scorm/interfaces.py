@@ -421,3 +421,73 @@ class ISCORMStatic(interface.Interface):
     scaled_passing_score = Number(title=u'Scaled passing score required to master the SCO (in -1...1).',
                                   required=False)
     
+
+class ISCORMRuntime(interface.Interface):
+    """
+    An object containing summary information about an SCO runtime.
+    """
+    
+    mode = ValidTextLine(title=u'Identifies one of three possible modes in which the SCO may be presented to the learner.',
+                         required=False)
+    
+    exit_ = ValidTextLine(title=u'Indicates how or why the learner left the SCO.',
+                          required=False)
+    
+    entry = ValidTextLine(title=u'Asserts whether the learner has previously accessed the SCO.',
+                          required=False)
+    
+    credit = Bool(title=u'Indicates whether the learner will be credited for performance in the SCO.',
+                  required=False)
+    
+    static = Object(ISCORMStatic,
+                    title=u'Static information about the SCO runtime.',
+                    required=False)
+    
+    location = ValidTextLine(title=u'The learner’s current location in the SCO.',
+                             required=False)
+    
+    score_raw = Number(title=u'Number that reflects the performance of the learner, for the objective, \
+                               relative to the range bounded by the values of min and max.',
+                       required=False)
+    
+    objectives = TypedIterable(title=u'The objectives.',
+                               value_type=Object(ISCORMObjective),
+                               required=True)
+    
+    total_time = Number(title=u'The sum of all of the learner’s session times accumulated in the current learner attempt.',
+                               required=False)
+    
+    time_tracked = Number(title=u'The amount of time that the learner has spent in the current learner session for this SCO.',
+                                 required=False)
+    
+    interactions = TypedIterable(title=u'The interactions associated with the SCO.',
+                                 value_type=Object(ISCORMInteraction),
+                                 required=True)
+    
+    score_scaled = Number(title=u'Number that reflects the performance of the learner, from -1 to 1.',
+                          required=False)
+    
+    suspend_data = ValidTextLine(title=u'Provides space to store and retrieve data between learner sessions.',
+                                 required=False)
+    
+    success_status = ValidTextLine(title=u'Indicates whether the learner has mastered the SCO.',
+                                   required=False)
+    
+    progress_measure = ValidTextLine(title=u'A measure of the progress the learner has made toward completing the SCO.',
+                                     required=False)
+    
+    completion_status = ValidTextLine(title=u'Indicates whether the learner has completed the SCO.',
+                                      required=False)
+    
+    learner_preference = Object(ISCORMLearnerPreference,
+                                title=u'The learner\'s preferences.',
+                                required=False)
+    
+    comments_from_lms = TypedIterable(title=u'The comments from the LMS.',
+                                      value_type=Object(ISCORMComment),
+                                      required=True)
+    
+    comments_from_learner = TypedIterable(title=u'The comments from the learner.',
+                                          value_type=Object(ISCORMComment),
+                                          required=True)
+    
