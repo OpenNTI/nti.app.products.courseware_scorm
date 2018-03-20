@@ -267,3 +267,44 @@ class ISCORMActivity(interface.Interface):
     runtime = Object(title=u'The activity runtime.',
                      required=False)
 
+
+class ISCORMObjective(interface.Interface):
+    """
+    An object containing summary information about an activity objective.
+    """
+    
+    id = ValidTextLine(title=u'The objective ID.',
+                       required=True)
+    
+    measure_status = Bool(title=u'Whether to measure status.',
+                          required=True)
+    
+    normalized_measure = Number(title=u'The normalized measure.',
+                                required=True)
+    
+    progress_status = Bool(title=u'The progress status.',
+                           required=True)
+    
+    satisfied_status = Bool(title=u'The satisfied status.',
+                            required=True)
+    
+    score_scaled = Number(title=u'The scaled score.',
+                          required=False)
+    
+    score_min = Number(title=u'The minimum score.',
+                       required=False)
+    
+    score_raw = Number(title=u'The raw score.',
+                       required=False)
+    
+    success_status = ValidTextLine(title=u'The success status.',
+                                   required=False)
+    
+    completion_status = ValidTextLine(title=u'The completion status.',
+                                      required=False)
+    
+    progress_measure = ValidTextLine(title=u'The progress measure.',
+                                     required=False)
+    
+    description = ValidTextLine(title=u'The description.',
+                                required=False)
