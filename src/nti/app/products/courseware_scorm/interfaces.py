@@ -25,7 +25,6 @@ from nti.schema.field import Number
 from nti.schema.field import Object
 from nti.schema.field import DateTime
 from nti.schema.field import Iterable
-from nti.schema.field import ValidText
 from nti.schema.field import ListOrTuple
 from nti.schema.field import IndexedIterable as TypedIterable
 from nti.schema.field import DecodingValidTextLine as ValidTextLine
@@ -203,24 +202,6 @@ class IScormRegistration(interface.Interface):
     learner_first_name = ValidTextLine(title=u'The first name of the registered learner.')
 
     learner_last_name = ValidTextLine(title=u'The last name of the registered learner.')
-
-
-class ISCORMProgress(interface.Interface):
-    """
-    An object containing high-level information about a registration result.
-    """
-
-    complete = Bool(title=u'Whether the registration has been completed.')
-
-    success = Bool(title=u'Whether the registration has been passed or failed.')
-
-    score = Number(title=u'The score, from 0 to 100.')
-
-    total_time = Number(title=u'The total time tracked by the content player in seconds; \
-                                that is, how long the learner had the course open.')
-    
-    activity = ValidText(title=u'A textual representation of registration activity in the course.',
-                         required=False)
 
 
 class ISCORMObjective(interface.Interface):
@@ -491,4 +472,23 @@ class ISCORMActivity(interface.Interface):
     runtime = Object(ISCORMRuntime,
                      title=u'The activity runtime.',
                      required=False)
+    
+
+class ISCORMProgress(interface.Interface):
+    """
+    An object containing high-level information about a registration result.
+    """
+
+    complete = Bool(title=u'Whether the registration has been completed.')
+
+    success = Bool(title=u'Whether the registration has been passed or failed.')
+
+    score = Number(title=u'The score, from 0 to 100.')
+
+    total_time = Number(title=u'The total time tracked by the content player in seconds; \
+                                that is, how long the learner had the course open.')
+    
+    activity = Object(ISCORMActivity,
+                      title=u'A textual representation of registration activity in the course.',
+                      required=False)
     
