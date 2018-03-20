@@ -209,10 +209,10 @@ class ISCORMObjective(interface.Interface):
     An object containing summary information about an activity objective.
     """
     
-    id = ValidTextLine(title=u'The objective ID.',
+    id = ValidTextLine(title=u'A unique label for the objective.',
                        required=True)
     
-    measure_status = Bool(title=u'Whether to measure status.',
+    measure_status = Bool(title=u'The measure status.',
                           required=True)
     
     normalized_measure = Number(title=u'The normalized measure.',
@@ -224,25 +224,27 @@ class ISCORMObjective(interface.Interface):
     satisfied_status = Bool(title=u'The satisfied status.',
                             required=True)
     
-    score_scaled = Number(title=u'The scaled score.',
+    score_scaled = Number(title=u'A number that reflects the performance of the learner for the objective.',
                           required=False)
     
-    score_min = Number(title=u'The minimum score.',
+    score_min = Number(title=u'The minimum value, for the objective, in the range for the raw score.',
                        required=False)
     
-    score_raw = Number(title=u'The raw score.',
+    score_raw = Number(title=u'A number that reflects the performance of the learner, for the objective, \
+                               relative to the range bounded by the values of min and max.',
                        required=False)
     
-    success_status = ValidTextLine(title=u'The success status.',
-                                   required=False)
+    success_status = Bool(title=u'Indicates whether the learner has mastered the objective.',
+                          required=False)
     
-    completion_status = ValidTextLine(title=u'The completion status.',
+    completion_status = ValidTextLine(title=u'Indicates whether the learner has completed the associated objective.',
                                       required=False)
     
-    progress_measure = ValidTextLine(title=u'The progress measure.',
-                                     required=False)
+    progress_measure = Number(title=u'A measure of the progress the learner has made \
+                                      toward completing the objective (in 0...1).',
+                              required=False)
     
-    description = ValidTextLine(title=u'The description.',
+    description = ValidTextLine(title=u'A brief informative description of the objective.',
                                 required=False)
     
     
