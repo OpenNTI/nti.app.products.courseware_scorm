@@ -235,7 +235,8 @@ class ISCORMObjective(interface.Interface):
                        required=False)
     
     success_status = Bool(title=u'Indicates whether the learner has mastered the objective.',
-                          required=False)
+                          required=False,
+                          default=None)
     
     completion_status = ValidTextLine(title=u'Indicates whether the learner has completed the associated objective.',
                                       required=False)
@@ -439,10 +440,12 @@ class ISCORMActivity(interface.Interface):
                           required=True)
     
     complete = Bool(title=u'Whether the activity has been completed.',
-                    required=False)
+                    required=False,
+                    default=None)
     
     success = Bool(title=u'Whether the activity has been passed or failed.',
-                   required=False)
+                   required=False,
+                   default=None)
     
     satisfied = Bool(title=u'Whether the activity has been satisfied.',
                      required=True)
@@ -464,7 +467,8 @@ class ISCORMActivity(interface.Interface):
                    default=None)
     
     score = Number(title=u'The activity score, from 0 to 1.',
-                   required=False)
+                   required=False,
+                   default=None)
     
     objectives = List(title=u'The activity objectives.',
                       required=True)
@@ -474,7 +478,8 @@ class ISCORMActivity(interface.Interface):
     
     runtime = Object(ISCORMRuntime,
                      title=u'The activity runtime.',
-                     required=False)
+                     required=False,
+                     default=None)
     
 
 class ISCORMProgress(interface.Interface):
@@ -493,5 +498,6 @@ class ISCORMProgress(interface.Interface):
     
     activity = Object(ISCORMActivity,
                       title=u'A textual representation of registration activity in the course.',
-                      required=False)
+                      required=False,
+                      default=None)
     
