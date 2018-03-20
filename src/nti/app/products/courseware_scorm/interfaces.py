@@ -23,6 +23,7 @@ from nti.schema.field import Bool
 from nti.schema.field import List
 from nti.schema.field import Number
 from nti.schema.field import Object
+from nti.schema.field import DateTime
 from nti.schema.field import ValidText
 from nti.schema.field import ListOrTuple
 from nti.schema.field import DecodingValidTextLine as ValidTextLine
@@ -308,3 +309,19 @@ class ISCORMObjective(interface.Interface):
     
     description = ValidTextLine(title=u'The description.',
                                 required=False)
+    
+    
+class ISCORMComment(interface.Interface):
+    """
+    An object representing a comment or annotation associated with a SCO.
+    """
+    
+    value = ValidTextLine(title=u'The comment text.',
+                          required=False)
+    
+    location = ValidTextLine(title=u'The point in the SCO to which the comment applies.',
+                             required=False)
+    
+    data_time = DateTime(title=u'The point in time at which the comment was created or most recently changed.',
+                         required=False)
+    
