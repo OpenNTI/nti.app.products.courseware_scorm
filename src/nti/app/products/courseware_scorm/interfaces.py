@@ -24,8 +24,10 @@ from nti.schema.field import List
 from nti.schema.field import Number
 from nti.schema.field import Object
 from nti.schema.field import DateTime
+from nti.schema.field import Iterable
 from nti.schema.field import ValidText
 from nti.schema.field import ListOrTuple
+from nti.schema.field import IndexedIterable as TypedIterable
 from nti.schema.field import DecodingValidTextLine as ValidTextLine
 
 
