@@ -20,7 +20,9 @@ from nti.contenttypes.courses.interfaces import INonExportable
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.schema.field import Bool
+from nti.schema.field import List
 from nti.schema.field import Number
+from nti.schema.field import Object
 from nti.schema.field import ValidText
 from nti.schema.field import ListOrTuple
 from nti.schema.field import DecodingValidTextLine as ValidTextLine
@@ -216,3 +218,52 @@ class ISCORMProgress(interface.Interface):
     
     activity = ValidText(title=u'A textual representation of registration activity in the course.',
                          required=False)
+
+
+class ISCORMActivity(interface.Interface):
+    """
+    An object containing summary information about a registration activity.
+    """
+    
+    id = ValidTextLine(title=u'The activity ID.',
+                       required=True)
+    
+    title = ValidTextLine(title=u'The activity title.',
+                          required=True)
+    
+    complete = Bool(title=u'Whether the activity has been completed.',
+                    required=False)
+    
+    success = Bool(title=u'Whether the activity has been passed or failed.',
+                   required=False)
+    
+    satisfied = Bool(title=u'Whether the activity has been satisfied.',
+                     required=True)
+    
+    completed = Bool(title=u'Whether the activity has been completed.',
+                   required=True)
+    
+    progress_status = Bool(title=u'Whether there is progress status.',
+                           required=True)
+
+    attempts = Number(title=u'The number of attempts.',
+                      required=True)
+    
+    suspended = Bool(title=u'Whether the activity has been suspended.',
+                     required=True)
+    
+    time_ = Number(title=u'The time spent on the activity.',
+                   required=False)
+    
+    score = Number(title=u'The activity score, from 0 to 1.',
+                   required=False)
+    
+    objectives = List(title=u'The activity objectives.',
+                      required=True)
+    
+    children = List(title=u'The activity children.',
+                    required=True)
+    
+    runtime = Object(title=u'The activity runtime.',
+                     required=False)
+
