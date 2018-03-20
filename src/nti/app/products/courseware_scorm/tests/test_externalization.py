@@ -15,6 +15,7 @@ from hamcrest import assert_that
 from hamcrest import has_entries
 
 from nti.app.products.courseware_scorm.interfaces import ISCORMProgress
+from nti.app.products.courseware_scorm.interfaces import ISCORMObjective
 from nti.app.products.courseware_scorm.interfaces import IScormRegistration
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
@@ -22,6 +23,7 @@ from nti.app.testing.application_webtest import ApplicationLayerTest
 from nti.externalization.testing import externalizes
 
 from nti.scorm_cloud.client.registration import Instance
+from nti.scorm_cloud.client.registration import Objective
 from nti.scorm_cloud.client.registration import Registration
 from nti.scorm_cloud.client.registration import RegistrationReport
 
@@ -91,3 +93,26 @@ class TestExternal(ApplicationLayerTest):
                                              'instances', has_item(has_entries('instance_id', 'instanceId',
                                                                                'course_version', 'version',
                                                                                'update_date', 'updateDate')))))
+    
+    def test_scorm_objective(self):
+        mock_objective = Objective(id_=u'id',
+                                   score_min=u'0',
+                                   score_raw=u'100',
+                                   success_status=u'passed', 
+                                   completion_status=u'completed',
+                                   progress_measure=u'1')
+        objective = ISCORMObjective(mock_objective)
+        assert_that(objective, is_not(none()))
+        assert_that(objective,
+                    externalizes(has_entries('ID', 'id',
+                                             'measure_status', False,
+                                             'normalized_measure', 0.0,
+                                             'progress_status', False,
+                                             'satisfied_status', False,
+                                             'score_scaled', None,
+                                             'score_min', 0.0,
+                                             'score_raw', 100.0,
+                                             'success_status', True,
+                                             'completion_status', u'completed',
+                                             'progress_measure', 1.0,
+                                             'description', None)))

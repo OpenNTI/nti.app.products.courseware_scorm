@@ -44,6 +44,10 @@
 	 <adapter factory=".model.SCORMProgress"
  			 for="nti.scorm_cloud.client.registration.RegistrationReport"
  			 provides=".interfaces.ISCORMProgress" />
+ 			 
+ 	<adapter factory=".model.SCORMObjective"
+ 			 for="nti.scorm_cloud.client.registration.Objective"
+ 			 provides=".interfaces.ISCORMObjective" />
 
 	<!-- Subscribers -->
 	<subscriber handler=".subscribers._enrollment_record_dropped" />
@@ -93,9 +97,10 @@
 
 	<ext:registerAutoPackageIO
 					root_interfaces=".interfaces.ISCORMCourseMetadata
-													 .interfaces.IScormInstance
-													 .interfaces.IScormRegistration
-													 .interfaces.ISCORMProgress"
+									 .interfaces.IScormInstance
+									 .interfaces.IScormRegistration
+									 .interfaces.ISCORMProgress
+									 .interfaces.ISCORMObjective"
 					modules=".courses .model" />
 
 </configure>
