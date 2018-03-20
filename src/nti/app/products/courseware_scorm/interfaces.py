@@ -324,4 +324,15 @@ class ISCORMComment(interface.Interface):
     
     data_time = DateTime(title=u'The point in time at which the comment was created or most recently changed.',
                          required=False)
+
+
+class ISCORMResponse(interface.Interface):
+    """
+    An object representing data generated when a learner responds to an interaction.
+    """
     
+    id = ValidTextLine(title=u'The response ID.',
+                       required=False)
+    
+    value = ValidTextLine(title=u'The response value.',
+                          required=False)
