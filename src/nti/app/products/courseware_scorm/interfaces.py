@@ -459,8 +459,9 @@ class ISCORMActivity(interface.Interface):
     suspended = Bool(title=u'Whether the activity has been suspended.',
                      required=True)
     
-    time_ = Number(title=u'The time spent on the activity.',
-                   required=False)
+    time = Number(title=u'The time spent on the activity.',
+                   required=False,
+                   default=None)
     
     score = Number(title=u'The activity score, from 0 to 1.',
                    required=False)
