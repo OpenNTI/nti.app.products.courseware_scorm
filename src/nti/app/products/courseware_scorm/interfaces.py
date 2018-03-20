@@ -336,3 +336,42 @@ class ISCORMResponse(interface.Interface):
     
     value = ValidTextLine(title=u'The response value.',
                           required=False)
+
+
+class ISCORMInteraction(interface.Interface):
+    """
+    An object which represents the results of a question response.
+    """
+    
+    id = ValidTextLine(title=u'A unique label for the interaction.',
+                       required=True)
+    
+    result = ValidTextLine(title=u'A judgment of the correctness of the learner response.',
+                           required=False)
+    
+    latency = Number(title=u'The time elapsed between the time the interaction was made \
+                            available to the learner for response and the time of the first response.',
+                            required=False)
+    
+    timestamp = Number(title=u'The point in time at which the interaction was first made available to the learner \
+                               for learner interaction and response.',
+                               required=False)
+    
+    weighting = Number(title=u'The weight given to the interaction relative to other interactions.',
+                       required=False)
+    
+    objectives = TypedIterable(title=u'The objectives associated with the interaction.',
+                               value_type=Object(ISCORMObjective),
+                               required=True)
+    
+    description = ValidTextLine(title=u'A brief informative description of the interaction.',
+                                required=False)
+    
+    learner_response = Object(ISCORMResponse,
+                              title=u'The data generated when a learner responds to an interaction.',
+                              required=False)
+    
+    correct_responses = Iterable(title=u'The correct response patterns for the interaction.',
+                                 required=True)
+    
+    
