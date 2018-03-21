@@ -21,6 +21,7 @@ from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.schema.field import Bool
 from nti.schema.field import List
+from nti.schema.field import Choice
 from nti.schema.field import Number
 from nti.schema.field import Object
 from nti.schema.field import DateTime
@@ -238,8 +239,10 @@ class ISCORMObjective(interface.Interface):
                           required=False,
                           default=None)
     
-    completion_status = ValidTextLine(title=u'Indicates whether the learner has completed the associated objective.',
-                                      required=False)
+    completion_status = Choice(title=u'Indicates whether the learner has completed the associated objective.',
+                               values=('completed', 'incomplete', 'not attempted', 'unknown'),
+                               default=None,
+                               required=False)
     
     progress_measure = Number(title=u'A measure of the progress the learner has made \
                                       toward completing the objective (in 0...1).',
@@ -284,8 +287,10 @@ class ISCORMInteraction(interface.Interface):
     id = ValidTextLine(title=u'A unique label for the interaction.',
                        required=True)
     
-    result = ValidTextLine(title=u'A judgment of the correctness of the learner response.',
-                           required=False)
+    result = Choice(title=u'A judgment of the correctness of the learner response.',
+                    values=('correct', 'incorrect', 'unanticipated', 'neutral'),
+                    default=None,
+                    required=False)
     
     latency = Number(title=u'The time elapsed between the time the interaction was made \
                             available to the learner for response and the time of the first response.',
