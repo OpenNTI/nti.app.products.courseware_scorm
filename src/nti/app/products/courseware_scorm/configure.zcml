@@ -48,6 +48,14 @@
  	<adapter factory=".model.SCORMObjective"
  			 for="nti.scorm_cloud.client.registration.Objective"
  			 provides=".interfaces.ISCORMObjective" />
+ 	
+ 	<adapter factory=".model.SCORMResponse"
+ 			 for="nti.scorm_cloud.client.registration.Response"
+ 			 provides=".interfaces.ISCORMResponse" />
+ 	
+ 	<adapter factory=".model.SCORMInteraction"
+ 			 for="nti.scorm_cloud.client.registration.Interaction"
+ 			 provides=".interfaces.ISCORMInteraction" />
 
 	<!-- Subscribers -->
 	<subscriber handler=".subscribers._enrollment_record_dropped" />
@@ -100,7 +108,9 @@
 									 .interfaces.IScormInstance
 									 .interfaces.IScormRegistration
 									 .interfaces.ISCORMProgress
-									 .interfaces.ISCORMObjective"
+									 .interfaces.ISCORMObjective
+									 .interfaces.ISCORMResponse
+									 .interfaces.ISCORMInteraction"
 					modules=".courses .model" />
 
 </configure>

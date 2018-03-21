@@ -15,17 +15,25 @@ from hamcrest import assert_that
 from hamcrest import has_entries
 
 from nti.app.products.courseware_scorm.interfaces import ISCORMProgress
+from nti.app.products.courseware_scorm.interfaces import ISCORMResponse
 from nti.app.products.courseware_scorm.interfaces import ISCORMObjective
+from nti.app.products.courseware_scorm.interfaces import ISCORMInteraction
 from nti.app.products.courseware_scorm.interfaces import IScormRegistration
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
+from nti.externalization.externalization import StandardExternalFields
+
 from nti.externalization.testing import externalizes
 
 from nti.scorm_cloud.client.registration import Instance
+from nti.scorm_cloud.client.registration import Response
 from nti.scorm_cloud.client.registration import Objective
+from nti.scorm_cloud.client.registration import Interaction
 from nti.scorm_cloud.client.registration import Registration
 from nti.scorm_cloud.client.registration import RegistrationReport
+
+ID = StandardExternalFields.ID
 
 
 class TestExternal(ApplicationLayerTest):
@@ -42,7 +50,8 @@ class TestExternal(ApplicationLayerTest):
                     externalizes(has_entries(u'complete', False,
                                              u'success', False,
                                              u'total_time', 3,
-                                             u'score', None)))
+                                             u'score', None,
+                                             u'activity', None)))
         report.score=None
         progress = ISCORMProgress(report, None)
         assert_that(progress, is_not(none()))
@@ -50,7 +59,8 @@ class TestExternal(ApplicationLayerTest):
                     externalizes(has_entries(u'complete', False,
                                              u'success', False,
                                              u'total_time', 3,
-                                             u'score', None)))
+                                             u'score', None,
+                                             u'activity', None)))
         report.score=u'100'
         report.complete = u'complete'
         report.success = u'passed'
@@ -60,7 +70,8 @@ class TestExternal(ApplicationLayerTest):
                     externalizes(has_entries(u'complete', True,
                                              u'success', True,
                                              u'total_time', 3,
-                                             u'score', 100)))
+                                             u'score', 100,
+                                             u'activity', None)))
 
 
     def test_scorm_registration(self):
@@ -96,23 +107,63 @@ class TestExternal(ApplicationLayerTest):
     
     def test_scorm_objective(self):
         mock_objective = Objective(id_=u'id',
+                                   measurestatus=True,
+                                   normalizedmeasure=0.5,
+                                   progressstatus=True,
+                                   satisfiedstatus=True,
+                                   score_scaled=u'1.0',
                                    score_min=u'0',
                                    score_raw=u'100',
                                    success_status=u'passed', 
                                    completion_status=u'completed',
-                                   progress_measure=u'1')
+                                   progress_measure=u'1',
+                                   description=u'description')
         objective = ISCORMObjective(mock_objective)
         assert_that(objective, is_not(none()))
         assert_that(objective,
-                    externalizes(has_entries('ID', 'id',
-                                             'measure_status', False,
-                                             'normalized_measure', 0.0,
-                                             'progress_status', False,
-                                             'satisfied_status', False,
-                                             'score_scaled', None,
+                    externalizes(has_entries(ID, 'id',
+                                             'measure_status', True,
+                                             'normalized_measure', 0.5,
+                                             'progress_status', True,
+                                             'satisfied_status', True,
+                                             'score_scaled', 1.0,
                                              'score_min', 0.0,
                                              'score_raw', 100.0,
                                              'success_status', True,
                                              'completion_status', u'completed',
                                              'progress_measure', 1.0,
-                                             'description', None)))
+                                             'description', u'description')))
+        
+    def test_scorm_interaction(self):
+        mock_interaction = Interaction(id_=u'i-id',
+                                       timestamp=u'0001:01:27.76',
+                                       weighting=u'1.2',
+                                       learner_response=Response(id_=u'r-id', value=u'r-value'),
+                                       result=u'correct',
+                                       description=u'i-description',
+                                       objectives=[Objective(id_=u'o-id')],
+                                       correct_responses=[Response(id_=u'r-id', value=u'r-value')])
+        interaction = ISCORMInteraction(mock_interaction)
+        assert_that(interaction, is_not(none()))
+        assert_that(interaction,
+                    externalizes(has_entries(ID, 'i-id',
+                                             'timestamp', 3687.76,
+                                             'weighting', 1.2,
+                                             'result', 'correct',
+                                             'description', 'i-description',
+                                             'learner_response', has_entries(ID, u'r-id',
+                                                                             'value', u'r-value'),
+                                             'objectives', has_item(has_entries(ID, 'o-id',
+                                                                                'measure_status', False,
+                                                                                'normalized_measure', 0.0,
+                                                                                'progress_status', False,
+                                                                                'satisfied_status', False,
+                                                                                'score_scaled', None,
+                                                                                'score_min', None,
+                                                                                'score_raw', None,
+                                                                                'success_status', None,
+                                                                                'completion_status', None,
+                                                                                'progress_measure', None,
+                                                                                'description', None)),
+                                             'correct_responses', has_item(has_entries(ID, u'r-id',
+                                                                                       'value', u'r-value')))))

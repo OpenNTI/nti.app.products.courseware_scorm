@@ -8,16 +8,22 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+from datetime import datetime
+
 from zope import component
 from zope import interface
 
 from nti.app.products.courseware_scorm.interfaces import IScormInstance
 from nti.app.products.courseware_scorm.interfaces import ISCORMProgress
+from nti.app.products.courseware_scorm.interfaces import ISCORMResponse
 from nti.app.products.courseware_scorm.interfaces import ISCORMObjective
+from nti.app.products.courseware_scorm.interfaces import ISCORMInteraction
 from nti.app.products.courseware_scorm.interfaces import IScormRegistration
 
 from nti.scorm_cloud.client.registration import Instance
+from nti.scorm_cloud.client.registration import Response
 from nti.scorm_cloud.client.registration import Objective
+from nti.scorm_cloud.client.registration import Interaction
 from nti.scorm_cloud.client.registration import Registration
 from nti.scorm_cloud.client.registration import RegistrationReport
 
@@ -50,6 +56,13 @@ def _parse_time(str_value, name):
         time = sum([x*y for x,y in zip([float(x) for x in str_value.split(':')], (3600, 60, 1))])
     return time
 
+def _parse_datetime(str_value, name):
+    datetime_value = None
+    try:
+        datetime_value = datetime.strptime(str_value, '%Y%m%d%H%M%S')
+    except ValueError as error:
+        logger.info('%s: %s', name, error)
+    return datetime_value
 
 @component.adapter(Instance)
 @interface.implementer(IScormInstance)
@@ -122,3 +135,29 @@ class SCORMObjective(object):
         self.completion_status = objective.completion_status
         self.progress_measure = _parse_float(objective.progress_measure, u'SCORMObjective.progress_measure')
         self.description = objective.description        
+
+
+@component.adapter(Response)
+@interface.implementer(ISCORMResponse)
+class SCORMResponse(object):
+            
+        def __init__(self, response):
+            self.id = response.id
+            self.value = response.value
+
+
+@component.adapter(Interaction)
+@interface.implementer(ISCORMInteraction)
+class SCORMInteraction(object):
+    
+    def __init__(self, interaction):
+        self.id = interaction.id
+        self.result = interaction.result
+        self.latency = _parse_time(interaction.latency, u'SCORMInteraction.latency')
+        self.timestamp = _parse_time(interaction.timestamp, u'SCORMInteraction.timestamp')
+        self.weighting = _parse_float(interaction.weighting, u'SCORMInteraction.weighting')
+        self.objectives = [ISCORMObjective(obj) for obj in interaction.objectives]
+        self.description = interaction.description
+        self.learner_response = ISCORMResponse(interaction.learner_response)
+        self.correct_responses = [ISCORMResponse(resp) for resp in interaction.correct_responses]
+        
