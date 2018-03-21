@@ -118,7 +118,7 @@ class SCORMObjective(object):
         self.score_scaled = _parse_float(objective.score_scaled, u'SCORMObjective.score_scaled')
         self.score_min = _parse_float(objective.score_min, u'SCORMObjective.score_min')
         self.score_raw = _parse_float(objective.score_raw, u'SCORMObjective.score_raw')
-        self.success_status = {u'passed': True, u'failed': False}[objective.success_status]
+        self.success_status = {u'passed': True, u'failed': False}.get(objective.success_status)
         self.completion_status = objective.completion_status
         self.progress_measure = _parse_float(objective.progress_measure, u'SCORMObjective.progress_measure')
         self.description = objective.description        
