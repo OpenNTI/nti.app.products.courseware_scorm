@@ -41,9 +41,9 @@
 			 for="nti.scorm_cloud.client.registration.Registration"
 			 provides=".interfaces.IScormRegistration" />
 
-	 <adapter factory=".model.SCORMProgress"
+	 <adapter factory=".model.SCORMRegistrationReport"
  			 for="nti.scorm_cloud.client.registration.RegistrationReport"
- 			 provides=".interfaces.ISCORMProgress" />
+ 			 provides=".interfaces.ISCORMRegistrationReport" />
  			 
  	<adapter factory=".model.SCORMObjective"
  			 for="nti.scorm_cloud.client.registration.Objective"
@@ -127,7 +127,7 @@
 					root_interfaces=".interfaces.ISCORMCourseMetadata
 									 .interfaces.IScormInstance
 									 .interfaces.IScormRegistration
-									 .interfaces.ISCORMProgress
+									 .interfaces.ISCORMRegistrationReport
 									 .interfaces.ISCORMObjective
 									 .interfaces.ISCORMResponse
 									 .interfaces.ISCORMInteraction

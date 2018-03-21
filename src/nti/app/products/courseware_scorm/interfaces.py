@@ -502,7 +502,7 @@ class ISCORMActivity(interface.Interface):
                      default=None)
     
 
-class ISCORMProgress(interface.Interface):
+class ISCORMRegistrationReport(interface.Interface):
     """
     An object containing high-level information about a registration result.
     """

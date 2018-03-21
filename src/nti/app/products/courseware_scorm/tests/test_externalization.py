@@ -18,10 +18,10 @@ from datetime import datetime
 
 from nti.app.products.courseware_scorm.interfaces import ISCORMRuntime
 from nti.app.products.courseware_scorm.interfaces import ISCORMActivity
-from nti.app.products.courseware_scorm.interfaces import ISCORMProgress
 from nti.app.products.courseware_scorm.interfaces import ISCORMObjective
 from nti.app.products.courseware_scorm.interfaces import ISCORMInteraction
 from nti.app.products.courseware_scorm.interfaces import IScormRegistration
+from nti.app.products.courseware_scorm.interfaces import ISCORMRegistrationReport
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
@@ -53,7 +53,7 @@ class TestExternal(ApplicationLayerTest):
                                     success=u'failure',
                                     totaltime=3,
                                     score=u'unknown')
-        progress = ISCORMProgress(report, None)
+        progress = ISCORMRegistrationReport(report, None)
         assert_that(progress, is_not(none()))
         assert_that(progress,
                     externalizes(has_entries(u'complete', False,
@@ -62,7 +62,7 @@ class TestExternal(ApplicationLayerTest):
                                              u'score', None,
                                              u'activity', None)))
         report.score=None
-        progress = ISCORMProgress(report, None)
+        progress = ISCORMRegistrationReport(report, None)
         assert_that(progress, is_not(none()))
         assert_that(progress,
                     externalizes(has_entries(u'complete', False,
@@ -74,7 +74,7 @@ class TestExternal(ApplicationLayerTest):
         report.complete = u'complete'
         report.success = u'passed'
         report.activity = Activity(id_=u'a-id', title=u'activity-title')
-        progress = ISCORMProgress(report, None)
+        progress = ISCORMRegistrationReport(report, None)
         assert_that(progress, is_not(none()))
         assert_that(progress,
                     externalizes(has_entries(u'complete', True,

@@ -19,12 +19,12 @@ from nti.app.externalization.error import raise_json_error
 
 from nti.app.products.courseware_scorm import MessageFactory as _
 
-from nti.app.products.courseware_scorm.interfaces import ISCORMProgress
 from nti.app.products.courseware_scorm.interfaces import ISCORMIdentifier
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 from nti.app.products.courseware_scorm.interfaces import IScormRegistration
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
+from nti.app.products.courseware_scorm.interfaces import ISCORMRegistrationReport
 
 from nti.dataserver.users.interfaces import IFriendlyNamed
 
@@ -296,7 +296,7 @@ class SCORMCloudClient(object):
             else:
                 # An unexpected error occurred
                 raise error
-        return ISCORMProgress(result)
+        return ISCORMRegistrationReport(result)
 
     def enrollment_registration_exists(self, course, user):
         registration_id = self._get_registration_id(course, user)

@@ -18,12 +18,12 @@ from nti.app.products.courseware_scorm.interfaces import ISCORMComment
 from nti.app.products.courseware_scorm.interfaces import ISCORMRuntime
 from nti.app.products.courseware_scorm.interfaces import ISCORMActivity
 from nti.app.products.courseware_scorm.interfaces import IScormInstance
-from nti.app.products.courseware_scorm.interfaces import ISCORMProgress
 from nti.app.products.courseware_scorm.interfaces import ISCORMResponse
 from nti.app.products.courseware_scorm.interfaces import ISCORMObjective
 from nti.app.products.courseware_scorm.interfaces import ISCORMInteraction
 from nti.app.products.courseware_scorm.interfaces import IScormRegistration
 from nti.app.products.courseware_scorm.interfaces import ISCORMLearnerPreference
+from nti.app.products.courseware_scorm.interfaces import ISCORMRegistrationReport
 
 from nti.scorm_cloud.client.registration import Static
 from nti.scorm_cloud.client.registration import Comment
@@ -120,8 +120,8 @@ class ScormRegistration(object):
 
 
 @component.adapter(RegistrationReport)
-@interface.implementer(ISCORMProgress)
-class SCORMProgress(object):
+@interface.implementer(ISCORMRegistrationReport)
+class SCORMRegistrationReport(object):
 
     def __init__(self, registration_report):
         if registration_report.activity is not None:
