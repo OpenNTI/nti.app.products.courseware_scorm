@@ -135,8 +135,8 @@ class TestExternal(ApplicationLayerTest):
                                              'description', u'description')))
         
     def test_scorm_interaction(self):
-        mock_objective = ISCORMObjective(Objective(id_=u'o-id'))
-        mock_response = ISCORMResponse(Response(id_=u'r-id', value=u'r-value'))
+        mock_objective = Objective(id_=u'o-id')
+        mock_response = Response(id_=u'r-id', value=u'r-value')
         mock_interaction = Interaction(id_=u'i-id',
                                        timestamp=u'0001:01:27.76',
                                        weighting=u'1.2',
