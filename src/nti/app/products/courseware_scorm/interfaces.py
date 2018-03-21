@@ -314,8 +314,10 @@ class ISCORMInteraction(interface.Interface):
                               title=u'The data generated when a learner responds to an interaction.',
                               required=False)
     
-    correct_responses = Iterable(title=u'The correct response patterns for the interaction.',
-                                 required=True)
+    correct_responses = TypedIterable(title=u'The correct response patterns for the interaction.',
+                                      value_type=Object(ISCORMResponse),
+                                      default=None,
+                                      required=False)
     
     
 class ISCORMLearnerPreference(interface.Interface):
@@ -332,8 +334,10 @@ class ISCORMLearnerPreference(interface.Interface):
     delivery_speed = Number(title=u'The learner’s preferred relative speed of content delivery.',
                             required=False)
     
-    audio_captioning = ValidTextLine(title=u'Specifies whether captioning text corresponding to audio is displayed.',
-                                     required=False)
+    audio_captioning = Choice(title=u'Specifies whether captioning text corresponding to audio is displayed.',
+                              values=('-1', '0', '1'),
+                              default=None,
+                              required=False)
     
     
 class ISCORMStatic(interface.Interface):
@@ -353,8 +357,10 @@ class ISCORMStatic(interface.Interface):
     max_time_allowed = Number(title=u'The amount of accumulated time the learner is allowed to use an SCO.',
                               required=False)
     
-    time_limit_action = ValidTextLine(title=u'Indicates what the SCO should do when max_time_allowed is exceeded.',
-                                      required=False)
+    time_limit_action = Choice(title=u'Indicates what the SCO should do when max_time_allowed is exceeded.',
+                               values=('exit,message', 'continue,message', 'exit,no message', 'continue,no message'),
+                               default=None,
+                               required=False)
     
     completion_threshold = Number(title=u'Used to determine whether the SCO should be considered complete (in 0...1).',
                                   required=False)
@@ -368,11 +374,15 @@ class ISCORMRuntime(interface.Interface):
     An object containing summary information about an SCO runtime.
     """
     
-    mode = ValidTextLine(title=u'Identifies one of three possible modes in which the SCO may be presented to the learner.',
-                         required=False)
+    mode = Choice(title=u'Identifies one of three possible modes in which the SCO may be presented to the learner.',
+                  values=('browse', 'normal', 'review'),
+                  default=None,
+                  required=False)
     
-    exit_ = ValidTextLine(title=u'Indicates how or why the learner left the SCO.',
-                          required=False)
+    exit = Choice(title=u'Indicates how or why the learner left the SCO.',
+                  values=('timeout', 'suspend', 'logout', 'normal'),
+                  default=None,
+                  required=False)
     
     entry = ValidTextLine(title=u'Asserts whether the learner has previously accessed the SCO.',
                           required=False)
@@ -382,6 +392,7 @@ class ISCORMRuntime(interface.Interface):
     
     static = Object(ISCORMStatic,
                     title=u'Static information about the SCO runtime.',
+                    default=None,
                     required=False)
     
     location = ValidTextLine(title=u'The learner’s current location in the SCO.',
@@ -411,17 +422,21 @@ class ISCORMRuntime(interface.Interface):
     suspend_data = ValidTextLine(title=u'Provides space to store and retrieve data between learner sessions.',
                                  required=False)
     
-    success_status = ValidTextLine(title=u'Indicates whether the learner has mastered the SCO.',
-                                   required=False)
+    success_status = Bool(title=u'Indicates whether the learner has mastered the SCO (in 0...1).',
+                          default=None,
+                          required=False)
     
-    progress_measure = ValidTextLine(title=u'A measure of the progress the learner has made toward completing the SCO.',
-                                     required=False)
+    progress_measure = Number(title=u'A measure of the progress the learner has made toward completing the SCO (in 0...1).',
+                              required=False)
     
-    completion_status = ValidTextLine(title=u'Indicates whether the learner has completed the SCO.',
-                                      required=False)
+    completion_status = Choice(title=u'Indicates whether the learner has completed the SCO.',
+                               values=('completed', 'incomplete', 'not attempted', 'unknown'),
+                               default=None,
+                               required=False)
     
     learner_preference = Object(ISCORMLearnerPreference,
                                 title=u'The learner\'s preferences.',
+                                default=None,
                                 required=False)
     
     comments_from_lms = TypedIterable(title=u'The comments from the LMS.',

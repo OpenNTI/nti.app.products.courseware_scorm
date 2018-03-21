@@ -56,6 +56,22 @@
  	<adapter factory=".model.SCORMInteraction"
  			 for="nti.scorm_cloud.client.registration.Interaction"
  			 provides=".interfaces.ISCORMInteraction" />
+ 	
+ 	<adapter factory=".model.SCORMComment"
+ 			 for="nti.scorm_cloud.client.registration.Comment"
+ 			 provides=".interfaces.ISCORMComment" />
+ 	
+ 	<adapter factory=".model.SCORMLearnerPreference"
+ 			 for="nti.scorm_cloud.client.registration.LearnerPreference"
+ 			 provides=".interfaces.ISCORMLearnerPreference" />
+ 	
+ 	<adapter factory=".model.SCORMStatic"
+ 			 for="nti.scorm_cloud.client.registration.Static"
+ 			 provides=".interfaces.ISCORMStatic" />
+ 			 
+ 	<adapter factory=".model.SCORMRuntime"
+ 			 for="nti.scorm_cloud.client.registration.Runtime"
+ 			 provides=".interfaces.ISCORMRuntime" />
 
 	<!-- Subscribers -->
 	<subscriber handler=".subscribers._enrollment_record_dropped" />
@@ -110,7 +126,11 @@
 									 .interfaces.ISCORMProgress
 									 .interfaces.ISCORMObjective
 									 .interfaces.ISCORMResponse
-									 .interfaces.ISCORMInteraction"
+									 .interfaces.ISCORMInteraction
+									 .interfaces.ISCORMComment
+									 .interfaces.ISCORMLearnerPreference
+									 .interfaces.ISCORMStatic
+									 .interfaces.ISCORMRuntime"
 					modules=".courses .model" />
 
 </configure>

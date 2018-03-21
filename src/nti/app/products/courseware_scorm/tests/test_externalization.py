@@ -14,24 +14,36 @@ from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import has_entries
 
+from datetime import datetime
+
+from nti.app.products.courseware_scorm.interfaces import ISCORMStatic
+from nti.app.products.courseware_scorm.interfaces import ISCORMComment
+from nti.app.products.courseware_scorm.interfaces import ISCORMRuntime
 from nti.app.products.courseware_scorm.interfaces import ISCORMProgress
 from nti.app.products.courseware_scorm.interfaces import ISCORMResponse
 from nti.app.products.courseware_scorm.interfaces import ISCORMObjective
 from nti.app.products.courseware_scorm.interfaces import ISCORMInteraction
 from nti.app.products.courseware_scorm.interfaces import IScormRegistration
+from nti.app.products.courseware_scorm.interfaces import ISCORMLearnerPreference
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
+from nti.externalization.externalization import toExternalObject
 from nti.externalization.externalization import StandardExternalFields
 
 from nti.externalization.testing import externalizes
 
+from nti.scorm_cloud.client.registration import Static
+from nti.scorm_cloud.client.registration import Comment
+from nti.scorm_cloud.client.registration import Runtime
 from nti.scorm_cloud.client.registration import Instance
 from nti.scorm_cloud.client.registration import Response
 from nti.scorm_cloud.client.registration import Objective
 from nti.scorm_cloud.client.registration import Interaction
 from nti.scorm_cloud.client.registration import Registration
+from nti.scorm_cloud.client.registration import LearnerPreference
 from nti.scorm_cloud.client.registration import RegistrationReport
+from findertools import location
 
 ID = StandardExternalFields.ID
 
@@ -171,3 +183,96 @@ class TestExternal(ApplicationLayerTest):
                                                                                 'description', None)),
                                              'correct_responses', has_item(has_entries(ID, u'r-id',
                                                                                        'value', u'r-value')))))
+    
+    def test_scorm_runtime(self):
+        mock_static = Static(completion_threshold=u'0.5',
+                             launch_data=u's-launch-data',
+                             learner_id=u's-lid',
+                             learner_name=u's-learner-name',
+                             max_time_allowed=u'100',
+                             scaled_passing_score=u'0.9',
+                             time_limit_action=u'continue,message')
+        mock_objective = Objective(id_=u'o-id')
+        mock_interaction = Interaction(id_=u'i-id')
+        mock_preference = LearnerPreference(audio_level=u'2.0',
+                                            language=u'en',
+                                            delivery_speed=u'1.0',
+                                            audio_captioning=u'1')
+        mock_comment = Comment(value=u'comment',
+                               location=u'14',
+                               date_time=u'20180321193726')
+        mock_runtime = Runtime(completion_status=u'completed',
+                               credit=u'credit',
+                               entry=u'resume',
+                               exit_=u'normal',
+                               location=u'14',
+                               mode=u'normal',
+                               progress_measure=u'0.5',
+                               score_scaled=u'0.5',
+                               score_raw=u'80',
+                               total_time=u'0000:00:27.63',
+                               timetracked=u'0000:00:20.36',
+                               success_status=u'unknown',
+                               suspend_data=u'suspend-data',
+                               learnerpreference=mock_preference,
+                               static=mock_static,
+                               comments_from_learner=[mock_comment],
+                               comments_from_lms=[mock_comment],
+                               interactions=[mock_interaction],
+                               objectives=[mock_objective])
+        runtime = ISCORMRuntime(mock_runtime)
+        assert_that(runtime, is_not(none()))
+        assert_that(runtime,
+                    externalizes(has_entries('completion_status', u'completed',
+                                             'credit', True,
+                                             'entry', u'resume',
+                                             'exit', u'normal',
+                                             'location', u'14',
+                                             'mode', u'normal',
+                                             'progress_measure', 0.5,
+                                             'score_scaled', 0.5,
+                                             'score_raw', 80,
+                                             'total_time', 27.63,
+                                             'time_tracked', 20.36,
+                                             'success_status', None,
+                                             'suspend_data', u'suspend-data',
+                                             'learner_preference', has_entries('audio_level', 2.0,
+                                                                               'language', u'en',
+                                                                               'delivery_speed', 1.0,
+                                                                               'audio_captioning', u'1'),
+                                             'static', has_entries('completion_threshold', 0.5,
+                                                                   'launch_data', u's-launch-data',
+                                                                   'learner_id', u's-lid',
+                                                                   'learner_name', u's-learner-name',
+                                                                   'max_time_allowed', 100,
+                                                                   'scaled_passing_score', 0.9,
+                                                                   'time_limit_action', u'continue,message'),
+                                             'comments_from_learner', has_item(has_entries('value', u'comment',
+                                                                                           'location', u'14',
+                                                                                           'date_time', toExternalObject(
+                                                                                                            datetime(2018, 3, 21, 19, 37, 26)))),
+                                             'comments_from_lms', has_item(has_entries('value', u'comment',
+                                                                                           'location', u'14',
+                                                                                           'date_time', toExternalObject(
+                                                                                                            datetime(2018, 3, 21, 19, 37, 26)))),
+                                             'interactions', has_item(has_entries(ID, u'i-id',
+                                                                                  'timestamp', None,
+                                                                                  'weighting', None,
+                                                                                  'learner_response', None,
+                                                                                  'result', None,
+                                                                                  'latency', None,
+                                                                                  'description', None,
+                                                                                  'objectives', [],
+                                                                                  'correct_responses', None)),
+                                             'objectives', has_item(has_entries(ID, 'o-id',
+                                                                                'measure_status', False,
+                                                                                'normalized_measure', 0.0,
+                                                                                'progress_status', False,
+                                                                                'satisfied_status', False,
+                                                                                'score_scaled', None,
+                                                                                'score_min', None,
+                                                                                'score_raw', None,
+                                                                                'success_status', None,
+                                                                                'completion_status', None,
+                                                                                'progress_measure', None,
+                                                                                'description', None)))))

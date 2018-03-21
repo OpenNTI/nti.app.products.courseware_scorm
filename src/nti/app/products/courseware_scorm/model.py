@@ -13,18 +13,26 @@ from datetime import datetime
 from zope import component
 from zope import interface
 
+from nti.app.products.courseware_scorm.interfaces import ISCORMStatic
+from nti.app.products.courseware_scorm.interfaces import ISCORMComment
+from nti.app.products.courseware_scorm.interfaces import ISCORMRuntime
 from nti.app.products.courseware_scorm.interfaces import IScormInstance
 from nti.app.products.courseware_scorm.interfaces import ISCORMProgress
 from nti.app.products.courseware_scorm.interfaces import ISCORMResponse
 from nti.app.products.courseware_scorm.interfaces import ISCORMObjective
 from nti.app.products.courseware_scorm.interfaces import ISCORMInteraction
 from nti.app.products.courseware_scorm.interfaces import IScormRegistration
+from nti.app.products.courseware_scorm.interfaces import ISCORMLearnerPreference
 
+from nti.scorm_cloud.client.registration import Static
+from nti.scorm_cloud.client.registration import Comment
+from nti.scorm_cloud.client.registration import Runtime
 from nti.scorm_cloud.client.registration import Instance
 from nti.scorm_cloud.client.registration import Response
 from nti.scorm_cloud.client.registration import Objective
 from nti.scorm_cloud.client.registration import Interaction
 from nti.scorm_cloud.client.registration import Registration
+from nti.scorm_cloud.client.registration import LearnerPreference
 from nti.scorm_cloud.client.registration import RegistrationReport
 
 logger = __import__('logging').getLogger(__name__)
@@ -164,6 +172,79 @@ class SCORMInteraction(object):
         self.weighting = _parse_float(interaction.weighting, u'SCORMInteraction.weighting')
         self.objectives = [ISCORMObjective(obj) for obj in interaction.objectives]
         self.description = interaction.description
-        self.learner_response = ISCORMResponse(interaction.learner_response)
-        self.correct_responses = [ISCORMResponse(resp) for resp in interaction.correct_responses]
+        if interaction.learner_response is not None:
+            self.learner_response = ISCORMResponse(interaction.learner_response)
+        else:
+            self.learner_response = None
+        if interaction.correct_responses is not None:
+            self.correct_responses = [ISCORMResponse(resp) for resp in interaction.correct_responses]
+        else:
+            self.correct_responses = None
+        
+
+@component.adapter(Comment)
+@interface.implementer(ISCORMComment)
+class SCORMComment(object):
+        
+        def __init__(self, comment):
+            self.value = comment.value
+            self.location = comment.location
+            self.date_time = _parse_datetime(comment.date_time, u'SCORMComment.date_time')
+
+
+@component.adapter(LearnerPreference)
+@interface.implementer(ISCORMLearnerPreference)
+class SCORMLearnerPreference(object):
+    
+    def __init__(self, learner_preference):
+        self.language = learner_preference.language
+        self.audio_level = _parse_float(learner_preference.audio_level, u'SCORMLearnerPreference.audio_level')
+        self.delivery_speed = _parse_float(learner_preference.delivery_speed, u'SCORMLearnerPreference.delivery_speed')
+        self.audio_captioning = learner_preference.audio_captioning
+
+
+@component.adapter(Static)
+@interface.implementer(ISCORMStatic)
+class SCORMStatic(object):
+    
+    def __init__(self, static):
+        self.learner_id = static.learner_id
+        self.launch_data = static.launch_data
+        self.learner_name=static.learner_name
+        self.max_time_allowed = _parse_time(static.max_time_allowed, u'SCORMStatic.max_time_allowed')
+        self.time_limit_action = static.time_limit_action
+        self.completion_threshold = _parse_float(static.completion_threshold, u'SCORMStatic.completion_threshold')
+        self.scaled_passing_score = _parse_float(static.scaled_passing_score, u'SCORMStatic.scaled_passing_score')
+        
+        
+@component.adapter(Runtime)
+@interface.implementer(ISCORMRuntime)
+class SCORMRuntime(object):
+    
+    def __init__(self, runtime):
+        self.mode = runtime.mode
+        self.exit = runtime.exit
+        self.entry = runtime.entry
+        self.credit = {u'credit': True, u'no-credit': False}.get(runtime.credit)
+        if runtime.static is not None:
+            self.static = ISCORMStatic(runtime.static)
+        else:
+            self.static = None
+        self.location = runtime.location
+        self.score_raw = _parse_float(runtime.score_raw, u'SCORMRuntime.score_raw')
+        self.objectives = [ISCORMObjective(obj) for obj in runtime.objectives]
+        self.total_time = _parse_time(runtime.total_time, u'SCORMRuntime.total_time')
+        self.time_tracked = _parse_time(runtime.timetracked, u'SCORMRuntime.time_tracked')
+        self.interactions = [ISCORMInteraction(i) for i in runtime.interactions]
+        self.score_scaled = _parse_float(runtime.score_scaled, u'SCORMRuntime.score_scaled')
+        self.suspend_data = runtime.suspend_data
+        self.success_status = {u'passed': True, u'failed': False}.get(runtime.success_status)
+        self.progress_measure = _parse_float(runtime.progress_measure, u'SCORMRuntime.progress_measure')
+        self.completion_status = runtime.completion_status
+        if runtime.learnerpreference is not None:
+            self.learner_preference = ISCORMLearnerPreference(runtime.learnerpreference)
+        else:
+            self.learner_preference = None
+        self.comments_from_lms = [ISCORMComment(c) for c in runtime.comments_from_lms]
+        self.comments_from_learner = [ISCORMComment(c) for c in runtime.comments_from_learner]
         
