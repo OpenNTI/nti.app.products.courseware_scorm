@@ -473,7 +473,7 @@ class ISCORMActivity(interface.Interface):
     completed = Bool(title=u'Whether the activity has been completed.',
                      required=True)
     
-    progress_status = Bool(title=u'Whether there is progress status.',
+    progress_status = Bool(title=u'The progress status.',
                            required=True)
 
     attempts = Number(title=u'The number of attempts.',
