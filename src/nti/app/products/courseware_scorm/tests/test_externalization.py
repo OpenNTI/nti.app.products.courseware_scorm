@@ -142,6 +142,7 @@ class TestExternal(ApplicationLayerTest):
                                        weighting=u'1.2',
                                        learner_response=mock_response,
                                        result=u'correct',
+                                       latency=u'27.73',
                                        description=u'i-description',
                                        objectives=[mock_objective],
                                        correct_responses=[mock_response])
@@ -152,6 +153,7 @@ class TestExternal(ApplicationLayerTest):
                                              'timestamp', 3687.76,
                                              'weighting', 1.2,
                                              'result', 'correct',
+                                             'latency', 27.73,
                                              'description', 'i-description',
                                              'learner_response', has_entries(ID, u'r-id',
                                                                              'value', u'r-value'),

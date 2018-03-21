@@ -52,8 +52,14 @@ def _parse_int(str_value, name):
 
 def _parse_time(str_value, name):
     time = None
-    if str_value is not None:
-        time = sum([x*y for x,y in zip([float(x) for x in str_value.split(':')], (3600, 60, 1))])
+    if str_value is None:
+        return time
+    try:
+        # Parses "H:M:S.ms" and "S.ms"
+        sec_min_hour = reversed([float(x) for x in str_value.split(':')])
+        time = sum([x*y for x,y in zip(sec_min_hour, (1, 60, 3600))])
+    except ValueError as error:
+        logger.info('%s: %s', name, error)
     return time
 
 def _parse_datetime(str_value, name):
