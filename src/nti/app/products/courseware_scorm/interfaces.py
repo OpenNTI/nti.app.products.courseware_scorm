@@ -506,6 +506,18 @@ class ISCORMRegistrationReport(interface.Interface):
     """
     An object containing high-level information about a registration result.
     """
+    
+    format = Choice(title=u'The results format.',
+                    values=(u'course', u'activity', u'full'),
+                    required=True)
+    
+    registration_id = ValidTextLine(title=u'The registration ID.',
+                                    default=None,
+                                    required=False)
+    
+    instance_id = ValidTextLine(title=u'The instance ID.',
+                                default=None,
+                                required=False)
 
     complete = Bool(title=u'Whether the registration has been completed.')
 

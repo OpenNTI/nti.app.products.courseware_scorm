@@ -124,6 +124,9 @@ class ScormRegistration(object):
 class SCORMRegistrationReport(object):
 
     def __init__(self, registration_report):
+        self.format = registration_report.format
+        self.registration_id = registration_report.regid
+        self.instance_id = registration_report.instanceid
         if registration_report.activity is not None:
             self.activity = ISCORMActivity(registration_report.activity)
         else:

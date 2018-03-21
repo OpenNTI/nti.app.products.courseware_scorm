@@ -49,6 +49,8 @@ class TestExternal(ApplicationLayerTest):
 
     def test_scorm_progress(self):
         report = RegistrationReport(format_=u'course',
+                                    regid=u'regid',
+                                    instanceid=u'instanceid',
                                     complete=u'incomplete',
                                     success=u'failure',
                                     totaltime=3,
@@ -56,20 +58,28 @@ class TestExternal(ApplicationLayerTest):
         progress = ISCORMRegistrationReport(report, None)
         assert_that(progress, is_not(none()))
         assert_that(progress,
-                    externalizes(has_entries(u'complete', False,
+                    externalizes(has_entries(u'format', u'course',
+                                             u'registration_id', u'regid',
+                                             u'instance_id', u'instanceid',
+                                             u'complete', False,
                                              u'success', False,
                                              u'total_time', 3,
                                              u'score', None,
                                              u'activity', None)))
+        report.format = u'activity'
         report.score=None
         progress = ISCORMRegistrationReport(report, None)
         assert_that(progress, is_not(none()))
         assert_that(progress,
-                    externalizes(has_entries(u'complete', False,
+                    externalizes(has_entries(u'format', u'activity',
+                                             u'registration_id', u'regid',
+                                             u'instance_id', u'instanceid',
+                                             u'complete', False,
                                              u'success', False,
                                              u'total_time', 3,
                                              u'score', None,
                                              u'activity', None)))
+        report.format = u'full'
         report.score=u'100'
         report.complete = u'complete'
         report.success = u'passed'
@@ -77,7 +87,10 @@ class TestExternal(ApplicationLayerTest):
         progress = ISCORMRegistrationReport(report, None)
         assert_that(progress, is_not(none()))
         assert_that(progress,
-                    externalizes(has_entries(u'complete', True,
+                    externalizes(has_entries(u'format', u'full',
+                                             u'registration_id', u'regid',
+                                             u'instance_id', u'instanceid',
+                                             u'complete', True,
                                              u'success', True,
                                              u'total_time', 3,
                                              u'score', 100,
