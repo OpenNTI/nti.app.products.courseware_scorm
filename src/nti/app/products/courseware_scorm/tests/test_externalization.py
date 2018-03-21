@@ -16,16 +16,12 @@ from hamcrest import has_entries
 
 from datetime import datetime
 
-from nti.app.products.courseware_scorm.interfaces import ISCORMStatic
-from nti.app.products.courseware_scorm.interfaces import ISCORMComment
 from nti.app.products.courseware_scorm.interfaces import ISCORMRuntime
 from nti.app.products.courseware_scorm.interfaces import ISCORMActivity
 from nti.app.products.courseware_scorm.interfaces import ISCORMProgress
-from nti.app.products.courseware_scorm.interfaces import ISCORMResponse
 from nti.app.products.courseware_scorm.interfaces import ISCORMObjective
 from nti.app.products.courseware_scorm.interfaces import ISCORMInteraction
 from nti.app.products.courseware_scorm.interfaces import IScormRegistration
-from nti.app.products.courseware_scorm.interfaces import ISCORMLearnerPreference
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
