@@ -263,7 +263,7 @@ class ISCORMComment(interface.Interface):
     location = ValidTextLine(title=u'The point in the SCO to which the comment applies.',
                              required=False)
     
-    data_time = DateTime(title=u'The point in time at which the comment was created or most recently changed.',
+    date_time = DateTime(title=u'The point in time at which the comment was created or most recently changed.',
                          required=False)
 
 
