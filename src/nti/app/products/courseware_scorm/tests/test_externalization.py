@@ -135,14 +135,16 @@ class TestExternal(ApplicationLayerTest):
                                              'description', u'description')))
         
     def test_scorm_interaction(self):
+        mock_objective = ISCORMObjective(Objective(id_=u'o-id'))
+        mock_response = ISCORMResponse(Response(id_=u'r-id', value=u'r-value'))
         mock_interaction = Interaction(id_=u'i-id',
                                        timestamp=u'0001:01:27.76',
                                        weighting=u'1.2',
-                                       learner_response=Response(id_=u'r-id', value=u'r-value'),
+                                       learner_response=mock_response,
                                        result=u'correct',
                                        description=u'i-description',
-                                       objectives=[Objective(id_=u'o-id')],
-                                       correct_responses=[Response(id_=u'r-id', value=u'r-value')])
+                                       objectives=[mock_objective],
+                                       correct_responses=[mock_response])
         interaction = ISCORMInteraction(mock_interaction)
         assert_that(interaction, is_not(none()))
         assert_that(interaction,
