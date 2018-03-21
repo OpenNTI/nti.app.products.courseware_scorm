@@ -19,6 +19,7 @@ from datetime import datetime
 from nti.app.products.courseware_scorm.interfaces import ISCORMStatic
 from nti.app.products.courseware_scorm.interfaces import ISCORMComment
 from nti.app.products.courseware_scorm.interfaces import ISCORMRuntime
+from nti.app.products.courseware_scorm.interfaces import ISCORMActivity
 from nti.app.products.courseware_scorm.interfaces import ISCORMProgress
 from nti.app.products.courseware_scorm.interfaces import ISCORMResponse
 from nti.app.products.courseware_scorm.interfaces import ISCORMObjective
@@ -36,6 +37,7 @@ from nti.externalization.testing import externalizes
 from nti.scorm_cloud.client.registration import Static
 from nti.scorm_cloud.client.registration import Comment
 from nti.scorm_cloud.client.registration import Runtime
+from nti.scorm_cloud.client.registration import Activity
 from nti.scorm_cloud.client.registration import Instance
 from nti.scorm_cloud.client.registration import Response
 from nti.scorm_cloud.client.registration import Objective
@@ -43,7 +45,6 @@ from nti.scorm_cloud.client.registration import Interaction
 from nti.scorm_cloud.client.registration import Registration
 from nti.scorm_cloud.client.registration import LearnerPreference
 from nti.scorm_cloud.client.registration import RegistrationReport
-from findertools import location
 
 ID = StandardExternalFields.ID
 
@@ -76,6 +77,7 @@ class TestExternal(ApplicationLayerTest):
         report.score=u'100'
         report.complete = u'complete'
         report.success = u'passed'
+        report.activity = Activity(id_=u'a-id', title=u'activity-title')
         progress = ISCORMProgress(report, None)
         assert_that(progress, is_not(none()))
         assert_that(progress,
@@ -83,7 +85,20 @@ class TestExternal(ApplicationLayerTest):
                                              u'success', True,
                                              u'total_time', 3,
                                              u'score', 100,
-                                             u'activity', None)))
+                                             u'activity', has_entries(ID, u'a-id',
+                                                                      'title', u'activity-title',
+                                                                      'complete', None,
+                                                                      'success', None,
+                                                                      'satisfied', False,
+                                                                      'completed', False,
+                                                                      'progress_status', False,
+                                                                      'attempts', 1,
+                                                                      'suspended', False,
+                                                                      'time', None,
+                                                                      'score', None,
+                                                                      'objectives', [],
+                                                                      'children', [],
+                                                                      'runtime', None))))
 
 
     def test_scorm_registration(self):
@@ -276,3 +291,81 @@ class TestExternal(ApplicationLayerTest):
                                                                                 'completion_status', None,
                                                                                 'progress_measure', None,
                                                                                 'description', None)))))
+        
+    def test_scorm_activity(self):
+        mock_objective = Objective(id_=u'o-id')
+        mock_child = Activity(id_=u'c-id', title=u'child-title')
+        mock_runtime = Runtime()
+        mock_activity = Activity(id_=u'a-id',
+                                 title=u'activity-title',
+                                 complete=u'complete',
+                                 success=u'passed',
+                                 satisfied=True,
+                                 completed=True,
+                                 progressstatus=True,
+                                 attempts=2,
+                                 suspended=True,
+                                 time_=u'10',
+                                 score=u'0.93',
+                                 objectives=[mock_objective],
+                                 children=[mock_child],
+                                 runtime=mock_runtime)
+        activity = ISCORMActivity(mock_activity)
+        assert_that(activity, is_not(none()))
+        assert_that(activity,
+                    externalizes(has_entries(ID, u'a-id',
+                                             'title', u'activity-title',
+                                             'complete', True,
+                                             'success', True,
+                                             'satisfied', True,
+                                             'completed', True,
+                                             'progress_status', True,
+                                             'attempts', 2,
+                                             'suspended', True,
+                                             'time', 10,
+                                             'score', 0.93,
+                                             'objectives', has_item(has_entries(ID, 'o-id',
+                                                                                'measure_status', False,
+                                                                                'normalized_measure', 0.0,
+                                                                                'progress_status', False,
+                                                                                'satisfied_status', False,
+                                                                                'score_scaled', None,
+                                                                                'score_min', None,
+                                                                                'score_raw', None,
+                                                                                'success_status', None,
+                                                                                'completion_status', None,
+                                                                                'progress_measure', None,
+                                                                                'description', None)),
+                                             'children', has_item(has_entries(ID, u'c-id',
+                                                                              'title', u'child-title',
+                                                                              'complete', None,
+                                                                              'success', None,
+                                                                              'satisfied', False,
+                                                                              'completed', False,
+                                                                              'progress_status', False,
+                                                                              'attempts', 1,
+                                                                              'suspended', False,
+                                                                              'time', None,
+                                                                              'score', None,
+                                                                              'objectives', [],
+                                                                              'children', [],
+                                                                              'runtime', None)),
+                                             'runtime', has_entries('completion_status', None,
+                                                                    'credit', None,
+                                                                    'entry', None,
+                                                                    'exit', None,
+                                                                    'location', None,
+                                                                    'mode', None,
+                                                                    'progress_measure', None,
+                                                                    'score_scaled', None,
+                                                                    'score_raw', None,
+                                                                    'total_time', None,
+                                                                    'time_tracked', None,
+                                                                    'success_status', None,
+                                                                    'suspend_data', None,
+                                                                    'learner_preference', None,
+                                                                    'static', None,
+                                                                    'comments_from_learner', [],
+                                                                    'comments_from_lms', [],
+                                                                    'interactions', [],
+                                                                    'objectives', []))))

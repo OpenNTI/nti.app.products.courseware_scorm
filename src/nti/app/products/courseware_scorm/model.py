@@ -16,6 +16,7 @@ from zope import interface
 from nti.app.products.courseware_scorm.interfaces import ISCORMStatic
 from nti.app.products.courseware_scorm.interfaces import ISCORMComment
 from nti.app.products.courseware_scorm.interfaces import ISCORMRuntime
+from nti.app.products.courseware_scorm.interfaces import ISCORMActivity
 from nti.app.products.courseware_scorm.interfaces import IScormInstance
 from nti.app.products.courseware_scorm.interfaces import ISCORMProgress
 from nti.app.products.courseware_scorm.interfaces import ISCORMResponse
@@ -27,6 +28,7 @@ from nti.app.products.courseware_scorm.interfaces import ISCORMLearnerPreference
 from nti.scorm_cloud.client.registration import Static
 from nti.scorm_cloud.client.registration import Comment
 from nti.scorm_cloud.client.registration import Runtime
+from nti.scorm_cloud.client.registration import Activity
 from nti.scorm_cloud.client.registration import Instance
 from nti.scorm_cloud.client.registration import Response
 from nti.scorm_cloud.client.registration import Objective
@@ -123,7 +125,7 @@ class SCORMProgress(object):
 
     def __init__(self, registration_report):
         if registration_report.activity is not None:
-            self.activity = registration_report.activity.__repr__()
+            self.activity = ISCORMActivity(registration_report.activity)
         else:
             self.activity = None
         self.complete = registration_report.complete == u'complete'
@@ -149,6 +151,30 @@ class SCORMObjective(object):
         self.completion_status = objective.completion_status
         self.progress_measure = _parse_float(objective.progress_measure, u'SCORMObjective.progress_measure')
         self.description = objective.description        
+
+
+@component.adapter(Activity)
+@interface.implementer(ISCORMActivity)
+class SCORMActivity(object):
+    
+    def __init__(self, activity):
+        self.id = activity.id
+        self.title = activity.title
+        self.complete = {u'complete': True, u'incomplete': False}.get(activity.complete)
+        self.success = {u'passed': True, u'failed': False}.get(activity.success)
+        self.satisfied = activity.satisfied
+        self.completed = activity.completed
+        self.progress_status = activity.progressstatus
+        self.attempts = activity.attempts
+        self.suspended = activity.suspended
+        self.time = _parse_time(activity.time, u'SCORMActivity.time')
+        self.score = _parse_float(activity.score, u'SCORMActivity.score')
+        self.objectives = [ISCORMObjective(obj) for obj in activity.objectives]
+        self.children = [SCORMActivity(child) for child in activity.children]
+        if activity.runtime is not None:
+            self.runtime = ISCORMRuntime(activity.runtime)
+        else:
+            self.runtime = None
 
 
 @component.adapter(Response)

@@ -72,6 +72,10 @@
  	<adapter factory=".model.SCORMRuntime"
  			 for="nti.scorm_cloud.client.registration.Runtime"
  			 provides=".interfaces.ISCORMRuntime" />
+ 			 
+ 	<adapter factory=".model.SCORMActivity"
+ 			 for="nti.scorm_cloud.client.registration.Activity"
+ 			 provides=".interfaces.ISCORMActivity" />
 
 	<!-- Subscribers -->
 	<subscriber handler=".subscribers._enrollment_record_dropped" />
@@ -130,7 +134,8 @@
 									 .interfaces.ISCORMComment
 									 .interfaces.ISCORMLearnerPreference
 									 .interfaces.ISCORMStatic
-									 .interfaces.ISCORMRuntime"
+									 .interfaces.ISCORMRuntime
+									 .interfaces.ISCORMActivity"
 					modules=".courses .model" />
 
 </configure>
