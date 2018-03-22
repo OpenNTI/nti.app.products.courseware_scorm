@@ -16,6 +16,8 @@
 	<include package="nti.scorm_cloud" />
 
 	<adapter factory=".courses.SCORMCourseInstanceMetadataFactory" />
+	
+	<adapter factory=".courses.UserRegistrationReportContainerFactory" />
 
 	<adapter factory=".courses.SCORMIdentifier"
 			 for="nti.contenttypes.courses.interfaces.ICourseInstance"
