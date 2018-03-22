@@ -80,6 +80,17 @@ def _parse_datetime(str_value, name):
         logger.info('%s: %s', name, error)
     return datetime_value
 
+def _response(value):
+    response = None
+    if value is None:
+        return response
+    if type(value) is Response:
+        response = value
+    else:
+        response = Response(id_=u'', value=value)
+    return ISCORMResponse(response)
+    
+
 @component.adapter(Instance)
 @interface.implementer(IScormInstance)
 class ScormInstance(object):
@@ -201,12 +212,9 @@ class SCORMInteraction(object):
         self.weighting = _parse_float(interaction.weighting, u'SCORMInteraction.weighting')
         self.objectives = [ISCORMObjective(obj) for obj in interaction.objectives]
         self.description = interaction.description
-        if interaction.learner_response is not None:
-            self.learner_response = ISCORMResponse(interaction.learner_response)
-        else:
-            self.learner_response = None
+        self.learner_response = _response(interaction.learner_response)
         if interaction.correct_responses is not None:
-            self.correct_responses = [ISCORMResponse(resp) for resp in interaction.correct_responses]
+            self.correct_responses = [_response(r) for r in interaction.correct_responses]
         else:
             self.correct_responses = None
         

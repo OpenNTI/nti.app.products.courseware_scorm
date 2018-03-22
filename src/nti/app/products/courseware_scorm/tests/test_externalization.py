@@ -181,7 +181,7 @@ class TestExternal(ApplicationLayerTest):
                                        latency=u'27.73',
                                        description=u'i-description',
                                        objectives=[mock_objective],
-                                       correct_responses=[mock_response])
+                                       correct_responses=[u'r-value'])
         interaction = ISCORMInteraction(mock_interaction)
         assert_that(interaction, is_not(none()))
         assert_that(interaction,
@@ -205,7 +205,7 @@ class TestExternal(ApplicationLayerTest):
                                                                                 'completion_status', None,
                                                                                 'progress_measure', None,
                                                                                 'description', None)),
-                                             'correct_responses', has_item(has_entries(ID, u'r-id',
+                                             'correct_responses', has_item(has_entries(ID, u'',
                                                                                        'value', u'r-value')))))
     
     def test_scorm_runtime(self):
