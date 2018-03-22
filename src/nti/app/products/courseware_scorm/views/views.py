@@ -20,6 +20,8 @@ from zope import component
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
+from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
+
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 
 from nti.app.products.courseware_scorm.views import SCORM_PROGRESS_VIEW_NAME
@@ -32,6 +34,8 @@ from nti.contenttypes.courses.utils import is_course_instructor_or_editor
 
 from nti.dataserver.authorization import ACT_READ
 from nti.dataserver.authorization import is_admin_or_content_admin_or_site_admin
+
+from nti.dataserver.users.users import User 
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -112,7 +116,7 @@ class LaunchSCORMCourseView(AbstractSCORMLaunchView):
     
 @view_config(route_name='objects.generic.traversal',
              renderer='rest',
-             context=ICourseInstance,
+             context=ICourseInstanceEnrollment,
              request_method='GET',
              permission=ACT_READ,
              name=SCORM_PROGRESS_VIEW_NAME)
@@ -120,7 +124,11 @@ class SCORMProgressView(AbstractAuthenticatedView):
     """
     A view for observing SCORM registration progress.
     """
+    
+    def _results_format(self):
+        return CaseInsensitiveDict(self.request.params).get(u'resultsFormat')
 
     def __call__(self):
         client = component.getUtility(ISCORMCloudClient)
-        return client.get_registration_progress(self.context, self.remoteUser)
+        user = User.get_user(self.context.Username) 
+        return client.get_registration_progress(self.context.CourseInstance, user, self._results_format())

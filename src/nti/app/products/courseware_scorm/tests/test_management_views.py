@@ -23,11 +23,13 @@ import shutil
 
 from zope import component
 
-from nti.app.products.courseware.tests import PersistentInstructedCourseApplicationTestLayer
+from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
 
 from nti.app.products.courseware_admin import VIEW_COURSE_ADMIN_LEVELS
 
 from nti.app.products.courseware_scorm.courses import SCORM_COURSE_MIME_TYPE
+
+from nti.app.products.courseware_scorm.decorators import PROGRESS_REL
 
 from nti.app.products.courseware_scorm.tests import CoursewareSCORMTestLayer
 
@@ -42,10 +44,24 @@ from nti.app.testing.decorators import WithSharedApplicationMockDS
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contentlibrary.interfaces import IDelimitedHierarchyContentPackageEnumeration
 
+from nti.contenttypes.courses.interfaces import ICourseInstance
+from nti.contenttypes.courses.interfaces import ICourseEnrollmentManager
+
+from nti.dataserver.users.users import User
+
 from nti.dataserver.tests import mock_dataserver
+
+from nti.externalization.externalization import toExternalObject
 
 from nti.externalization.interfaces import StandardExternalFields
 
+from nti.externalization.testing import externalizes
+
+from nti.ntiids.ntiids import find_object_with_ntiid
+
+from nti.scorm_cloud.client.registration import RegistrationReport
+
+HREF = StandardExternalFields().HREF
 ITEMS = StandardExternalFields.ITEMS
 CLASS = StandardExternalFields.CLASS
 LINKS = StandardExternalFields.LINKS
@@ -60,14 +76,14 @@ class TestManagementViews(ApplicationLayerTest):
 
     layer = CoursewareSCORMTestLayer
 
-    default_origin = 'http://janux.ou.edu'
+    default_origin = 'http://alpha.nextthought.com'
 
     @WithSharedApplicationMockDS(testapp=True, users=True)
     def tearDown(self):
         """
         Our janux.ou.edu site should have no courses in it.
         """
-        with mock_dataserver.mock_db_trans(site_name='janux.ou.edu'):
+        with mock_dataserver.mock_db_trans(site_name='alpha.nextthought.com'):
             library = component.getUtility(IContentPackageLibrary)
             enumeration = IDelimitedHierarchyContentPackageEnumeration(library)
             # pylint: disable=no-member
@@ -85,12 +101,18 @@ class TestManagementViews(ApplicationLayerTest):
 
     @WithSharedApplicationMockDS(testapp=True, users=True)
     @fudge.patch('nti.app.products.courseware_scorm.courses.SCORMCourseMetadata.has_scorm_package',
-                 'nti.app.products.courseware_scorm.client.SCORMCloudClient.delete_course')
-    def test_create_SCORM_course_view(self, mock_has_scorm, mock_delete_course):
+                 'nti.app.products.courseware_scorm.client.SCORMCloudClient.delete_course',
+                 'nti.app.products.courseware_scorm.client.SCORMCloudClient.enrollment_registration_exists',
+                 'nti.app.products.courseware_scorm.tests.test_client.MockSCORMCloudService.get_registration_service')
+    def test_create_SCORM_course_view(self, mock_has_scorm, mock_delete_course, mock_has_enrollment_reg, mock_get_registration_service):
         """
         Validates SCORM course creation.
         """
         mock_has_scorm.is_callable().returns(False)
+        mock_has_enrollment_reg.is_callable().returns(True)
+        
+        mock_registration_service = fudge.Fake()
+        mock_get_registration_service.is_callable().returns(mock_registration_service)
 
         admin_href = self._get_admin_href()
 
@@ -145,6 +167,46 @@ class TestManagementViews(ApplicationLayerTest):
         catalog = catalog.json_body
         entry_ntiid = catalog['NTIID']
         assert_that(entry_ntiid, not_none())
+        
+        course_ntiid = new_course['NTIID']
+        
+        with mock_dataserver.mock_db_trans():
+            self._create_user(u'CapnCook')
+            
+        # Check for SCORM progress Link on enrollment records
+        self.progress_href = None
+        new_username = u'CapnCook'
+        with mock_dataserver.mock_db_trans(site_name='alpha.nextthought.com'):
+            new_user = User.get_user(new_username)
+            entry = find_object_with_ntiid(course_ntiid)
+            course = ICourseInstance(entry)
+            
+            enrollment_manager = ICourseEnrollmentManager(course)
+            enrollment_record = enrollment_manager.enroll(new_user)
+            enrollment = ICourseInstanceEnrollment(enrollment_record)
+            assert_that(enrollment, is_not(none()))
+            assert_that(enrollment,
+                        externalizes(has_entry(LINKS, has_item(has_entry('rel', PROGRESS_REL)))))
+            
+            ext_enrollment = toExternalObject(enrollment)
+            progress_link = next((link for link in ext_enrollment[LINKS] if link['rel'] == PROGRESS_REL), None)
+            assert_that(progress_link, is_not(none()))
+            self.progress_href = progress_link[HREF]
+        
+        assert_that(self.progress_href, is_not(none()))
+        self.testapp.get(self.progress_href, status=403)
+        
+        reg_report = RegistrationReport(format_='course')
+        mock_registration_service.expects('get_registration_result').returns(reg_report)
+        new_user_env = self._make_extra_environ(new_username)
+        progress = self.testapp.get(self.progress_href, extra_environ=new_user_env, status=200).json_body
+        assert_that(progress, is_not(none()))
+        assert_that(progress, has_entries('complete', False,
+                                          'score', None,
+                                          'success', False,
+                                          'total_time', 0,
+                                          'activity', None))
+        self.progress_href = None
 
         # GUID NTIID
         assert_that(entry_ntiid,
@@ -153,6 +215,7 @@ class TestManagementViews(ApplicationLayerTest):
 
         # Delete
         mock_delete_course.expects_call()
+        mock_registration_service.expects('deleteRegistration')
         self.testapp.delete(course_delete_href)
         self.testapp.get(new_course_href, status=404)
         courses = self.testapp.get(new_admin_href)

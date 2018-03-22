@@ -11,14 +11,18 @@ from __future__ import absolute_import
 from zope import component
 from zope import interface
 
+from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
+
 from nti.app.products.courseware.utils import PreviewCourseAccessPredicateDecorator
 
 from nti.app.products.courseware_scorm.courses import is_course_admin
 
+from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 
 from nti.app.products.courseware_scorm.views import UPDATE_SCORM_VIEW_NAME
+from nti.app.products.courseware_scorm.views import SCORM_PROGRESS_VIEW_NAME
 from nti.app.products.courseware_scorm.views import GET_SCORM_ARCHIVE_VIEW_NAME
 from nti.app.products.courseware_scorm.views import IMPORT_SCORM_COURSE_VIEW_NAME
 from nti.app.products.courseware_scorm.views import LAUNCH_SCORM_COURSE_VIEW_NAME
@@ -35,6 +39,8 @@ from nti.dataserver.authorization import is_admin_or_content_admin_or_site_admin
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalObjectDecorator
 
+from nti.links.externalization import render_link
+
 from nti.links.links import Link
 
 from nti.traversal.traversal import find_interface
@@ -44,8 +50,7 @@ LINKS = StandardExternalFields.LINKS
 ARCHIVE_REL = GET_SCORM_ARCHIVE_VIEW_NAME
 IMPORT_REL = IMPORT_SCORM_COURSE_VIEW_NAME
 LAUNCH_REL = LAUNCH_SCORM_COURSE_VIEW_NAME
-
-logger = __import__('logging').getLogger(__name__)
+PROGRESS_REL = SCORM_PROGRESS_VIEW_NAME
 
 
 @component.adapter(ISCORMCourseInstance)
@@ -93,3 +98,19 @@ class _SCORMCourseInstanceMetadataDecorator(PreviewCourseAccessPredicateDecorato
             _links.append(
                 Link(course, rel=LAUNCH_REL, elements=(element,))
             )
+
+
+@component.adapter(ICourseInstanceEnrollment)
+@interface.implementer(IExternalObjectDecorator)
+class _CourseInstanceEnrollmentDecorator(AbstractAuthenticatedRequestAwareDecorator):
+    
+    def _predicate(self, original, unused_external):
+        return ISCORMCourseInstance.providedBy(original.CourseInstance)
+    
+    def _do_decorate_external(self, original, external):
+        _links = external.setdefault(LINKS, [])
+        # Render link now because we're already in the second pass
+        _links.append(render_link(Link(original,
+                                      rel=PROGRESS_REL,
+                                      elements=(PROGRESS_REL,))))
+        
