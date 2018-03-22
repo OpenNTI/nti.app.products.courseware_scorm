@@ -41,23 +41,27 @@ logger = __import__('logging').getLogger(__name__)
 
 
 def _parse_float(str_value, name):
-        float_value = None
-        try:
-            float_value = float(str_value)
-        except (TypeError, ValueError):
-            logger.debug(u'Found non-float value %s for property %s',
-                         str_value, name)
+    float_value = None
+    if str_value is None:
         return float_value
+    try:
+        float_value = float(str_value)
+    except (TypeError, ValueError):
+        logger.info(u'Found non-float value %s for property %s',
+                    str_value, name)
+    return float_value
     
 
 def _parse_int(str_value, name):
-        int_value = None
-        try:
-            int_value = int(str_value)
-        except (TypeError, ValueError):
-            logger.debug(u'Found non-int value %s for property %s',
-                         str_value, name)
+    int_value = None
+    if str_value is None:
         return int_value
+    try:
+        int_value = int(str_value)
+    except (TypeError, ValueError):
+        logger.info(u'Found non-int value %s for property %s',
+                    str_value, name)
+    return int_value
 
 
 def _parse_time(str_value, name):
@@ -74,6 +78,8 @@ def _parse_time(str_value, name):
 
 def _parse_datetime(str_value, name):
     datetime_value = None
+    if str_value is None:
+        return datetime_value
     try:
         datetime_value = datetime.strptime(str_value, '%Y%m%d%H%M%S')
     except ValueError as error:
