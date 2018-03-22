@@ -12,6 +12,8 @@ from __future__ import absolute_import
 
 from zope import interface
 
+from zope.annotation.interfaces import IAttributeAnnotatable
+
 from zope.container.constraints import contains
 
 from zope.container.interfaces import IContainer
@@ -41,7 +43,7 @@ class ISCORMCourseInstance(ICourseInstance, INonExportable):
     """
 
 
-class ISCORMCourseMetadata(IContained):
+class ISCORMCourseMetadata(IContained, IAttributeAnnotatable):
     """
     Metadata for a SCORM course.
     """
