@@ -22,6 +22,9 @@ from zope.intid.interfaces import IIntIds
 from nti.app.products.courseware_scorm.interfaces import ISCORMIdentifier
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
+from nti.app.products.courseware_scorm.interfaces import IUserRegistrationReportContainer
+
+from nti.containers.containers import CaseInsensitiveCheckingLastModifiedBTreeContainer
 
 from nti.contenttypes.courses.courses import CourseInstance
 
@@ -67,6 +70,23 @@ SCORMCourseInstanceMetadataFactory = an_factory(SCORMCourseMetadata,
                                                 SCORM_COURSE_METADATA_KEY)
 
 
+@component.adapter(ISCORMCourseMetadata)
+@interface.implementer(IUserRegistrationReportContainer)
+class UserRegistrationReportContainer(CaseInsensitiveCheckingLastModifiedBTreeContainer):
+    
+    def add_registration_report(self, registration_report, user):
+        self[user.username] = registration_report
+    
+    def get_registration_report(self, user):
+        return self.get(user.username)
+    
+    def remove_registration_report(self, user):
+        try:
+            del self[user.username]
+            result = True
+        except KeyError:
+            result = False
+        return result
 @interface.implementer(ISCORMIdentifier)
 class SCORMIdentifier(object):
 
