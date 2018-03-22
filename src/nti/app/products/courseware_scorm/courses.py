@@ -22,6 +22,9 @@ from zope.intid.interfaces import IIntIds
 from nti.app.products.courseware_scorm.interfaces import ISCORMIdentifier
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
+from nti.app.products.courseware_scorm.interfaces import IUserRegistrationReportContainer
+
+from nti.containers.containers import CaseInsensitiveCheckingLastModifiedBTreeContainer
 
 from nti.contenttypes.courses.courses import CourseInstance
 
@@ -31,6 +34,8 @@ from nti.dataserver import authorization as nauth
 
 SCORM_COURSE_METADATA_KEY = 'nti.app.produts.courseware_scorm.courses.metadata'
 SCORM_COURSE_MIME_TYPE = 'application/vnd.nextthought.courses.scormcourseinstance'
+
+USER_REGISTRATION_REPORT_CONTAINER_KEY = 'nti.app.products.courseware_scorm.courses.registration-report-container'
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -65,6 +70,28 @@ class SCORMCourseMetadata(Persistent, Contained):
 
 SCORMCourseInstanceMetadataFactory = an_factory(SCORMCourseMetadata,
                                                 SCORM_COURSE_METADATA_KEY)
+
+
+@component.adapter(ISCORMCourseMetadata)
+@interface.implementer(IUserRegistrationReportContainer)
+class UserRegistrationReportContainer(CaseInsensitiveCheckingLastModifiedBTreeContainer):
+    
+    def add_registration_report(self, registration_report, user):
+        self[user.username] = registration_report
+    
+    def get_registration_report(self, user):
+        return self.get(user.username)
+    
+    def remove_registration_report(self, user):
+        try:
+            del self[user.username]
+            result = True
+        except KeyError:
+            result = False
+        return result
+
+UserRegistrationReportContainerFactory = an_factory(UserRegistrationReportContainer,
+                                                    USER_REGISTRATION_REPORT_CONTAINER_KEY)
 
 
 @interface.implementer(ISCORMIdentifier)
