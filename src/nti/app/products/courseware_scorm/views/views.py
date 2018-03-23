@@ -147,7 +147,6 @@ class SCORMProgressView(AbstractAuthenticatedView):
         return client.get_registration_progress(self.context.CourseInstance, user, self._results_format())
 
 
-
 @view_config(route_name='objects.generic.traversal',
              renderer='rest',
              context=ICourseInstanceEnrollment,
@@ -184,6 +183,7 @@ class SCORMRegistrationResultPostBack(AbstractView):
             return hexc.HTTPUnprocessableEntity()
         report = ISCORMRegistrationReport(report)
         
+        username = self.context.Username
         metadata = ISCORMCourseMetadata(self.context.CourseInstance)
         container = IUserRegistrationReportContainer(metadata)
         container[username] = report
