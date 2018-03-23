@@ -15,6 +15,19 @@
 
 	<include package="nti.scorm_cloud" />
 
+	<utility factory=".client.PostBackPasswordUtility"
+		 provides=".interfaces.IPostBackPasswordUtility" />
+
+	<configure zcml:condition="have devmode">
+	  <utility factory=".client.DevModePostbackURLGenerator"
+		   provides=".interfaces.IPostBackURLUtility" />
+	</configure>
+
+	<configure zcml:condition="not-have devmode">
+	  <utility factory=".client.PostBackURLGenerator"
+		   provides=".interfaces.IPostBackURLUtility" />
+	</configure>
+	
 	<adapter factory=".courses.SCORMCourseInstanceMetadataFactory" />
 	
 	<adapter factory=".courses.UserRegistrationReportContainerFactory" />
