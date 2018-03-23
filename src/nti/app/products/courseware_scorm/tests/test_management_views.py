@@ -237,7 +237,7 @@ class TestManagementViews(ApplicationLayerTest):
         params = {'username': new_username,
                   'password': 'temp001',
                   'data': postback_data}
-        self.testapp.post(self.postback_href, params=params)
+        self.testapp.post(self.postback_href, params=params, content_type='application/x-www-form-urlencoded')
 
         with mock_dataserver.mock_db_trans(site_name='alpha.nextthought.com'):
             new_user = User.get_user(new_username)
