@@ -14,11 +14,13 @@ import fudge
 from hamcrest import is_
 from hamcrest import none
 from hamcrest import is_not
+from hamcrest import equal_to
 from hamcrest import has_item
 from hamcrest import not_none
 from hamcrest import has_entry
 from hamcrest import assert_that
 from hamcrest import has_entries
+from hamcrest import instance_of
 does_not = is_not
 
 import shutil
@@ -40,6 +42,8 @@ from nti.app.products.courseware_scorm.interfaces import ISCORMIdentifier
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 from nti.app.products.courseware_scorm.interfaces import IUserRegistrationReportContainer
 
+from nti.app.products.courseware_scorm.subscribers import _SCORMCompletableItemProvider
+
 from nti.app.products.courseware_scorm.tests import CoursewareSCORMTestLayer
 
 from nti.app.products.courseware_scorm.views import GET_SCORM_ARCHIVE_VIEW_NAME
@@ -52,6 +56,8 @@ from nti.app.testing.decorators import WithSharedApplicationMockDS
 
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contentlibrary.interfaces import IDelimitedHierarchyContentPackageEnumeration
+
+from nti.contenttypes.completion.interfaces import IRequiredCompletableItemProvider
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseEnrollmentManager
@@ -261,6 +267,15 @@ class TestManagementViews(ApplicationLayerTest):
                                                  u'success', True,
                                                  u'score', 100,
                                                  u'total_time', 326)))
+            
+            providers = component.subscribers((new_user, course),
+                                              IRequiredCompletableItemProvider)
+            assert_that(len(providers), is_not(0))
+            assert_that(providers, has_item(instance_of(_SCORMCompletableItemProvider)))
+            for provider in providers:
+                if type(provider) is _SCORMCompletableItemProvider:
+                    assert_that(provider.iter_items(), has_item(metadata))
+            
         self.postback_href = None
         self.h_username, self.h_password = None, None
         self.registration_id = None

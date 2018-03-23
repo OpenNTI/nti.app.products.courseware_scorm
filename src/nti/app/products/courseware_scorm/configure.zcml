@@ -98,6 +98,11 @@
 
 	<subscriber factory=".subscribers.SCORMAllCoursesCollectionAcceptsProvider"
 				provides="nti.app.products.courseware.interfaces.IAllCoursesCollectionAcceptsProvider" />
+				
+	<subscriber factory=".subscribers._SCORMCompletableItemProvider"
+				provides="nti.contenttypes.completion.interfaces.IRequiredCompletableItemProvider"
+				for="nti.dataserver.interfaces.IUser
+					 .interfaces.ISCORMCourseInstance" />
 	
 	<subscriber handler=".courses._on_scorm_registration_removed" />
 

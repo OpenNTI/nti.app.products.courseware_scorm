@@ -20,6 +20,8 @@ from zope.container.interfaces import IContainer
 
 from zope.location.interfaces import IContained
 
+from nti.contenttypes.completion.interfaces import ICompletableItem
+
 from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
 
 from nti.contenttypes.courses.interfaces import INonExportable
@@ -45,7 +47,7 @@ class ISCORMCourseInstance(ICourseInstance, INonExportable):
     """
 
 
-class ISCORMCourseMetadata(IContained, IAttributeAnnotatable):
+class ISCORMCourseMetadata(IContained, IAttributeAnnotatable, ICompletableItem):
     """
     Metadata for a SCORM course.
     """
