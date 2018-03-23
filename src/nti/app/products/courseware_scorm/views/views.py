@@ -28,6 +28,7 @@ from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
 
+from nti.app.products.courseware_scorm.interfaces import ISCORMIdentifier
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 from nti.app.products.courseware_scorm.interfaces import ISCORMRegistrationReport
@@ -182,13 +183,23 @@ class SCORMRegistrationResultPostBack(AbstractView):
             return hexc.HTTPUnprocessableEntity()
         report = ISCORMRegistrationReport(report)
         
-        username = self.context.Username
-        metadata = ISCORMCourseMetadata(self.context.CourseInstance)
+        user = User.get_user(self.context.Username)
+        course = self.context.CourseInstance
+        registration_id = self._get_registration_id(course, user)
+        if registration_id != report.registration_id:
+            logger.info(u"Postback regid (%s) does not match enrollment regid (%s)",
+                        report.registration_id, registration_id)
+            return hexc.HTTPBadRequest()
+        metadata = ISCORMCourseMetadata(course)
         container = IUserRegistrationReportContainer(metadata)
-        container[username] = report
+        container.add_registration_report(report, user)
         
-        logger.info(u"Registration report postback stored: user=%s", username)
+        logger.info(u"Registration report postback stored: user=%s", user.username)
 
         return hexc.HTTPNoContent()
-
+    
+    def _get_registration_id(self, course, user):
+        identifier = component.getMultiAdapter((user, course),
+                                               ISCORMIdentifier)
+        return identifier.get_id()
         

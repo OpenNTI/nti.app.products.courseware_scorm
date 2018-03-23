@@ -36,6 +36,7 @@ from nti.app.products.courseware_scorm.courses import SCORM_COURSE_MIME_TYPE
 
 from nti.app.products.courseware_scorm.decorators import PROGRESS_REL
 
+from nti.app.products.courseware_scorm.interfaces import ISCORMIdentifier
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 from nti.app.products.courseware_scorm.interfaces import IUserRegistrationReportContainer
 
@@ -188,6 +189,7 @@ class TestManagementViews(ApplicationLayerTest):
         # Check for SCORM progress Link on enrollment records
         self.progress_href = None
         self.postback_href = None
+        self.registration_id = None
         new_username = u'CapnCook'
         with mock_dataserver.mock_db_trans(site_name='alpha.nextthought.com'):
             new_user = User.get_user(new_username)
@@ -211,6 +213,7 @@ class TestManagementViews(ApplicationLayerTest):
             self.postback_href = postback_url_generator.url_for_registration_postback(enrollment, mock_request)
             
             self.h_username, self.h_password = PostBackPasswordUtility().credentials_for_enrollment(enrollment)
+            self.registration_id = self._get_registration_id(course, new_user)
         
         assert_that(self.progress_href, is_not(none()))
         self.testapp.get(self.progress_href, status=403)
@@ -227,15 +230,16 @@ class TestManagementViews(ApplicationLayerTest):
                                           'activity', None))
         self.progress_href = None
         
+        assert_that(self.registration_id, is_not(none()))
         postback_data = '''<?xml version="1.0" encoding="utf-8" ?>
         <rsp stat="ok">
-        <registrationreport format="course" regid="8494706484070936189-5641550854418256038" instanceid="0">
+        <registrationreport format="course" regid="%s" instanceid="0">
             <complete>complete</complete>
             <success>passed</success>
             <totaltime>326</totaltime>
             <score>100</score>
         </registrationreport>
-        </rsp>'''
+        </rsp>''' % self.registration_id
          
         params = {'username': self.h_username,
                   'password': self.h_password,
@@ -258,6 +262,7 @@ class TestManagementViews(ApplicationLayerTest):
             
         self.postback_href = None
         self.h_username, self.h_password = None, None
+        self.registration_id = None
 
         # GUID NTIID
         assert_that(entry_ntiid,
@@ -272,3 +277,8 @@ class TestManagementViews(ApplicationLayerTest):
         courses = self.testapp.get(new_admin_href)
         assert_that(courses.json_body, does_not(has_item(new_course_key)))
         self.testapp.delete(new_admin_href)
+    
+    def _get_registration_id(self, course, user):
+        identifier = component.getMultiAdapter((user, course),
+                                               ISCORMIdentifier)
+        return identifier.get_id()
