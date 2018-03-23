@@ -19,20 +19,26 @@ from pyramid.threadlocal import get_current_request
 from zope import component
 from zope import interface
 
+from zope.event import notify
+
 from nti.app.externalization.error import raise_json_error
 
 from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
 
 from nti.app.products.courseware_scorm import MessageFactory as _
 
-from nti.app.products.courseware_scorm.interfaces import IPostBackURLUtility
+from nti.app.products.courseware_scorm.courses import SCORMRegistrationIdentifier
+from nti.app.products.courseware_scorm.courses import SCORMRegistrationRemovedEvent
+
 from nti.app.products.courseware_scorm.interfaces import ISCORMIdentifier
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 from nti.app.products.courseware_scorm.interfaces import IScormRegistration
+from nti.app.products.courseware_scorm.interfaces import IPostBackURLUtility
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 from nti.app.products.courseware_scorm.interfaces import IPostBackPasswordUtility
 from nti.app.products.courseware_scorm.interfaces import ISCORMRegistrationReport
+from nti.app.products.courseware_scorm.interfaces import IUserRegistrationReportContainer
 
 from nti.app.products.courseware_scorm.views import REGISTRATION_RESULT_POSTBACK_VIEW_NAME
 
@@ -179,7 +185,9 @@ class SCORMCloudClient(object):
             service = self.cloud.get_registration_service()
             registration_list = self.get_registration_list(course)
             for registration in registration_list or ():
-                self._remove_registration(registration.registration_id, service)
+                reg_id = registration.registration_id
+                user = SCORMRegistrationIdentifier.get_user(reg_id)
+                self._remove_registration(reg_id, course, user, service)
         return course
 
     def upload_course(self, unused_source, redirect_url):
@@ -315,15 +323,18 @@ class SCORMCloudClient(object):
             else:
                 raise error
 
-    def _remove_registration(self, registration_id, service=None):
+    def _remove_registration(self, registration_id, course, user, service=None):
         """
-        Unregister the give registration id.
+        Unregister the given registration ID.
         """
         if service is None:
             service = self.cloud.get_registration_service()
         logger.info("Unregistering: reg_id=%s", registration_id)
         try:
             service.deleteRegistration(registration_id)
+            notify(SCORMRegistrationRemovedEvent(registration_id,
+                                                 course,
+                                                 user))
         except ScormCloudError as error:
             if error.code == u'1':
                 logger.debug("The regid specified for deletion does not exist: %s",
@@ -340,7 +351,7 @@ class SCORMCloudClient(object):
             return
         user = User.get_user(enrollment_record.Principal.id)
         reg_id = self._get_registration_id(course, user)
-        self._remove_registration(reg_id)
+        self._remove_registration(reg_id, course, user)
 
     def launch(self, course, user, redirect_url):
         service = self.cloud.get_registration_service()

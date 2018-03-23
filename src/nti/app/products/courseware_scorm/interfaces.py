@@ -25,6 +25,8 @@ from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
 from nti.contenttypes.courses.interfaces import INonExportable
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
+from nti.coremetadata.interfaces import IUser
+
 from nti.schema.field import Bool
 from nti.schema.field import List
 from nti.schema.field import Choice
@@ -581,4 +583,20 @@ class IUserRegistrationReportContainer(IContainer):
         """
         Removes from this container the :class:`ISCORMRegistrationReport` for the given :class:`IUser`.
         """
+
+class ISCORMRegistrationRemovedEvent(interface.Interface):
+    """
+    An event that is sent after a SCORM registration has been removed.
+    """
+    
+    registration_id = ValidTextLine(title=u'The registration ID that was removed.',
+                                    required=True)
+    
+    course = Object(ISCORMCourseInstance,
+                    title=u'The course from which the registration was removed.',
+                    required=True)
+    
+    user = Object(IUser,
+                  title=u'The user for whom the registration was removed.',
+                  required=True)
     
