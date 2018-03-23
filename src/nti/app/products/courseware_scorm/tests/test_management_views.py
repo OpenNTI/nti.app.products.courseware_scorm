@@ -7,6 +7,8 @@ from __future__ import absolute_import
 
 # pylint: disable=protected-access,too-many-public-methods
 
+from collections import OrderedDict
+
 import fudge
 
 from hamcrest import is_
@@ -27,9 +29,14 @@ from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
 
 from nti.app.products.courseware_admin import VIEW_COURSE_ADMIN_LEVELS
 
+from nti.app.products.courseware_scorm.client import PostBackURLGenerator
+
 from nti.app.products.courseware_scorm.courses import SCORM_COURSE_MIME_TYPE
 
 from nti.app.products.courseware_scorm.decorators import PROGRESS_REL
+
+from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
+from nti.app.products.courseware_scorm.interfaces import IUserRegistrationReportContainer
 
 from nti.app.products.courseware_scorm.tests import CoursewareSCORMTestLayer
 
@@ -170,11 +177,14 @@ class TestManagementViews(ApplicationLayerTest):
         
         course_ntiid = new_course['NTIID']
         
+        new_username = u'CapnCook'
+        
         with mock_dataserver.mock_db_trans():
-            self._create_user(u'CapnCook')
+            self._create_user(new_username)
             
         # Check for SCORM progress Link on enrollment records
         self.progress_href = None
+        self.postback_href = None
         new_username = u'CapnCook'
         with mock_dataserver.mock_db_trans(site_name='alpha.nextthought.com'):
             new_user = User.get_user(new_username)
@@ -192,6 +202,10 @@ class TestManagementViews(ApplicationLayerTest):
             progress_link = next((link for link in ext_enrollment[LINKS] if link['rel'] == PROGRESS_REL), None)
             assert_that(progress_link, is_not(none()))
             self.progress_href = progress_link[HREF]
+            
+            postback_url_generator = PostBackURLGenerator()
+            mock_request = fudge.Fake().provides('relative_url').calls(lambda url: url)
+            self.postback_href = postback_url_generator.url_for_registration_postback(enrollment, mock_request)
         
         assert_that(self.progress_href, is_not(none()))
         self.testapp.get(self.progress_href, status=403)
@@ -207,6 +221,39 @@ class TestManagementViews(ApplicationLayerTest):
                                           'total_time', 0,
                                           'activity', None))
         self.progress_href = None
+        
+        postback_data = '''
+        <?xml version="1.0" encoding="utf-8" ?>\n
+        <rsp stat="ok">
+        <registrationreport format="course" regid="8494706484070936189-5641550854418256038" instanceid="0">
+            <complete>complete</complete>
+            <success>passed</success>
+            <totaltime>326</totaltime>
+            <score>100</score>
+        </registrationreport>
+        </rsp>
+        '''
+         
+        params = {'username': new_username,
+                  'password': 'temp001',
+                  'data': postback_data}
+        self.testapp.post(self.postback_href, params=params)
+
+        with mock_dataserver.mock_db_trans(site_name='alpha.nextthought.com'):
+            new_user = User.get_user(new_username)
+            entry = find_object_with_ntiid(course_ntiid)
+            course = ICourseInstance(entry)
+            metadata = ISCORMCourseMetadata(course)
+            container = IUserRegistrationReportContainer(metadata)
+            report = container.get_registration_report(new_user)
+            assert_that(report, is_not(none()))
+            assert_that(report,
+                        externalizes(has_entries(u'complete', True,
+                                                 u'success', True,
+                                                 u'score', 100,
+                                                 u'total_time', 326)))
+            
+        self.postback_href = None
 
         # GUID NTIID
         assert_that(entry_ntiid,
