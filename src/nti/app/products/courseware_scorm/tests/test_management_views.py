@@ -179,10 +179,12 @@ class TestManagementViews(ApplicationLayerTest):
         
         course_ntiid = new_course['NTIID']
         
-        new_username = u'CapnCook'
+        new_username1 = u'CapnCook'
+        new_username2 = u'Krazy-8'
         
         with mock_dataserver.mock_db_trans():
-            self._create_user(new_username)
+            self._create_user(new_username1)
+            self._create_user(new_username2)
             
         self.h_username, self.h_password = None, None
             
@@ -190,9 +192,8 @@ class TestManagementViews(ApplicationLayerTest):
         self.progress_href = None
         self.postback_href = None
         self.registration_id = None
-        new_username = u'CapnCook'
         with mock_dataserver.mock_db_trans(site_name='alpha.nextthought.com'):
-            new_user = User.get_user(new_username)
+            new_user = User.get_user(new_username1)
             entry = find_object_with_ntiid(course_ntiid)
             course = ICourseInstance(entry)
             
@@ -220,7 +221,7 @@ class TestManagementViews(ApplicationLayerTest):
         
         reg_report = RegistrationReport(format_='course')
         mock_registration_service.expects('get_registration_result').returns(reg_report)
-        new_user_env = self._make_extra_environ(new_username)
+        new_user_env = self._make_extra_environ(new_username1)
         progress = self.testapp.get(self.progress_href, extra_environ=new_user_env, status=200).json_body
         assert_that(progress, is_not(none()))
         assert_that(progress, has_entries('complete', False,
@@ -230,8 +231,7 @@ class TestManagementViews(ApplicationLayerTest):
                                           'activity', None))
         self.progress_href = None
         
-        assert_that(self.registration_id, is_not(none()))
-        postback_data = '''<?xml version="1.0" encoding="utf-8" ?>
+        postback_data_template = '''<?xml version="1.0" encoding="utf-8" ?>
         <rsp stat="ok">
         <registrationreport format="course" regid="%s" instanceid="0">
             <complete>complete</complete>
@@ -239,15 +239,59 @@ class TestManagementViews(ApplicationLayerTest):
             <totaltime>326</totaltime>
             <score>100</score>
         </registrationreport>
-        </rsp>''' % self.registration_id
-         
+        </rsp>'''
+        
+        assert_that(self.registration_id, is_not(none()))
+        postback_data1 = postback_data_template % self.registration_id 
         params = {'username': self.h_username,
                   'password': self.h_password,
-                  'data': postback_data}
+                  'data': postback_data1}
         self.testapp.post(self.postback_href, params=params, content_type='application/x-www-form-urlencoded')
 
         with mock_dataserver.mock_db_trans(site_name='alpha.nextthought.com'):
-            new_user = User.get_user(new_username)
+            new_user = User.get_user(new_username1)
+            entry = find_object_with_ntiid(course_ntiid)
+            course = ICourseInstance(entry)
+            metadata = ISCORMCourseMetadata(course)
+            container = IUserRegistrationReportContainer(metadata)
+            report = container.get_registration_report(new_user)
+            assert_that(report, is_not(none()))
+            assert_that(report,
+                        externalizes(has_entries(u'complete', True,
+                                                 u'success', True,
+                                                 u'score', 100,
+                                                 u'total_time', 326)))
+        self.postback_href = None
+        self.h_username, self.h_password = None, None
+        self.registration_id = None
+        
+        # Make sure registration reports are removed when a regid is removed
+            
+        with mock_dataserver.mock_db_trans(site_name='alpha.nextthought.com'):
+            new_user = User.get_user(new_username2)
+            entry = find_object_with_ntiid(course_ntiid)
+            course = ICourseInstance(entry)
+             
+            enrollment_manager = ICourseEnrollmentManager(course)
+            enrollment_record = enrollment_manager.enroll(new_user)
+            enrollment = ICourseInstanceEnrollment(enrollment_record)
+             
+            postback_url_generator = PostBackURLGenerator()
+            mock_request = fudge.Fake().provides('relative_url').calls(lambda url: url)
+            self.postback_href = postback_url_generator.url_for_registration_postback(enrollment, mock_request)
+            
+            self.h_username, self.h_password = PostBackPasswordUtility().credentials_for_enrollment(enrollment)
+            self.registration_id = self._get_registration_id(course, new_user)
+        
+        assert_that(self.registration_id, is_not(none()))
+        postback_data2 = postback_data_template % self.registration_id
+        params = {'username': self.h_username,
+                  'password': self.h_password,
+                  'data': postback_data2}
+        self.testapp.post(self.postback_href, params=params, content_type='application/x-www-form-urlencoded')
+        
+        with mock_dataserver.mock_db_trans(site_name='alpha.nextthought.com'):
+            new_user = User.get_user(new_username2)
             entry = find_object_with_ntiid(course_ntiid)
             course = ICourseInstance(entry)
             metadata = ISCORMCourseMetadata(course)
@@ -260,7 +304,13 @@ class TestManagementViews(ApplicationLayerTest):
                                                  u'score', 100,
                                                  u'total_time', 326)))
             
-        self.postback_href = None
+            mock_registration_service.provides('deleteRegistration')
+            mock_registration_service.expects('deleteRegistration')
+            enrollment_manager = ICourseEnrollmentManager(course)
+            enrollment_manager.drop(new_user)
+            
+            report = container.get_registration_report(new_user)
+            assert_that(report, is_(none()))
         self.h_username, self.h_password = None, None
         self.registration_id = None
 
