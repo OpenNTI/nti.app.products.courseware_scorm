@@ -118,3 +118,9 @@ class SCORMRegistrationIdentifier(object):
         user_id = str(intids.getId(self.user))
         course_id = str(intids.getId(self.course))
         return u'-'.join([user_id, course_id])
+    
+    @classmethod
+    def get_user(cls, registration_id):
+        intids = component.getUtility(IIntIds)
+        parts = registration_id.split(u'-')
+        return intids.queryObject(parts[0])
