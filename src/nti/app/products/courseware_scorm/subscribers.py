@@ -24,6 +24,7 @@ from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 
+from nti.contenttypes.completion.interfaces import ICompletedItemProvider
 from nti.contenttypes.completion.interfaces import IRequiredCompletableItemProvider
 
 from nti.contenttypes.courses.interfaces import ICourseInstanceRemovedEvent
@@ -77,5 +78,18 @@ class _SCORMCompletableItemProvider(object):
         metadata = ISCORMCourseMetadata(self.course)
         if metadata.has_scorm_package():
             items.append(metadata)
+        return items
+    
+
+@component.adapter(IUser, ISCORMCourseInstance)
+@interface.implementer(ICompletedItemProvider)
+class _SCORMCompletedItemProvider(object):
+    
+    def __init__(self, user, course):
+        self.user = user
+        self.course = course
+    
+    def completed_items(self):
+        items = []
         return items
     

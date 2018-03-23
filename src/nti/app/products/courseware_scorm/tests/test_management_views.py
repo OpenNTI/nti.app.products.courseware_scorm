@@ -42,6 +42,7 @@ from nti.app.products.courseware_scorm.interfaces import ISCORMIdentifier
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 from nti.app.products.courseware_scorm.interfaces import IUserRegistrationReportContainer
 
+from nti.app.products.courseware_scorm.subscribers import _SCORMCompletedItemProvider
 from nti.app.products.courseware_scorm.subscribers import _SCORMCompletableItemProvider
 
 from nti.app.products.courseware_scorm.tests import CoursewareSCORMTestLayer
@@ -57,6 +58,7 @@ from nti.app.testing.decorators import WithSharedApplicationMockDS
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contentlibrary.interfaces import IDelimitedHierarchyContentPackageEnumeration
 
+from nti.contenttypes.completion.interfaces import ICompletedItemProvider
 from nti.contenttypes.completion.interfaces import IRequiredCompletableItemProvider
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
@@ -268,6 +270,7 @@ class TestManagementViews(ApplicationLayerTest):
                                                  u'score', 100,
                                                  u'total_time', 326)))
             
+            # Completable item providers
             providers = component.subscribers((new_user, course),
                                               IRequiredCompletableItemProvider)
             assert_that(len(providers), is_not(0))
@@ -278,6 +281,15 @@ class TestManagementViews(ApplicationLayerTest):
                     assert_that(provider.iter_items(), does_not(has_item(metadata)))
                     mock_has_scorm.is_callable().returns(True)
                     assert_that(provider.iter_items(), has_item(metadata))
+            
+            # Completed item providers
+            providers = component.subscribers((new_user, course),
+                                              ICompletedItemProvider)
+            assert_that(len(providers), is_not(0))
+            assert_that(providers, has_item(instance_of(_SCORMCompletedItemProvider)))
+            for provider in providers:
+                if type(provider) is _SCORMCompletedItemProvider:
+                    assert_that(len(provider.completed_items()), is_(0))
             
         self.postback_href = None
         self.h_username, self.h_password = None, None
