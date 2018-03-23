@@ -98,6 +98,8 @@
 
 	<subscriber factory=".subscribers.SCORMAllCoursesCollectionAcceptsProvider"
 				provides="nti.app.products.courseware.interfaces.IAllCoursesCollectionAcceptsProvider" />
+	
+	<subscriber handler=".courses._on_scorm_registration_removed" />
 
 	<!-- Client -->
 	<include package="." file="meta.zcml" />

@@ -19,6 +19,8 @@ from pyramid.threadlocal import get_current_request
 from zope import component
 from zope import interface
 
+from zope.event import notify
+
 from nti.app.externalization.error import raise_json_error
 
 from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
@@ -26,6 +28,7 @@ from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
 from nti.app.products.courseware_scorm import MessageFactory as _
 
 from nti.app.products.courseware_scorm.courses import SCORMRegistrationIdentifier
+from nti.app.products.courseware_scorm.courses import SCORMRegistrationRemovedEvent
 
 from nti.app.products.courseware_scorm.interfaces import ISCORMIdentifier
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
@@ -329,10 +332,9 @@ class SCORMCloudClient(object):
         logger.info("Unregistering: reg_id=%s", registration_id)
         try:
             service.deleteRegistration(registration_id)
-            # Remove any stored registration report
-            metadata = ISCORMCourseMetadata(course)
-            container = IUserRegistrationReportContainer(metadata)
-            container.remove_registration_report(user)
+            notify(SCORMRegistrationRemovedEvent(registration_id,
+                                                 course,
+                                                 user))
         except ScormCloudError as error:
             if error.code == u'1':
                 logger.debug("The regid specified for deletion does not exist: %s",

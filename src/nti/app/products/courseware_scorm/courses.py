@@ -22,6 +22,7 @@ from zope.intid.interfaces import IIntIds
 from nti.app.products.courseware_scorm.interfaces import ISCORMIdentifier
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
+from nti.app.products.courseware_scorm.interfaces import ISCORMRegistrationRemovedEvent
 from nti.app.products.courseware_scorm.interfaces import IUserRegistrationReportContainer
 
 from nti.containers.containers import CaseInsensitiveCheckingLastModifiedBTreeContainer
@@ -72,6 +73,15 @@ SCORMCourseInstanceMetadataFactory = an_factory(SCORMCourseMetadata,
                                                 SCORM_COURSE_METADATA_KEY)
 
 
+@interface.implementer(ISCORMRegistrationRemovedEvent)
+class SCORMRegistrationRemovedEvent(object):
+    
+    def __init__(self, registration_id, course, user):
+        self.registration_id = registration_id
+        self.course = course
+        self.user = user
+
+
 @component.adapter(ISCORMCourseMetadata)
 @interface.implementer(IUserRegistrationReportContainer)
 class UserRegistrationReportContainer(CaseInsensitiveCheckingLastModifiedBTreeContainer):
@@ -92,6 +102,15 @@ class UserRegistrationReportContainer(CaseInsensitiveCheckingLastModifiedBTreeCo
 
 UserRegistrationReportContainerFactory = an_factory(UserRegistrationReportContainer,
                                                     USER_REGISTRATION_REPORT_CONTAINER_KEY)
+
+
+@component.adapter(ISCORMRegistrationRemovedEvent)
+def _on_scorm_registration_removed(event):
+    # Remove any stored registration report
+    logger.debug(u'_on_scorm_registration_removed: regid=%s', event.registration_id)
+    metadata = ISCORMCourseMetadata(event.course)
+    container = IUserRegistrationReportContainer(metadata)
+    container.remove_registration_report(event.user)
 
 
 @interface.implementer(ISCORMIdentifier)
