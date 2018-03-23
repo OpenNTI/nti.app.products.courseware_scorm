@@ -26,13 +26,12 @@ from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
 from nti.app.products.courseware_scorm import MessageFactory as _
 
 from nti.app.products.courseware_scorm.interfaces import IPostBackURLUtility
-from nti.app.products.courseware_scorm.interfaces import ISCORMProgress
 from nti.app.products.courseware_scorm.interfaces import ISCORMIdentifier
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 from nti.app.products.courseware_scorm.interfaces import IScormRegistration
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
-from nti.app.products.courseware_scorm.interfaces import IPostBackPasswordUtility
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
+from nti.app.products.courseware_scorm.interfaces import IPostBackPasswordUtility
 from nti.app.products.courseware_scorm.interfaces import ISCORMRegistrationReport
 
 from nti.app.products.courseware_scorm.views import REGISTRATION_RESULT_POSTBACK_VIEW_NAME
