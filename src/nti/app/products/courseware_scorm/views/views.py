@@ -16,6 +16,10 @@ from requests.structures import CaseInsensitiveDict
 
 from six.moves import urllib_parse
 
+from xml.dom import minidom
+
+from xml.parsers.expat import ExpatError
+
 from zope import component
 from zope import interface
 
@@ -25,7 +29,10 @@ from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
 
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
+from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
+from nti.app.products.courseware_scorm.interfaces import ISCORMRegistrationReport
 from nti.app.products.courseware_scorm.interfaces import IPostBackPasswordUtility
+from nti.app.products.courseware_scorm.interfaces import IUserRegistrationReportContainer
 
 from nti.app.products.courseware_scorm.views import SCORM_PROGRESS_VIEW_NAME
 from nti.app.products.courseware_scorm.views import LAUNCH_SCORM_COURSE_VIEW_NAME
@@ -40,6 +47,8 @@ from nti.dataserver.authorization import ACT_READ
 from nti.dataserver.authorization import is_admin_or_content_admin_or_site_admin
 
 from nti.dataserver.users.users import User 
+
+from nti.scorm_cloud.client.registration import RegistrationReport
 
 logger = __import__('logging').getLogger(__name__)
 
