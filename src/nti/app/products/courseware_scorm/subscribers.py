@@ -73,6 +73,9 @@ class _SCORMCompletableItemProvider(object):
         self.course = course
         
     def iter_items(self):
+        items = []
         metadata = ISCORMCourseMetadata(self.course)
-        return [metadata]
+        if metadata.has_scorm_package():
+            items.append(metadata)
+        return items
     

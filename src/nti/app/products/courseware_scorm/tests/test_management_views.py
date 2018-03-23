@@ -274,6 +274,9 @@ class TestManagementViews(ApplicationLayerTest):
             assert_that(providers, has_item(instance_of(_SCORMCompletableItemProvider)))
             for provider in providers:
                 if type(provider) is _SCORMCompletableItemProvider:
+                    mock_has_scorm.is_callable().returns(False)
+                    assert_that(provider.iter_items(), does_not(has_item(metadata)))
+                    mock_has_scorm.is_callable().returns(True)
                     assert_that(provider.iter_items(), has_item(metadata))
             
         self.postback_href = None
