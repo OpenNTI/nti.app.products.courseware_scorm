@@ -30,6 +30,7 @@ from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
 from nti.app.products.courseware_admin import VIEW_COURSE_ADMIN_LEVELS
 
 from nti.app.products.courseware_scorm.client import PostBackURLGenerator
+from nti.app.products.courseware_scorm.client import PostBackPasswordUtility
 
 from nti.app.products.courseware_scorm.courses import SCORM_COURSE_MIME_TYPE
 
@@ -182,6 +183,8 @@ class TestManagementViews(ApplicationLayerTest):
         with mock_dataserver.mock_db_trans():
             self._create_user(new_username)
             
+        self.h_username, self.h_password = None, None
+            
         # Check for SCORM progress Link on enrollment records
         self.progress_href = None
         self.postback_href = None
@@ -206,6 +209,8 @@ class TestManagementViews(ApplicationLayerTest):
             postback_url_generator = PostBackURLGenerator()
             mock_request = fudge.Fake().provides('relative_url').calls(lambda url: url)
             self.postback_href = postback_url_generator.url_for_registration_postback(enrollment, mock_request)
+            
+            self.h_username, self.h_password = PostBackPasswordUtility().credentials_for_enrollment(enrollment)
         
         assert_that(self.progress_href, is_not(none()))
         self.testapp.get(self.progress_href, status=403)
@@ -222,8 +227,7 @@ class TestManagementViews(ApplicationLayerTest):
                                           'activity', None))
         self.progress_href = None
         
-        postback_data = '''
-        <?xml version="1.0" encoding="utf-8" ?>\n
+        postback_data = '''<?xml version="1.0" encoding="utf-8" ?>
         <rsp stat="ok">
         <registrationreport format="course" regid="8494706484070936189-5641550854418256038" instanceid="0">
             <complete>complete</complete>
@@ -231,11 +235,10 @@ class TestManagementViews(ApplicationLayerTest):
             <totaltime>326</totaltime>
             <score>100</score>
         </registrationreport>
-        </rsp>
-        '''
+        </rsp>'''
          
-        params = {'username': new_username,
-                  'password': 'temp001',
+        params = {'username': self.h_username,
+                  'password': self.h_password,
                   'data': postback_data}
         self.testapp.post(self.postback_href, params=params, content_type='application/x-www-form-urlencoded')
 
@@ -254,6 +257,7 @@ class TestManagementViews(ApplicationLayerTest):
                                                  u'total_time', 326)))
             
         self.postback_href = None
+        self.h_username, self.h_password = None, None
 
         # GUID NTIID
         assert_that(entry_ntiid,
