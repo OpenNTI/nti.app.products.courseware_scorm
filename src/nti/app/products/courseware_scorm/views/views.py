@@ -150,6 +150,7 @@ class SCORMRegistrationResultPostBack(AbstractView):
         username = self.request.params.get('username', None)
         password = self.request.params.get('password', None)
         data = self.request.params.get('data', None)
+        logger.info(u"Registration report postback received: user=%s, pass=%s, data=%s", username, password, data)
 
         if not username or not password or not data:
             raise hexc.HTTPBadRequest()
@@ -160,8 +161,25 @@ class SCORMRegistrationResultPostBack(AbstractView):
         except ValueError:
             raise hexc.HTTPForbidden()
 
-        # TODO do something with the data here.  Parse it and store completion information
-        # on the course
+        # Parse the data and store completion information on the course
+        try:
+            xmldoc = minidom.parseString(data)
+        except (UnicodeEncodeError, ExpatError) as error:
+            logger.info(u"Postback data cannot be parsed into XML: %s", error)
+            return hexc.HTTPUnprocessableEntity()
+        
+        nodes = xmldoc.getElementsByTagName('registrationreport')
+        report = RegistrationReport.fromMinidom(nodes[0]) if nodes else None
+        if report is None:
+            logger.info(u"Postback XML cannot be parsed into RegistrationReport")
+            return hexc.HTTPUnprocessableEntity()
+        report = ISCORMRegistrationReport(report)
+        
+        metadata = ISCORMCourseMetadata(self.context.CourseInstance)
+        container = IUserRegistrationReportContainer(metadata)
+        container[username] = report
+        
+        logger.info(u"Registration report postback stored: user=%s", username)
 
         return hexc.HTTPNoContent()
 
