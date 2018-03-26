@@ -33,6 +33,8 @@ from nti.contenttypes.courses.utils import is_course_editor
 
 from nti.dataserver import authorization as nauth
 
+from nti.ntiids.oids import to_external_ntiid_oid
+
 SCORM_COURSE_METADATA_KEY = 'nti.app.produts.courseware_scorm.courses.metadata'
 SCORM_COURSE_MIME_TYPE = 'application/vnd.nextthought.courses.scormcourseinstance'
 
@@ -65,6 +67,10 @@ class SCORMCourseMetadata(Persistent, Contained):
     """
 
     scorm_id = None
+    
+    @property
+    def ntiid(self):
+        return to_external_ntiid_oid(self)
 
     def has_scorm_package(self):
         return self.scorm_id is not None
