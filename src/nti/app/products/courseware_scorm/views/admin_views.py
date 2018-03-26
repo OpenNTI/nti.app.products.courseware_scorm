@@ -14,19 +14,26 @@ from pyramid import httpexceptions as hexc
 
 from pyramid.view import view_config
 
+from requests.structures import CaseInsensitiveDict
+
 from zope import component
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
+
+from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
 
 from nti.app.products.courseware_scorm import MessageFactory as _
 
 from nti.app.products.courseware_scorm.courses import is_course_admin
 
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
+from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
+from nti.app.products.courseware_scorm.interfaces import IUserRegistrationReportContainer
 
 from nti.app.products.courseware_scorm.views import GET_SCORM_ARCHIVE_VIEW_NAME
 from nti.app.products.courseware_scorm.views import GET_REGISTRATION_LIST_VIEW_NAME
 from nti.app.products.courseware_scorm.views import DELETE_ALL_REGISTRATIONS_VIEW_NAME
+from nti.app.products.courseware_scorm.views import SYNC_REGISTRATION_REPORT_VIEW_NAME
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
@@ -107,3 +114,30 @@ class GetArchiveView(AbstractAuthenticatedView):
         zip_io = cStringIO(zip_bytes)
         response.body_file = zip_io
         return response
+    
+
+@view_config(route_name='objects.generic.traversal',
+             renderer='rest',
+             context=ICourseInstanceEnrollment,
+             request_method='POST',
+             name=SYNC_REGISTRATION_REPORT_VIEW_NAME)
+class SyncRegistrationReportView(AbstractAuthenticatedView):
+    
+    def _results_format(self):
+        return CaseInsensitiveDict(self.request.params).get(u'resultsFormat')
+    
+    def __call__(self):
+        user = self.remoteUser
+        course = self.context.CourseInstance
+        if not is_course_admin(user=user, course=self.context.CourseInstance):
+            return hexc.HTTPForbidden(_(u"You do not have access to this SCORM content."))
+        client = component.getUtility(ISCORMCloudClient)
+        metadata = ISCORMCourseMetadata(course)
+        container = IUserRegistrationReportContainer(metadata)
+        if client.enrollment_registration_exists(course, user):
+            report = client.get_registration_progress(course, user, self._results_format())
+            container.add_registration_report(report, user)
+        else:
+            container.remove_registration_report(user)
+        return hexc.HTTPNoContent()
+            
