@@ -99,12 +99,12 @@
 	<subscriber factory=".subscribers.SCORMAllCoursesCollectionAcceptsProvider"
 				provides="nti.app.products.courseware.interfaces.IAllCoursesCollectionAcceptsProvider" />
 				
-	<subscriber factory=".subscribers._SCORMCompletableItemProvider"
+	<subscriber factory=".completion._SCORMCompletableItemProvider"
 				provides="nti.contenttypes.completion.interfaces.IRequiredCompletableItemProvider"
 				for="nti.dataserver.interfaces.IUser
 					 .interfaces.ISCORMCourseInstance" />
 	
-	<subscriber factory=".subscribers._SCORMCompletedItemProvider"
+	<subscriber factory=".completion._SCORMCompletedItemProvider"
 				provides="nti.contenttypes.completion.interfaces.ICompletedItemProvider"
 				for="nti.dataserver.interfaces.IUser
 					 .interfaces.ISCORMCourseInstance" />

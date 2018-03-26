@@ -34,6 +34,9 @@ from nti.app.products.courseware_admin import VIEW_COURSE_ADMIN_LEVELS
 from nti.app.products.courseware_scorm.client import PostBackURLGenerator
 from nti.app.products.courseware_scorm.client import PostBackPasswordUtility
 
+from nti.app.products.courseware_scorm.completion import _SCORMCompletedItemProvider
+from nti.app.products.courseware_scorm.completion import _SCORMCompletableItemProvider
+
 from nti.app.products.courseware_scorm.courses import SCORM_COURSE_MIME_TYPE
 
 from nti.app.products.courseware_scorm.decorators import PROGRESS_REL
@@ -41,9 +44,6 @@ from nti.app.products.courseware_scorm.decorators import PROGRESS_REL
 from nti.app.products.courseware_scorm.interfaces import ISCORMIdentifier
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 from nti.app.products.courseware_scorm.interfaces import IUserRegistrationReportContainer
-
-from nti.app.products.courseware_scorm.subscribers import _SCORMCompletedItemProvider
-from nti.app.products.courseware_scorm.subscribers import _SCORMCompletableItemProvider
 
 from nti.app.products.courseware_scorm.tests import CoursewareSCORMTestLayer
 
