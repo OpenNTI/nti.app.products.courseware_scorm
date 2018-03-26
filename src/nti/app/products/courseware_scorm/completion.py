@@ -16,7 +16,10 @@ from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 
 from nti.contenttypes.completion.interfaces import ICompletedItemProvider
+from nti.contenttypes.completion.interfaces import ICompletableItemCompletionPolicy
 from nti.contenttypes.completion.interfaces import IRequiredCompletableItemProvider
+
+from nti.contenttypes.completion.completion import CompletedItem
 
 from nti.contenttypes.completion.progress import Progress
 
@@ -59,6 +62,35 @@ class _SCORMCompletableItemProvider(object):
         if metadata.has_scorm_package():
             items.append(metadata)
         return items
+    
+
+@component.adapter(ISCORMCourseMetadata)
+@interface.implementer(ICompletableItemCompletionPolicy)
+class SCORMCompletionPolicy(object):
+    
+    def __init__(self, metadata):
+        self.metadata = metadata
+    
+    def is_complete(self, progress):
+        result = None
+        
+        if progress is None:
+            return result
+        
+        if not ISCORMProgress.providedBy(progress):
+            return result
+        
+        report = progress.registration_report
+        activity = report.activity
+        if activity is not None:
+            completed = activity.complete or activity.completed
+        else:
+            completed = report.complete
+        
+        if completed:
+            result = CompletedItem(Item=progress.Item,
+                                   Principal=progress.User)
+        return result
     
 
 @component.adapter(IUser, ISCORMCourseInstance)

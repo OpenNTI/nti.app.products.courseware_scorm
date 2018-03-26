@@ -91,6 +91,10 @@
  	<adapter factory=".model.SCORMActivity"
  			 for="nti.scorm_cloud.client.registration.Activity"
  			 provides=".interfaces.ISCORMActivity" />
+ 			 
+ 	<adapter factory=".completion.SCORMCompletionPolicy"
+ 			 for=".courses.SCORMCourseMetadata"
+ 			 provides="nti.contenttypes.completion.interfaces.ICompletableItemCompletionPolicy" />
 
 	<!-- Subscribers -->
 	<subscriber handler=".subscribers._enrollment_record_dropped" />
