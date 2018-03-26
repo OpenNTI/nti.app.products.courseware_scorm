@@ -289,7 +289,8 @@ class TestManagementViews(ApplicationLayerTest):
             assert_that(providers, has_item(instance_of(_SCORMCompletedItemProvider)))
             for provider in providers:
                 if type(provider) is _SCORMCompletedItemProvider:
-                    assert_that(len(provider.completed_items()), is_(0))
+                    assert_that(len(provider.completed_items()), is_(1))
+                    
             
         self.postback_href = None
         self.h_username, self.h_password = None, None
