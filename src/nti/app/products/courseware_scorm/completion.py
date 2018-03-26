@@ -32,15 +32,15 @@ class SCORMProgress(Progress):
         activity = report.activity
         runtime = activity.runtime if activity is not None else None
         if runtime is not None:
-            progress = self.report.activity.runtime.progress_measure
+            progress = report.activity.runtime.progress_measure
         elif activity is not None:
-            progress = 1 if self.report.activity.complete else 0
+            progress = 1 if report.activity.complete else 0
         else: 
-            progress = 1 if self.report.complete else 0
+            progress = 1 if report.complete else 0
         self.AbsoluteProgress = progress
             
         self.MaxPossibleProgress = 1
-        self.HasProgress = self.report.total_time > 0
+        self.HasProgress = report.total_time > 0
         
         super(SCORMProgress, self).__init__(User=User, LastModified=None)
         
