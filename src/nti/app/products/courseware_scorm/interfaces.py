@@ -609,3 +609,7 @@ class ISCORMProgress(IProgress):
     An :class:`IProgress` object for SCORM content.
     """
     
+    registration_report = Object(ISCORMRegistrationReport,
+                                 title=u'The SCORM registration report.',
+                                 required=True)
+    

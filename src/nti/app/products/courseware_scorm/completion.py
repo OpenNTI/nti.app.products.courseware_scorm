@@ -27,7 +27,7 @@ from nti.coremetadata.interfaces import IUser
 class SCORMProgress(Progress):
     
     def __init__(self, User, report):
-        self.report = report
+        self.registration_report = report
 
         activity = report.activity
         runtime = activity.runtime if activity is not None else None
