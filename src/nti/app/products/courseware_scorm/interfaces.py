@@ -20,6 +20,7 @@ from zope.container.interfaces import IContainer
 
 from zope.location.interfaces import IContained
 
+from nti.contenttypes.completion.interfaces import IProgress
 from nti.contenttypes.completion.interfaces import ICompletableItem
 
 from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
@@ -601,4 +602,10 @@ class ISCORMRegistrationRemovedEvent(interface.Interface):
     user = Object(IUser,
                   title=u'The user for whom the registration was removed.',
                   required=True)
+
+
+class ISCORMProgress(IProgress):
+    """
+    An :class:`IProgress` object for SCORM content.
+    """
     
