@@ -18,6 +18,7 @@ from hamcrest import equal_to
 from hamcrest import has_item
 from hamcrest import not_none
 from hamcrest import has_entry
+from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import has_entries
 from hamcrest import instance_of
@@ -27,12 +28,19 @@ import shutil
 
 from zope import component
 
+from nti.app.contenttypes.completion import COMPLETED_ITEMS_PATH_NAME
+
+from nti.app.contenttypes.completion.views import completed_items_link as make_completed_items_link
+
 from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
 
 from nti.app.products.courseware_admin import VIEW_COURSE_ADMIN_LEVELS
 
 from nti.app.products.courseware_scorm.client import PostBackURLGenerator
 from nti.app.products.courseware_scorm.client import PostBackPasswordUtility
+
+from nti.app.products.courseware_scorm.completion import _SCORMCompletedItemProvider
+from nti.app.products.courseware_scorm.completion import _SCORMCompletableItemProvider
 
 from nti.app.products.courseware_scorm.courses import SCORM_COURSE_MIME_TYPE
 
@@ -41,8 +49,6 @@ from nti.app.products.courseware_scorm.decorators import PROGRESS_REL
 from nti.app.products.courseware_scorm.interfaces import ISCORMIdentifier
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 from nti.app.products.courseware_scorm.interfaces import IUserRegistrationReportContainer
-
-from nti.app.products.courseware_scorm.subscribers import _SCORMCompletableItemProvider
 
 from nti.app.products.courseware_scorm.tests import CoursewareSCORMTestLayer
 
@@ -57,6 +63,7 @@ from nti.app.testing.decorators import WithSharedApplicationMockDS
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contentlibrary.interfaces import IDelimitedHierarchyContentPackageEnumeration
 
+from nti.contenttypes.completion.interfaces import ICompletedItemProvider
 from nti.contenttypes.completion.interfaces import IRequiredCompletableItemProvider
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
@@ -72,6 +79,8 @@ from nti.externalization.interfaces import StandardExternalFields
 
 from nti.externalization.testing import externalizes
 
+from nti.links.externalization import render_link
+
 from nti.ntiids.ntiids import find_object_with_ntiid
 
 from nti.scorm_cloud.client.registration import RegistrationReport
@@ -85,6 +94,8 @@ MIMETYPE = StandardExternalFields.MIMETYPE
 ARCHIVE_REL = GET_SCORM_ARCHIVE_VIEW_NAME
 IMPORT_REL = IMPORT_SCORM_COURSE_VIEW_NAME
 LAUNCH_REL = LAUNCH_SCORM_COURSE_VIEW_NAME
+
+logger = __import__('logging').getLogger(__name__)
 
 
 class TestManagementViews(ApplicationLayerTest):
@@ -197,6 +208,7 @@ class TestManagementViews(ApplicationLayerTest):
         # Check for SCORM progress Link on enrollment records
         self.progress_href = None
         self.postback_href = None
+        self.completed_items_href = None
         self.registration_id = None
         with mock_dataserver.mock_db_trans(site_name='alpha.nextthought.com'):
             new_user = User.get_user(new_username1)
@@ -218,6 +230,11 @@ class TestManagementViews(ApplicationLayerTest):
             postback_url_generator = PostBackURLGenerator()
             mock_request = fudge.Fake().provides('relative_url').calls(lambda url: url)
             self.postback_href = postback_url_generator.url_for_registration_postback(enrollment, mock_request)
+            
+            # Manually create link until we know why it isn't being decorated in the test
+            completed_items_link = make_completed_items_link(course, new_user)
+            assert_that(completed_items_link, is_not(none()))
+            self.completed_items_href = render_link(completed_items_link)[HREF]
             
             self.h_username, self.h_password = PostBackPasswordUtility().credentials_for_enrollment(enrollment)
             self.registration_id = self._get_registration_id(course, new_user)
@@ -268,6 +285,7 @@ class TestManagementViews(ApplicationLayerTest):
                                                  u'score', 100,
                                                  u'total_time', 326)))
             
+            # Completable item providers
             providers = component.subscribers((new_user, course),
                                               IRequiredCompletableItemProvider)
             assert_that(len(providers), is_not(0))
@@ -279,7 +297,21 @@ class TestManagementViews(ApplicationLayerTest):
                     mock_has_scorm.is_callable().returns(True)
                     assert_that(provider.iter_items(), has_item(metadata))
             
+            # Completed item providers
+            providers = component.subscribers((new_user, course),
+                                              ICompletedItemProvider)
+            assert_that(len(providers), is_not(0))
+            assert_that(providers, has_item(instance_of(_SCORMCompletedItemProvider)))
+            for provider in providers:
+                if type(provider) is _SCORMCompletedItemProvider:
+                    assert_that(len(provider.completed_items()), is_(1))
+        
+        # CompletedItems link    
+        completed_items = self.testapp.get(self.completed_items_href).json_body['Items']
+        assert_that(completed_items, has_length(1))            
+            
         self.postback_href = None
+        self.completed_items_href = None
         self.h_username, self.h_password = None, None
         self.registration_id = None
         
