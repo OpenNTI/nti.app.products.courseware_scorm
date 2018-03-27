@@ -35,7 +35,7 @@ class SCORMProgress(Progress):
 
         activity = report.activity
         if activity is not None:
-            progress = 1 if report.activity.complete else 0
+            progress = 1 if (activity.complete or activity.completed) else 0
         else: 
             progress = 1 if report.complete else 0
         self.AbsoluteProgress = progress
