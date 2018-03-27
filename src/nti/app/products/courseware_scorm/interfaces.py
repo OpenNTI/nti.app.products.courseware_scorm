@@ -612,4 +612,5 @@ class ISCORMProgress(IProgress):
     registration_report = Object(ISCORMRegistrationReport,
                                  title=u'The SCORM registration report.',
                                  required=True)
+    registration_report.setTaggedValue('_ext_excluded_out', True)
     
