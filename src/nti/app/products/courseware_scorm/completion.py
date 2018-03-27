@@ -34,10 +34,7 @@ class SCORMProgress(Progress):
         self.registration_report = report
 
         activity = report.activity
-        runtime = activity.runtime if activity is not None else None
-        if runtime is not None:
-            progress = report.activity.runtime.progress_measure
-        elif activity is not None:
+        if activity is not None:
             progress = 1 if report.activity.complete else 0
         else: 
             progress = 1 if report.complete else 0
