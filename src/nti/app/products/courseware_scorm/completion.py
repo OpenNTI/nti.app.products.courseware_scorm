@@ -105,14 +105,15 @@ class _SCORMCompletedItemProvider(object):
         report_container = IUserRegistrationReportContainer(metadata)
         report = report_container.get_registration_report(self.user)
         
-        progress = SCORMProgress(self.user, report)
-        progress.NTIID = metadata.ntiid
-        progress.Item = metadata
-        progress.CompletionContext = self.course
+        if report is not None:
+            progress = SCORMProgress(self.user, report)
+            progress.NTIID = metadata.ntiid
+            progress.Item = metadata
+            progress.CompletionContext = self.course
         
-        policy = ICompletableItemCompletionPolicy(metadata)
-        completed_item = policy.is_complete(progress)
-        if completed_item is not None:
-            items.append(completed_item)
+            policy = ICompletableItemCompletionPolicy(metadata)
+            completed_item = policy.is_complete(progress)
+            if completed_item is not None:
+                items.append(completed_item)
         
         return items
