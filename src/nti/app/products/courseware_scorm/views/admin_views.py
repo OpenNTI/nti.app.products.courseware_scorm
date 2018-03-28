@@ -121,7 +121,7 @@ class GetArchiveView(AbstractAuthenticatedView):
 @view_config(route_name='objects.generic.traversal',
              renderer='rest',
              context=ICourseInstanceEnrollment,
-             request_method='GET',
+             request_method='POST',
              name=SYNC_REGISTRATION_REPORT_VIEW_NAME)
 class SyncRegistrationReportView(AbstractAuthenticatedView):
     
