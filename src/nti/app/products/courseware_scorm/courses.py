@@ -29,7 +29,7 @@ from nti.containers.containers import CaseInsensitiveCheckingLastModifiedBTreeCo
 
 from nti.contenttypes.courses.courses import CourseInstance
 
-from nti.contenttypes.courses.utils import is_course_editor
+from nti.contenttypes.courses.utils import is_course_instructor_or_editor
 
 from nti.dataserver import authorization as nauth
 
@@ -44,7 +44,7 @@ logger = __import__('logging').getLogger(__name__)
 
 
 def is_course_admin(user, course):
-    return is_course_editor(course, user) \
+    return is_course_instructor_or_editor(course, user) \
         or nauth.is_admin_or_content_admin_or_site_admin(user)
 
 
@@ -93,6 +93,7 @@ class SCORMRegistrationRemovedEvent(object):
 class UserRegistrationReportContainer(CaseInsensitiveCheckingLastModifiedBTreeContainer):
     
     def add_registration_report(self, registration_report, user):
+        self.remove_registration_report(user)
         self[user.username] = registration_report
     
     def get_registration_report(self, user):
