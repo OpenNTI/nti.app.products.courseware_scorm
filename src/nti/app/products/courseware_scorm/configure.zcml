@@ -93,23 +93,26 @@
  			 provides=".interfaces.ISCORMActivity" />
  			 
  	<adapter factory=".completion.SCORMCompletionPolicy"
- 			 for=".courses.SCORMCourseMetadata"
+ 			 for=".interfaces.ISCORMCourseMetadata .interfaces.ISCORMCourseInstance"
  			 provides="nti.contenttypes.completion.interfaces.ICompletableItemCompletionPolicy" />
+ 			 
+ 	<adapter factory=".completion.SCORMProgress"
+ 			 provides=".interfaces.ISCORMProgress" 
+ 			 for="nti.dataserver.interfaces.IUser 
+ 			 	  .interfaces.ISCORMCourseMetadata 
+ 			 	  .interfaces.ISCORMCourseInstance" />
 
 	<!-- Subscribers -->
 	<subscriber handler=".subscribers._enrollment_record_dropped" />
 	<subscriber handler=".subscribers._on_course_instance_removed" />
+	
+	<subscriber handler=".completion._on_user_progress_updated" />
 
 	<subscriber factory=".subscribers.SCORMAllCoursesCollectionAcceptsProvider"
 				provides="nti.app.products.courseware.interfaces.IAllCoursesCollectionAcceptsProvider" />
 				
 	<subscriber factory=".completion._SCORMCompletableItemProvider"
 				provides="nti.contenttypes.completion.interfaces.IRequiredCompletableItemProvider"
-				for="nti.dataserver.interfaces.IUser
-					 .interfaces.ISCORMCourseInstance" />
-	
-	<subscriber factory=".completion._SCORMCompletedItemProvider"
-				provides="nti.contenttypes.completion.interfaces.ICompletedItemProvider"
 				for="nti.dataserver.interfaces.IUser
 					 .interfaces.ISCORMCourseInstance" />
 	

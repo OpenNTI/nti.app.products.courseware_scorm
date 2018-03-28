@@ -18,6 +18,8 @@ from requests.structures import CaseInsensitiveDict
 
 from zope import component
 
+from zope.event import notify
+
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
@@ -34,6 +36,8 @@ from nti.app.products.courseware_scorm.views import GET_SCORM_ARCHIVE_VIEW_NAME
 from nti.app.products.courseware_scorm.views import GET_REGISTRATION_LIST_VIEW_NAME
 from nti.app.products.courseware_scorm.views import DELETE_ALL_REGISTRATIONS_VIEW_NAME
 from nti.app.products.courseware_scorm.views import SYNC_REGISTRATION_REPORT_VIEW_NAME
+
+from nti.contenttypes.completion.interfaces import UserProgressUpdatedEvent
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
@@ -139,6 +143,9 @@ class SyncRegistrationReportView(AbstractAuthenticatedView):
         if client.enrollment_registration_exists(course, user):
             report = client.get_registration_progress(course, user, self._results_format())
             container.add_registration_report(report, user)
+            notify(UserProgressUpdatedEvent(obj=metadata,
+                                            user=user,
+                                            context=course))
             return report
         else:
             container.remove_registration_report(user)

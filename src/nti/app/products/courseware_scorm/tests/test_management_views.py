@@ -7,8 +7,6 @@ from __future__ import absolute_import
 
 # pylint: disable=protected-access,too-many-public-methods
 
-from collections import OrderedDict
-
 import fudge
 
 from hamcrest import is_
@@ -28,8 +26,6 @@ import shutil
 
 from zope import component
 
-from nti.app.contenttypes.completion import COMPLETED_ITEMS_PATH_NAME
-
 from nti.app.contenttypes.completion.views import completed_items_link as make_completed_items_link
 
 from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
@@ -39,7 +35,6 @@ from nti.app.products.courseware_admin import VIEW_COURSE_ADMIN_LEVELS
 from nti.app.products.courseware_scorm.client import PostBackURLGenerator
 from nti.app.products.courseware_scorm.client import PostBackPasswordUtility
 
-from nti.app.products.courseware_scorm.completion import _SCORMCompletedItemProvider
 from nti.app.products.courseware_scorm.completion import _SCORMCompletableItemProvider
 
 from nti.app.products.courseware_scorm.courses import SCORM_COURSE_MIME_TYPE
@@ -64,7 +59,9 @@ from nti.app.testing.decorators import WithSharedApplicationMockDS
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contentlibrary.interfaces import IDelimitedHierarchyContentPackageEnumeration
 
-from nti.contenttypes.completion.interfaces import ICompletedItemProvider
+from nti.contenttypes.completion.interfaces import IProgress
+from nti.contenttypes.completion.interfaces import ICompletableItemCompletionPolicy
+from nti.contenttypes.completion.interfaces import IPrincipalCompletedItemContainer
 from nti.contenttypes.completion.interfaces import IRequiredCompletableItemProvider
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
@@ -299,15 +296,25 @@ class TestManagementViews(ApplicationLayerTest):
                     assert_that(provider.iter_items(), does_not(has_item(metadata)))
                     mock_has_scorm.is_callable().returns(True)
                     assert_that(provider.iter_items(), has_item(metadata))
+                    
+            # Test progress
+            progress = component.queryMultiAdapter((new_user, metadata, course),
+                                                   IProgress)
+            assert_that(progress, is_not(none()))
             
-            # Completed item providers
-            providers = component.subscribers((new_user, course),
-                                              ICompletedItemProvider)
-            assert_that(len(providers), is_not(0))
-            assert_that(providers, has_item(instance_of(_SCORMCompletedItemProvider)))
-            for provider in providers:
-                if type(provider) is _SCORMCompletedItemProvider:
-                    assert_that(len(provider.completed_items()), is_(1))
+            # Test completion policy
+            policy = component.getMultiAdapter((metadata, course),
+                                               ICompletableItemCompletionPolicy)
+            assert_that(policy, is_not(none()))
+            completed_item = policy.is_complete(progress)
+            assert_that(completed_item, is_not(none()))
+            assert_that(completed_item.CompletedDate, equal_to(progress.LastModified))
+            
+            # Test that the completed item container has a completed item
+            container = component.queryMultiAdapter((new_user, course),
+                                                    IPrincipalCompletedItemContainer)
+            completed_item = container.get_completed_item(metadata)
+            assert_that(completed_item, is_not(none()))
         
         # CompletedItems link    
         completed_items = self.testapp.get(self.completed_items_href).json_body['Items']
@@ -318,12 +325,13 @@ class TestManagementViews(ApplicationLayerTest):
         self.h_username, self.h_password = None, None
         self.registration_id = None
         
-        # Get SyncRegistrationReport href
         self.sync_report_href = None
         with mock_dataserver.mock_db_trans(site_name='alpha.nextthought.com'):
             new_user = User.get_user(new_username2)
             entry = find_object_with_ntiid(course_ntiid)
             course = ICourseInstance(entry)
+            
+            # Get SyncRegistrationReport href
             enrollment_manager = ICourseEnrollmentManager(course)
             enrollment_record = enrollment_manager.enroll(new_user)
             enrollment = ICourseInstanceEnrollment(enrollment_record)
@@ -331,9 +339,18 @@ class TestManagementViews(ApplicationLayerTest):
                                                      rel=SYNC_REGISTRATION_REPORT_VIEW_NAME,
                                                      elements=(SYNC_REGISTRATION_REPORT_VIEW_NAME,)))[HREF]
             
+            # Manually create link until we know why it isn't being decorated in the test
+            completed_items_link = make_completed_items_link(course, new_user)
+            assert_that(completed_items_link, is_not(none()))
+            self.completed_items_href = render_link(completed_items_link)[HREF]
+            
         # Post to SyncRegistrationReport href
         admin_environ = self._make_extra_environ()      
         self.testapp.post(self.sync_report_href, extra_environ=admin_environ)
+        
+        # Test CompletedItems    
+        completed_items = self.testapp.get(self.completed_items_href).json_body['Items']
+        assert_that(completed_items, has_length(0))
         
         with mock_dataserver.mock_db_trans(site_name='alpha.nextthought.com'):
             new_user = User.get_user(new_username2)
@@ -360,6 +377,7 @@ class TestManagementViews(ApplicationLayerTest):
             report = container.get_registration_report(new_user)
             assert_that(report, is_(none()))
 
+        self.completed_items_href = None
         self.sync_report_href = None
 
         # GUID NTIID
