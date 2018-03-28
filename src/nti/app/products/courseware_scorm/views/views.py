@@ -23,6 +23,8 @@ from xml.parsers.expat import ExpatError
 from zope import component
 from zope import interface
 
+from zope.event import notify
+
 from nti.app.base.abstract_views import AbstractView
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
@@ -39,6 +41,8 @@ from nti.app.products.courseware_scorm.views import SCORM_PROGRESS_VIEW_NAME
 from nti.app.products.courseware_scorm.views import LAUNCH_SCORM_COURSE_VIEW_NAME
 from nti.app.products.courseware_scorm.views import PREVIEW_SCORM_COURSE_VIEW_NAME
 from nti.app.products.courseware_scorm.views import REGISTRATION_RESULT_POSTBACK_VIEW_NAME
+
+from nti.contenttypes.completion.interfaces import UserProgressUpdatedEvent
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
@@ -193,6 +197,9 @@ class SCORMRegistrationResultPostBack(AbstractView):
         metadata = ISCORMCourseMetadata(course)
         container = IUserRegistrationReportContainer(metadata)
         container.add_registration_report(report, user)
+        notify(UserProgressUpdatedEvent(obj=metadata,
+                                        user=user,
+                                        context=course))
         
         logger.info(u"Registration report postback stored: user=%s", user.username)
 

@@ -22,7 +22,11 @@ from nti.contenttypes.completion.interfaces import IRequiredCompletableItemProvi
 
 from nti.contenttypes.completion.completion import CompletedItem
 
+from nti.contenttypes.completion.interfaces import IUserProgressUpdatedEvent
+
 from nti.contenttypes.completion.progress import Progress
+
+from nti.contenttypes.completion.utils import update_completion
 
 from nti.coremetadata.interfaces import IUser
 
@@ -121,3 +125,11 @@ class _SCORMCompletedItemProvider(object):
         if completed_item is not None:
             items.append(completed_item)
         return items
+    
+
+@component.adapter(IUserProgressUpdatedEvent)
+def _on_user_progress_updated(event):
+    user = event.user
+    metadata = event.item
+    course = event.context
+    update_completion(metadata, metadata.ntiid, user, course)
