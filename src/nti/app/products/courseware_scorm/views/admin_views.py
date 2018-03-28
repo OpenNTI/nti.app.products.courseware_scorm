@@ -39,6 +39,8 @@ from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.dataserver import authorization as nauth
 
+from nti.dataserver.users.users import User
+
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
 
@@ -127,9 +129,9 @@ class SyncRegistrationReportView(AbstractAuthenticatedView):
         return CaseInsensitiveDict(self.request.params).get(u'resultsFormat')
     
     def __call__(self):
-        user = self.remoteUser
+        user = User.get_user(self.context.Username)
         course = self.context.CourseInstance
-        if not is_course_admin(user=user, course=self.context.CourseInstance):
+        if not is_course_admin(user=self.remoteUser, course=course):
             return hexc.HTTPForbidden(_(u"You do not have access to this SCORM content."))
         client = component.getUtility(ISCORMCloudClient)
         metadata = ISCORMCourseMetadata(course)
