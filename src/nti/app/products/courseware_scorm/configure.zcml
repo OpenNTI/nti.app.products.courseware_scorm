@@ -93,7 +93,7 @@
  			 provides=".interfaces.ISCORMActivity" />
  			 
  	<adapter factory=".completion.SCORMCompletionPolicy"
- 			 for=".courses.SCORMCourseMetadata"
+ 			 for=".interfaces.ISCORMCourseMetadata .interfaces.ISCORMCourseInstance"
  			 provides="nti.contenttypes.completion.interfaces.ICompletableItemCompletionPolicy" />
 
 	<!-- Subscribers -->

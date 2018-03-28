@@ -62,12 +62,13 @@ class _SCORMCompletableItemProvider(object):
         return items
     
 
-@component.adapter(ISCORMCourseMetadata)
+@component.adapter(ISCORMCourseMetadata, ISCORMCourseInstance)
 @interface.implementer(ICompletableItemCompletionPolicy)
 class SCORMCompletionPolicy(object):
     
-    def __init__(self, metadata):
+    def __init__(self, metadata, course):
         self.metadata = metadata
+        self.course = course
     
     def is_complete(self, progress):
         result = None
@@ -111,7 +112,8 @@ class _SCORMCompletedItemProvider(object):
             progress.Item = metadata
             progress.CompletionContext = self.course
         
-            policy = ICompletableItemCompletionPolicy(metadata)
+            policy = component.queryMultiAdapter((metadata, self.course),
+                                                 ICompletableItemCompletionPolicy)
             completed_item = policy.is_complete(progress)
             if completed_item is not None:
                 items.append(completed_item)
