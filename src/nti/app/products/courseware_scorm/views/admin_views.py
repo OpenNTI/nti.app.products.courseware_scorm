@@ -139,7 +139,8 @@ class SyncRegistrationReportView(AbstractAuthenticatedView):
         if client.enrollment_registration_exists(course, user):
             report = client.get_registration_progress(course, user, self._results_format())
             container.add_registration_report(report, user)
+            return report
         else:
             container.remove_registration_report(user)
-        return hexc.HTTPNoContent()
+            return hexc.HTTPNoContent()
             
