@@ -108,9 +108,8 @@ class SCORMCompletionPolicy(object):
         return result
     
 
-@component.adapter(IUserProgressUpdatedEvent)
-def _on_user_progress_updated(event):
+@component.adapter(ISCORMCourseMetadata, IUserProgressUpdatedEvent)
+def _on_user_progress_updated(metadata, event):
     user = event.user
-    metadata = event.item
     course = event.context
     update_completion(metadata, metadata.ntiid, user, course)
