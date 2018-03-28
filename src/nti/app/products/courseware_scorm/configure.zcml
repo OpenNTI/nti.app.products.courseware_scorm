@@ -116,11 +116,6 @@
 				for="nti.dataserver.interfaces.IUser
 					 .interfaces.ISCORMCourseInstance" />
 	
-	<subscriber factory=".completion._SCORMCompletedItemProvider"
-				provides="nti.contenttypes.completion.interfaces.ICompletedItemProvider"
-				for="nti.dataserver.interfaces.IUser
-					 .interfaces.ISCORMCourseInstance" />
-	
 	<subscriber handler=".courses._on_scorm_registration_removed" />
 
 	<!-- Client -->

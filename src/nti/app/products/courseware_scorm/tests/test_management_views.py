@@ -39,7 +39,6 @@ from nti.app.products.courseware_admin import VIEW_COURSE_ADMIN_LEVELS
 from nti.app.products.courseware_scorm.client import PostBackURLGenerator
 from nti.app.products.courseware_scorm.client import PostBackPasswordUtility
 
-from nti.app.products.courseware_scorm.completion import _SCORMCompletedItemProvider
 from nti.app.products.courseware_scorm.completion import _SCORMCompletableItemProvider
 
 from nti.app.products.courseware_scorm.courses import SCORM_COURSE_MIME_TYPE
@@ -65,6 +64,7 @@ from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contentlibrary.interfaces import IDelimitedHierarchyContentPackageEnumeration
 
 from nti.contenttypes.completion.interfaces import ICompletedItemProvider
+from nti.contenttypes.completion.interfaces import IPrincipalCompletedItemContainer
 from nti.contenttypes.completion.interfaces import IRequiredCompletableItemProvider
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
@@ -301,13 +301,10 @@ class TestManagementViews(ApplicationLayerTest):
                     assert_that(provider.iter_items(), has_item(metadata))
             
             # Completed item providers
-            providers = component.subscribers((new_user, course),
-                                              ICompletedItemProvider)
-            assert_that(len(providers), is_not(0))
-            assert_that(providers, has_item(instance_of(_SCORMCompletedItemProvider)))
-            for provider in providers:
-                if type(provider) is _SCORMCompletedItemProvider:
-                    assert_that(len(provider.completed_items()), is_(1))
+            container = component.queryMultiAdapter((new_user, course),
+                                                    IPrincipalCompletedItemContainer)
+            completed_item = container.get_completed_item(metadata)
+            assert_that(completed_item, is_not(none()))
         
         # CompletedItems link    
         completed_items = self.testapp.get(self.completed_items_href).json_body['Items']

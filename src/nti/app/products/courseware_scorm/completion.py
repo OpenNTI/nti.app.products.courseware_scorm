@@ -109,27 +109,6 @@ class SCORMCompletionPolicy(object):
         return result
     
 
-@component.adapter(IUser, ISCORMCourseInstance)
-@interface.implementer(ICompletedItemProvider)
-class _SCORMCompletedItemProvider(object):
-    
-    def __init__(self, user, course):
-        self.user = user
-        self.course = course
-    
-    def completed_items(self):
-        items = []
-        metadata = ISCORMCourseMetadata(self.course)
-        progress = component.queryMultiAdapter((self.user, metadata, self.course),
-                                                ISCORMProgress)
-        policy = component.queryMultiAdapter((metadata, self.course),
-                                             ICompletableItemCompletionPolicy)
-        completed_item = policy.is_complete(progress)
-        if completed_item is not None:
-            items.append(completed_item)
-        return items
-    
-
 @component.adapter(IUserProgressUpdatedEvent)
 def _on_user_progress_updated(event):
     user = event.user
