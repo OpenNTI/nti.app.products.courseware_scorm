@@ -21,7 +21,6 @@ from xml.dom import minidom
 from xml.parsers.expat import ExpatError
 
 from zope import component
-from zope import interface
 
 from zope.event import notify
 

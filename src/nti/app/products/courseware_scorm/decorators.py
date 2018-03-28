@@ -17,7 +17,6 @@ from nti.app.products.courseware.utils import PreviewCourseAccessPredicateDecora
 
 from nti.app.products.courseware_scorm.courses import is_course_admin
 
-from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 

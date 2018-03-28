@@ -13,8 +13,6 @@ from zc.intid.interfaces import IBeforeIdRemovedEvent
 from zope import component
 from zope import interface
 
-from zope.intid.interfaces import IIntIdAddedEvent
-
 from nti.app.products.courseware.interfaces import IAllCoursesCollection
 from nti.app.products.courseware.interfaces import IAllCoursesCollectionAcceptsProvider
 

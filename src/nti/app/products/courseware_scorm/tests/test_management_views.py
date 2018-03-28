@@ -7,8 +7,6 @@ from __future__ import absolute_import
 
 # pylint: disable=protected-access,too-many-public-methods
 
-from collections import OrderedDict
-
 import fudge
 
 from hamcrest import is_
@@ -27,8 +25,6 @@ does_not = is_not
 import shutil
 
 from zope import component
-
-from nti.app.contenttypes.completion import COMPLETED_ITEMS_PATH_NAME
 
 from nti.app.contenttypes.completion.views import completed_items_link as make_completed_items_link
 
@@ -63,7 +59,6 @@ from nti.app.testing.decorators import WithSharedApplicationMockDS
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contentlibrary.interfaces import IDelimitedHierarchyContentPackageEnumeration
 
-from nti.contenttypes.completion.interfaces import ICompletedItemProvider
 from nti.contenttypes.completion.interfaces import IProgress
 from nti.contenttypes.completion.interfaces import ICompletableItemCompletionPolicy
 from nti.contenttypes.completion.interfaces import IPrincipalCompletedItemContainer
