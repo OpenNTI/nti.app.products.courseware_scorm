@@ -93,6 +93,7 @@ class SCORMRegistrationRemovedEvent(object):
 class UserRegistrationReportContainer(CaseInsensitiveCheckingLastModifiedBTreeContainer):
     
     def add_registration_report(self, registration_report, user):
+        self.remove_registration_report(user)
         self[user.username] = registration_report
     
     def get_registration_report(self, user):
