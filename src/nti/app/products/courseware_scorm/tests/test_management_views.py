@@ -318,12 +318,13 @@ class TestManagementViews(ApplicationLayerTest):
         self.h_username, self.h_password = None, None
         self.registration_id = None
         
-        # Get SyncRegistrationReport href
         self.sync_report_href = None
         with mock_dataserver.mock_db_trans(site_name='alpha.nextthought.com'):
             new_user = User.get_user(new_username2)
             entry = find_object_with_ntiid(course_ntiid)
             course = ICourseInstance(entry)
+            
+            # Get SyncRegistrationReport href
             enrollment_manager = ICourseEnrollmentManager(course)
             enrollment_record = enrollment_manager.enroll(new_user)
             enrollment = ICourseInstanceEnrollment(enrollment_record)
@@ -331,9 +332,18 @@ class TestManagementViews(ApplicationLayerTest):
                                                      rel=SYNC_REGISTRATION_REPORT_VIEW_NAME,
                                                      elements=(SYNC_REGISTRATION_REPORT_VIEW_NAME,)))[HREF]
             
+            # Manually create link until we know why it isn't being decorated in the test
+            completed_items_link = make_completed_items_link(course, new_user)
+            assert_that(completed_items_link, is_not(none()))
+            self.completed_items_href = render_link(completed_items_link)[HREF]
+            
         # Post to SyncRegistrationReport href
         admin_environ = self._make_extra_environ()      
         self.testapp.post(self.sync_report_href, extra_environ=admin_environ)
+        
+        # Test CompletedItems    
+        completed_items = self.testapp.get(self.completed_items_href).json_body['Items']
+        assert_that(completed_items, has_length(0))
         
         with mock_dataserver.mock_db_trans(site_name='alpha.nextthought.com'):
             new_user = User.get_user(new_username2)
@@ -360,6 +370,7 @@ class TestManagementViews(ApplicationLayerTest):
             report = container.get_registration_report(new_user)
             assert_that(report, is_(none()))
 
+        self.completed_items_href = None
         self.sync_report_href = None
 
         # GUID NTIID
