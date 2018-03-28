@@ -8,6 +8,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+from datetime import datetime
+
 from zope import component
 from zope import interface
 
@@ -54,7 +56,7 @@ class SCORMProgress(Progress):
         self.MaxPossibleProgress = 1
         self.HasProgress = report.total_time > 0
         
-        super(SCORMProgress, self).__init__(User=user, LastModified=None)
+        super(SCORMProgress, self).__init__(User=user, LastModified=datetime.utcnow())
         
 
 @component.adapter(IUser, ISCORMCourseInstance)
@@ -102,7 +104,8 @@ class SCORMCompletionPolicy(object):
         
         if completed:
             result = CompletedItem(Item=progress.Item,
-                                   Principal=progress.User)
+                                   Principal=progress.User,
+                                   CompletedDate=progress.LastModified)
         return result
     
 
