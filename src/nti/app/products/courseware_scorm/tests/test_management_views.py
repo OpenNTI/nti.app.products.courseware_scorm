@@ -55,6 +55,7 @@ from nti.app.products.courseware_scorm.tests import CoursewareSCORMTestLayer
 from nti.app.products.courseware_scorm.views import GET_SCORM_ARCHIVE_VIEW_NAME
 from nti.app.products.courseware_scorm.views import IMPORT_SCORM_COURSE_VIEW_NAME
 from nti.app.products.courseware_scorm.views import LAUNCH_SCORM_COURSE_VIEW_NAME
+from nti.app.products.courseware_scorm.views import SYNC_REGISTRATION_REPORT_VIEW_NAME
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
@@ -80,6 +81,8 @@ from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.testing import externalizes
 
 from nti.links.externalization import render_link
+
+from nti.links.links import Link
 
 from nti.ntiids.ntiids import find_object_with_ntiid
 
@@ -315,54 +318,49 @@ class TestManagementViews(ApplicationLayerTest):
         self.h_username, self.h_password = None, None
         self.registration_id = None
         
-        # Make sure registration reports are removed when a regid is removed
-            
+        # Get SyncRegistrationReport href
+        self.sync_report_href = None
         with mock_dataserver.mock_db_trans(site_name='alpha.nextthought.com'):
             new_user = User.get_user(new_username2)
             entry = find_object_with_ntiid(course_ntiid)
             course = ICourseInstance(entry)
-             
             enrollment_manager = ICourseEnrollmentManager(course)
             enrollment_record = enrollment_manager.enroll(new_user)
             enrollment = ICourseInstanceEnrollment(enrollment_record)
-             
-            postback_url_generator = PostBackURLGenerator()
-            mock_request = fudge.Fake().provides('relative_url').calls(lambda url: url)
-            self.postback_href = postback_url_generator.url_for_registration_postback(enrollment, mock_request)
+            self.sync_report_href = render_link(Link(enrollment,
+                                                     rel=SYNC_REGISTRATION_REPORT_VIEW_NAME,
+                                                     elements=(SYNC_REGISTRATION_REPORT_VIEW_NAME,)))[HREF]
             
-            self.h_username, self.h_password = PostBackPasswordUtility().credentials_for_enrollment(enrollment)
-            self.registration_id = self._get_registration_id(course, new_user)
-        
-        assert_that(self.registration_id, is_not(none()))
-        postback_data2 = postback_data_template % self.registration_id
-        params = {'username': self.h_username,
-                  'password': self.h_password,
-                  'data': postback_data2}
-        self.testapp.post(self.postback_href, params=params, content_type='application/x-www-form-urlencoded')
+        # Post to SyncRegistrationReport href
+        admin_environ = self._make_extra_environ()      
+        self.testapp.post(self.sync_report_href, extra_environ=admin_environ)
         
         with mock_dataserver.mock_db_trans(site_name='alpha.nextthought.com'):
             new_user = User.get_user(new_username2)
             entry = find_object_with_ntiid(course_ntiid)
             course = ICourseInstance(entry)
+            
+            # Make sure registration report was synced
             metadata = ISCORMCourseMetadata(course)
             container = IUserRegistrationReportContainer(metadata)
             report = container.get_registration_report(new_user)
             assert_that(report, is_not(none()))
             assert_that(report,
-                        externalizes(has_entries(u'complete', True,
-                                                 u'success', True,
-                                                 u'score', 100,
-                                                 u'total_time', 326)))
+                        externalizes(has_entries(u'complete', False,
+                                                 u'score', None,
+                                                 u'success', False,
+                                                 u'total_time', 0,
+                                                 u'activity', None)))
             
+            # Make sure registration reports are removed when a regid is removed
             mock_registration_service.provides('deleteRegistration')
             mock_registration_service.expects('deleteRegistration')
             enrollment_manager = ICourseEnrollmentManager(course)
             enrollment_manager.drop(new_user)
-            
             report = container.get_registration_report(new_user)
             assert_that(report, is_(none()))
-        self.h_username, self.h_password = None, None
-        self.registration_id = None
+
+        self.sync_report_href = None
 
         # GUID NTIID
         assert_that(entry_ntiid,
