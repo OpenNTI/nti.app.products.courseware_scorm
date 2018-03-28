@@ -64,6 +64,8 @@ from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contentlibrary.interfaces import IDelimitedHierarchyContentPackageEnumeration
 
 from nti.contenttypes.completion.interfaces import ICompletedItemProvider
+from nti.contenttypes.completion.interfaces import IProgress
+from nti.contenttypes.completion.interfaces import ICompletableItemCompletionPolicy
 from nti.contenttypes.completion.interfaces import IPrincipalCompletedItemContainer
 from nti.contenttypes.completion.interfaces import IRequiredCompletableItemProvider
 
@@ -299,8 +301,21 @@ class TestManagementViews(ApplicationLayerTest):
                     assert_that(provider.iter_items(), does_not(has_item(metadata)))
                     mock_has_scorm.is_callable().returns(True)
                     assert_that(provider.iter_items(), has_item(metadata))
+                    
+            # Test progress
+            progress = component.queryMultiAdapter((new_user, metadata, course),
+                                                   IProgress)
+            assert_that(progress, is_not(none()))
             
-            # Completed item providers
+            # Test completion policy
+            policy = component.getMultiAdapter((metadata, course),
+                                               ICompletableItemCompletionPolicy)
+            assert_that(policy, is_not(none()))
+            completed_item = policy.is_complete(progress)
+            assert_that(completed_item, is_not(none()))
+            assert_that(completed_item.CompletedDate, equal_to(progress.LastModified))
+            
+            # Test that the completed item container has a completed item
             container = component.queryMultiAdapter((new_user, course),
                                                     IPrincipalCompletedItemContainer)
             completed_item = container.get_completed_item(metadata)
