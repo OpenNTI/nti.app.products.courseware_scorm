@@ -95,6 +95,12 @@
  	<adapter factory=".completion.SCORMCompletionPolicy"
  			 for=".interfaces.ISCORMCourseMetadata .interfaces.ISCORMCourseInstance"
  			 provides="nti.contenttypes.completion.interfaces.ICompletableItemCompletionPolicy" />
+ 			 
+ 	<adapter factory=".completion.SCORMProgress"
+ 			 provides=".interfaces.ISCORMProgress" 
+ 			 for="nti.dataserver.interfaces.IUser 
+ 			 	  .interfaces.ISCORMCourseMetadata 
+ 			 	  .interfaces.ISCORMCourseInstance" />
 
 	<!-- Subscribers -->
 	<subscriber handler=".subscribers._enrollment_record_dropped" />

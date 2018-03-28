@@ -27,10 +27,17 @@ from nti.contenttypes.completion.progress import Progress
 from nti.coremetadata.interfaces import IUser
 
 
+@component.adapter(IUser, ISCORMCourseMetadata, ISCORMCourseInstance)
 @interface.implementer(ISCORMProgress)
 class SCORMProgress(Progress):
     
-    def __init__(self, User, report):
+    def __init__(self, user, metadata, course):
+        self.NTIID = metadata.ntiid
+        self.Item = metadata
+        self.CompletionContext = course
+        
+        report_container = IUserRegistrationReportContainer(metadata)
+        report = report_container.get_registration_report(user)
         self.registration_report = report
 
         activity = report.activity
@@ -43,7 +50,7 @@ class SCORMProgress(Progress):
         self.MaxPossibleProgress = 1
         self.HasProgress = report.total_time > 0
         
-        super(SCORMProgress, self).__init__(User=User, LastModified=None)
+        super(SCORMProgress, self).__init__(User=user, LastModified=None)
         
 
 @component.adapter(IUser, ISCORMCourseInstance)
@@ -80,6 +87,9 @@ class SCORMCompletionPolicy(object):
             return result
         
         report = progress.registration_report
+        if report is None:
+            return result
+        
         activity = report.activity
         if activity is not None:
             completed = activity.complete or activity.completed
@@ -103,19 +113,11 @@ class _SCORMCompletedItemProvider(object):
     def completed_items(self):
         items = []
         metadata = ISCORMCourseMetadata(self.course)
-        report_container = IUserRegistrationReportContainer(metadata)
-        report = report_container.get_registration_report(self.user)
-        
-        if report is not None:
-            progress = SCORMProgress(self.user, report)
-            progress.NTIID = metadata.ntiid
-            progress.Item = metadata
-            progress.CompletionContext = self.course
-        
-            policy = component.queryMultiAdapter((metadata, self.course),
-                                                 ICompletableItemCompletionPolicy)
-            completed_item = policy.is_complete(progress)
-            if completed_item is not None:
-                items.append(completed_item)
-        
+        progress = component.queryMultiAdapter((self.user, metadata, self.course),
+                                                ISCORMProgress)
+        policy = component.queryMultiAdapter((metadata, self.course),
+                                             ICompletableItemCompletionPolicy)
+        completed_item = policy.is_complete(progress)
+        if completed_item is not None:
+            items.append(completed_item)
         return items
