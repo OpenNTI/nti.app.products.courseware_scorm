@@ -286,16 +286,16 @@ class TestManagementViews(ApplicationLayerTest):
                                                  u'total_time', 326)))
             
             # Completable item providers
-            providers = component.subscribers((new_user, course),
+            providers = component.subscribers((course,),
                                               IRequiredCompletableItemProvider)
             assert_that(len(providers), is_not(0))
             assert_that(providers, has_item(instance_of(_SCORMCompletableItemProvider)))
             for provider in providers:
                 if type(provider) is _SCORMCompletableItemProvider:
                     mock_has_scorm.is_callable().returns(False)
-                    assert_that(provider.iter_items(), does_not(has_item(metadata)))
+                    assert_that(provider.iter_items(new_user), does_not(has_item(metadata)))
                     mock_has_scorm.is_callable().returns(True)
-                    assert_that(provider.iter_items(), has_item(metadata))
+                    assert_that(provider.iter_items(new_user), has_item(metadata))
                     
             # Test progress
             progress = component.queryMultiAdapter((new_user, metadata, course),
