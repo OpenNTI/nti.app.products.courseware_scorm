@@ -113,8 +113,7 @@
 				
 	<subscriber factory=".completion._SCORMCompletableItemProvider"
 				provides="nti.contenttypes.completion.interfaces.IRequiredCompletableItemProvider"
-				for="nti.dataserver.interfaces.IUser
-					 .interfaces.ISCORMCourseInstance" />
+				for=".interfaces.ISCORMCourseInstance" />
 	
 	<subscriber handler=".courses._on_scorm_registration_removed" />
 

@@ -58,15 +58,14 @@ class SCORMProgress(Progress):
         super(SCORMProgress, self).__init__(User=user, LastModified=datetime.utcnow())
         
 
-@component.adapter(IUser, ISCORMCourseInstance)
+@component.adapter(ISCORMCourseInstance)
 @interface.implementer(IRequiredCompletableItemProvider)
 class _SCORMCompletableItemProvider(object):
     
-    def __init__(self, user, course):
-        self.user = user
+    def __init__(self, course):
         self.course = course
         
-    def iter_items(self):
+    def iter_items(self, user):
         items = []
         metadata = ISCORMCourseMetadata(self.course)
         if metadata.has_scorm_package():
