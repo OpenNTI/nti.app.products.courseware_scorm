@@ -32,17 +32,13 @@ from nti.contenttypes.completion.utils import update_completion
 from nti.coremetadata.interfaces import IUser
 
 
-@component.adapter(IUser, ISCORMCourseMetadata, ISCORMCourseInstance)
 @interface.implementer(ISCORMProgress)
 class SCORMProgress(Progress):
     
-    def __init__(self, user, metadata, course):
+    def __init__(self, user, metadata, course, report):
         self.NTIID = metadata.ntiid
         self.Item = metadata
         self.CompletionContext = course
-        
-        report_container = IUserRegistrationReportContainer(metadata)
-        report = report_container.get_registration_report(user)
         self.registration_report = report
 
         activity = report.activity
@@ -56,6 +52,16 @@ class SCORMProgress(Progress):
         self.HasProgress = report.total_time > 0
         
         super(SCORMProgress, self).__init__(User=user, LastModified=datetime.utcnow())
+        
+    
+@component.adapter(IUser, ISCORMCourseMetadata, ISCORMCourseInstance)
+def _scorm_progress(user, metadata, course):
+    report_container = IUserRegistrationReportContainer(metadata)
+    report = report_container.get_registration_report(user)
+    return SCORMProgress(user,
+                         metadata,
+                         course,
+                         report)
         
 
 @component.adapter(ISCORMCourseInstance)

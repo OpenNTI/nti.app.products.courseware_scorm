@@ -96,7 +96,7 @@
  			 for=".interfaces.ISCORMCourseMetadata .interfaces.ISCORMCourseInstance"
  			 provides="nti.contenttypes.completion.interfaces.ICompletableItemCompletionPolicy" />
  			 
- 	<adapter factory=".completion.SCORMProgress"
+ 	<adapter factory=".completion._scorm_progress"
  			 provides=".interfaces.ISCORMProgress" 
  			 for="nti.dataserver.interfaces.IUser 
  			 	  .interfaces.ISCORMCourseMetadata 
