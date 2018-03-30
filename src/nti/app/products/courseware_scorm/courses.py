@@ -163,4 +163,4 @@ class SCORMRegistrationIdentifier(object):
     def get_user(cls, registration_id):
         intids = component.getUtility(IIntIds)
         parts = registration_id.split(u'-')
-        return intids.queryObject(parts[0])
+        return intids.queryObject(int(parts[0]))
