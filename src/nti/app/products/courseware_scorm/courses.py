@@ -67,7 +67,7 @@ class SCORMCourseMetadata(Persistent, Contained):
     """
 
     scorm_id = None
-    
+
     @property
     def ntiid(self):
         return to_external_ntiid_oid(self)
@@ -81,7 +81,7 @@ SCORMCourseInstanceMetadataFactory = an_factory(SCORMCourseMetadata,
 
 @interface.implementer(ISCORMRegistrationRemovedEvent)
 class SCORMRegistrationRemovedEvent(object):
-    
+
     def __init__(self, registration_id, course, user):
         self.registration_id = registration_id
         self.course = course
@@ -91,15 +91,17 @@ class SCORMRegistrationRemovedEvent(object):
 @component.adapter(ISCORMCourseMetadata)
 @interface.implementer(IUserRegistrationReportContainer)
 class UserRegistrationReportContainer(CaseInsensitiveCheckingLastModifiedBTreeContainer):
-    
+
     def add_registration_report(self, registration_report, user):
         self.remove_registration_report(user)
         self[user.username] = registration_report
-    
+
     def get_registration_report(self, user):
         return self.get(user.username)
-    
+
     def remove_registration_report(self, user):
+        if user is None:
+            return False
         try:
             del self[user.username]
             result = True
@@ -144,7 +146,7 @@ class SCORMRegistrationIdentifier(object):
         user_id = str(intids.getId(self.user))
         course_id = str(intids.getId(self.course))
         return u'-'.join([user_id, course_id])
-    
+
     @classmethod
     def get_user(cls, registration_id):
         intids = component.getUtility(IIntIds)
