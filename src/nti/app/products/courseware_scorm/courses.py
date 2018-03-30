@@ -121,6 +121,8 @@ UserRegistrationReportContainerFactory = an_factory(UserRegistrationReportContai
 def _on_scorm_registration_removed(event):
     logger.debug(u'_on_scorm_registration_removed: regid=%s', event.registration_id)
     user = event.user
+    if user is None:
+        return
     course = event.course
     metadata = ISCORMCourseMetadata(course)
     # Remove any persisted CompletedItems
