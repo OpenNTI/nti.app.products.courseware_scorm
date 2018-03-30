@@ -99,6 +99,15 @@ LAUNCH_REL = LAUNCH_SCORM_COURSE_VIEW_NAME
 logger = __import__('logging').getLogger(__name__)
 
 
+def WithMockDSTrans(ds=None, site_name=None):
+    def real_decorator(decorated_func):
+        def wrapper(*args, **kwargs):
+            with mock_dataserver.mock_db_trans(ds=ds, site_name=site_name):
+                decorated_func(*args, **kwargs)
+        return wrapper
+    return real_decorator
+
+
 class TestManagementViews(ApplicationLayerTest):
 
     layer = CoursewareSCORMTestLayer
@@ -195,7 +204,7 @@ class TestManagementViews(ApplicationLayerTest):
         entry_ntiid = catalog['NTIID']
         assert_that(entry_ntiid, not_none())
         
-        course_ntiid = new_course['NTIID']
+        self.course_ntiid = new_course['NTIID']
         
         new_username1 = u'CapnCook'
         new_username2 = u'Krazy-8'
@@ -204,41 +213,14 @@ class TestManagementViews(ApplicationLayerTest):
             self._create_user(new_username1)
             self._create_user(new_username2)
             
-        self.h_username, self.h_password = None, None
-            
-        # Check for SCORM progress Link on enrollment records
         self.progress_href = None
         self.postback_href = None
         self.completed_items_href = None
         self.registration_id = None
-        with mock_dataserver.mock_db_trans(site_name='alpha.nextthought.com'):
-            new_user = User.get_user(new_username1)
-            entry = find_object_with_ntiid(course_ntiid)
-            course = ICourseInstance(entry)
-            
-            enrollment_manager = ICourseEnrollmentManager(course)
-            enrollment_record = enrollment_manager.enroll(new_user)
-            enrollment = ICourseInstanceEnrollment(enrollment_record)
-            assert_that(enrollment, is_not(none()))
-            assert_that(enrollment,
-                        externalizes(has_entry(LINKS, has_item(has_entry('rel', PROGRESS_REL)))))
-            
-            ext_enrollment = toExternalObject(enrollment)
-            progress_link = next((link for link in ext_enrollment[LINKS] if link['rel'] == PROGRESS_REL), None)
-            assert_that(progress_link, is_not(none()))
-            self.progress_href = progress_link[HREF]
-            
-            postback_url_generator = PostBackURLGenerator()
-            mock_request = fudge.Fake().provides('relative_url').calls(lambda url: url)
-            self.postback_href = postback_url_generator.url_for_registration_postback(enrollment, mock_request)
-            
-            # Manually create link until we know why it isn't being decorated in the test
-            completed_items_link = make_completed_items_link(course, new_user)
-            assert_that(completed_items_link, is_not(none()))
-            self.completed_items_href = render_link(completed_items_link)[HREF]
-            
-            self.h_username, self.h_password = PostBackPasswordUtility().credentials_for_enrollment(enrollment)
-            self.registration_id = self._get_registration_id(course, new_user)
+        self.h_username, self.h_password = None, None
+        
+        # Check for SCORM progress Link on enrollment records
+        self._test_enrollment_links(new_username1)
         
         assert_that(self.progress_href, is_not(none()))
         self.testapp.get(self.progress_href, status=403)
@@ -271,55 +253,8 @@ class TestManagementViews(ApplicationLayerTest):
                   'password': self.h_password,
                   'data': postback_data1}
         self.testapp.post(self.postback_href, params=params, content_type='application/x-www-form-urlencoded')
-
-        with mock_dataserver.mock_db_trans(site_name='alpha.nextthought.com'):
-            new_user = User.get_user(new_username1)
-            entry = find_object_with_ntiid(course_ntiid)
-            course = ICourseInstance(entry)
-            metadata = ISCORMCourseMetadata(course)
-            container = IUserRegistrationReportContainer(metadata)
-            report = container.get_registration_report(new_user)
-            assert_that(report, is_not(none()))
-            assert_that(report,
-                        externalizes(has_entries(u'complete', True,
-                                                 u'success', True,
-                                                 u'score', 100,
-                                                 u'total_time', 326)))
-            
-            # Completable item providers
-            providers = component.subscribers((course,),
-                                              IRequiredCompletableItemProvider)
-            assert_that(len(providers), is_not(0))
-            assert_that(providers, has_item(instance_of(_SCORMCompletableItemProvider)))
-            for provider in providers:
-                if type(provider) is _SCORMCompletableItemProvider:
-                    mock_has_scorm.is_callable().returns(False)
-                    assert_that(provider.iter_items(new_user), does_not(has_item(metadata)))
-                    mock_has_scorm.is_callable().returns(True)
-                    assert_that(provider.iter_items(new_user), has_item(metadata))
-                    
-            # Test progress
-            progress = component.queryMultiAdapter((new_user, metadata, course),
-                                                   IProgress)
-            assert_that(progress, is_not(none()))
-            assert_that(progress,
-                        has_properties(u'AbsoluteProgress', 1,
-                                       u'HasProgress', True,
-                                       u'MaxPossibleProgress', 1))
-            
-            # Test completion policy
-            policy = component.getMultiAdapter((metadata, course),
-                                               ICompletableItemCompletionPolicy)
-            assert_that(policy, is_not(none()))
-            completed_item = policy.is_complete(progress)
-            assert_that(completed_item, is_not(none()))
-            assert_that(completed_item.CompletedDate, equal_to(progress.LastModified))
-            
-            # Test that the completed item container has a completed item
-            container = component.queryMultiAdapter((new_user, course),
-                                                    IPrincipalCompletedItemContainer)
-            completed_item = container.get_completed_item(metadata)
-            assert_that(completed_item, is_not(none()))
+        
+        self._test_completion_providers(new_username1, mock_has_scorm)
         
         # CompletedItems link    
         completed_items = self.testapp.get(self.completed_items_href).json_body['Items']
@@ -331,23 +266,7 @@ class TestManagementViews(ApplicationLayerTest):
         self.registration_id = None
         
         self.sync_report_href = None
-        with mock_dataserver.mock_db_trans(site_name='alpha.nextthought.com'):
-            new_user = User.get_user(new_username2)
-            entry = find_object_with_ntiid(course_ntiid)
-            course = ICourseInstance(entry)
-            
-            # Get SyncRegistrationReport href
-            enrollment_manager = ICourseEnrollmentManager(course)
-            enrollment_record = enrollment_manager.enroll(new_user)
-            enrollment = ICourseInstanceEnrollment(enrollment_record)
-            self.sync_report_href = render_link(Link(enrollment,
-                                                     rel=SYNC_REGISTRATION_REPORT_VIEW_NAME,
-                                                     elements=(SYNC_REGISTRATION_REPORT_VIEW_NAME,)))[HREF]
-            
-            # Manually create link until we know why it isn't being decorated in the test
-            completed_items_link = make_completed_items_link(course, new_user)
-            assert_that(completed_items_link, is_not(none()))
-            self.completed_items_href = render_link(completed_items_link)[HREF]
+        self._get_completed_items_href(new_username2)
             
         # Post to SyncRegistrationReport href
         admin_environ = self._make_extra_environ()      
@@ -357,30 +276,7 @@ class TestManagementViews(ApplicationLayerTest):
         completed_items = self.testapp.get(self.completed_items_href).json_body['Items']
         assert_that(completed_items, has_length(0))
         
-        with mock_dataserver.mock_db_trans(site_name='alpha.nextthought.com'):
-            new_user = User.get_user(new_username2)
-            entry = find_object_with_ntiid(course_ntiid)
-            course = ICourseInstance(entry)
-            
-            # Make sure registration report was synced
-            metadata = ISCORMCourseMetadata(course)
-            container = IUserRegistrationReportContainer(metadata)
-            report = container.get_registration_report(new_user)
-            assert_that(report, is_not(none()))
-            assert_that(report,
-                        externalizes(has_entries(u'complete', False,
-                                                 u'score', None,
-                                                 u'success', False,
-                                                 u'total_time', 0,
-                                                 u'activity', None)))
-            
-            # Make sure registration reports are removed when a regid is removed
-            mock_registration_service.provides('deleteRegistration')
-            mock_registration_service.expects('deleteRegistration')
-            enrollment_manager = ICourseEnrollmentManager(course)
-            enrollment_manager.drop(new_user)
-            report = container.get_registration_report(new_user)
-            assert_that(report, is_(none()))
+        self._test_registration_report_container(new_username2, mock_registration_service)
 
         self.completed_items_href = None
         self.sync_report_href = None
@@ -398,8 +294,134 @@ class TestManagementViews(ApplicationLayerTest):
         courses = self.testapp.get(new_admin_href)
         assert_that(courses.json_body, does_not(has_item(new_course_key)))
         self.testapp.delete(new_admin_href)
+        self.course_ntiid = None
     
     def _get_registration_id(self, course, user):
         identifier = component.getMultiAdapter((user, course),
                                                ISCORMIdentifier)
         return identifier.get_id()
+    
+    @WithMockDSTrans(site_name='alpha.nextthought.com')
+    def _test_enrollment_links(self, username):
+        new_user = User.get_user(username)
+        entry = find_object_with_ntiid(self.course_ntiid)
+        course = ICourseInstance(entry)
+        
+        enrollment_manager = ICourseEnrollmentManager(course)
+        enrollment_record = enrollment_manager.enroll(new_user)
+        enrollment = ICourseInstanceEnrollment(enrollment_record)
+        assert_that(enrollment, is_not(none()))
+        assert_that(enrollment,
+                    externalizes(has_entry(LINKS, has_item(has_entry('rel', PROGRESS_REL)))))
+            
+        ext_enrollment = toExternalObject(enrollment)
+        progress_link = next((link for link in ext_enrollment[LINKS] if link['rel'] == PROGRESS_REL), None)
+        assert_that(progress_link, is_not(none()))
+        self.progress_href = progress_link[HREF]
+            
+        postback_url_generator = PostBackURLGenerator()
+        mock_request = fudge.Fake().provides('relative_url').calls(lambda url: url)
+        self.postback_href = postback_url_generator.url_for_registration_postback(enrollment, mock_request)
+            
+        # Manually create link until we know why it isn't being decorated in the test
+        completed_items_link = make_completed_items_link(course, new_user)
+        assert_that(completed_items_link, is_not(none()))
+        self.completed_items_href = render_link(completed_items_link)[HREF]
+            
+        self.h_username, self.h_password = PostBackPasswordUtility().credentials_for_enrollment(enrollment)
+        self.registration_id = self._get_registration_id(course, new_user)
+    
+    @WithMockDSTrans(site_name='alpha.nextthought.com')
+    def _test_completion_providers(self, username, mock_has_scorm):
+        new_user = User.get_user(username)
+        entry = find_object_with_ntiid(self.course_ntiid)
+        course = ICourseInstance(entry)
+        metadata = ISCORMCourseMetadata(course)
+        container = IUserRegistrationReportContainer(metadata)
+        report = container.get_registration_report(new_user)
+        assert_that(report, is_not(none()))
+        assert_that(report,
+                    externalizes(has_entries(u'complete', True,
+                                             u'success', True,
+                                             u'score', 100,
+                                             u'total_time', 326)))
+            
+        # Completable item providers
+        providers = component.subscribers((course,),
+                                              IRequiredCompletableItemProvider)
+        assert_that(len(providers), is_not(0))
+        assert_that(providers, has_item(instance_of(_SCORMCompletableItemProvider)))
+        for provider in providers:
+            if type(provider) is _SCORMCompletableItemProvider:
+                mock_has_scorm.is_callable().returns(False)
+                assert_that(provider.iter_items(new_user), does_not(has_item(metadata)))
+                mock_has_scorm.is_callable().returns(True)
+                assert_that(provider.iter_items(new_user), has_item(metadata))
+                    
+        # Test progress
+        progress = component.queryMultiAdapter((new_user, metadata, course),
+                                                IProgress)
+        assert_that(progress, is_not(none()))
+        assert_that(progress,
+                    has_properties(u'AbsoluteProgress', 1,
+                                   u'HasProgress', True,
+                                   u'MaxPossibleProgress', 1))
+            
+        # Test completion policy
+        policy = component.getMultiAdapter((metadata, course),
+                                            ICompletableItemCompletionPolicy)
+        assert_that(policy, is_not(none()))
+        completed_item = policy.is_complete(progress)
+        assert_that(completed_item, is_not(none()))
+        assert_that(completed_item.CompletedDate, equal_to(progress.LastModified))
+            
+        # Test that the completed item container has a completed item
+        container = component.queryMultiAdapter((new_user, course),
+                                                IPrincipalCompletedItemContainer)
+        completed_item = container.get_completed_item(metadata)
+        assert_that(completed_item, is_not(none()))
+    
+    @WithMockDSTrans(site_name='alpha.nextthought.com')
+    def _get_completed_items_href(self, username):
+        new_user = User.get_user(username)
+        entry = find_object_with_ntiid(self.course_ntiid)
+        course = ICourseInstance(entry)
+            
+        # Get SyncRegistrationReport href
+        enrollment_manager = ICourseEnrollmentManager(course)
+        enrollment_record = enrollment_manager.enroll(new_user)
+        enrollment = ICourseInstanceEnrollment(enrollment_record)
+        self.sync_report_href = render_link(Link(enrollment,
+                                                 rel=SYNC_REGISTRATION_REPORT_VIEW_NAME,
+                                                 elements=(SYNC_REGISTRATION_REPORT_VIEW_NAME,)))[HREF]
+            
+        # Manually create link until we know why it isn't being decorated in the test
+        completed_items_link = make_completed_items_link(course, new_user)
+        assert_that(completed_items_link, is_not(none()))
+        self.completed_items_href = render_link(completed_items_link)[HREF]
+        
+    @WithMockDSTrans(site_name='alpha.nextthought.com')
+    def _test_registration_report_container(self, username, mock_registration_service):
+        new_user = User.get_user(username)
+        entry = find_object_with_ntiid(self.course_ntiid)
+        course = ICourseInstance(entry)
+            
+        # Make sure registration report was synced
+        metadata = ISCORMCourseMetadata(course)
+        container = IUserRegistrationReportContainer(metadata)
+        report = container.get_registration_report(new_user)
+        assert_that(report, is_not(none()))
+        assert_that(report,
+                    externalizes(has_entries(u'complete', False,
+                                             u'score', None,
+                                             u'success', False,
+                                             u'total_time', 0,
+                                             u'activity', None)))
+            
+        # Make sure registration reports are removed when a regid is removed
+        mock_registration_service.provides('deleteRegistration')
+        mock_registration_service.expects('deleteRegistration')
+        enrollment_manager = ICourseEnrollmentManager(course)
+        enrollment_manager.drop(new_user)
+        report = container.get_registration_report(new_user)
+        assert_that(report, is_(none()))
