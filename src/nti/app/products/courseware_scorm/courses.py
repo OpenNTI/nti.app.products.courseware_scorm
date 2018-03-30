@@ -15,6 +15,8 @@ from zope import interface
 
 from zope.annotation import factory as an_factory
 
+from zope.event import notify
+
 from zope.container.contained import Contained
 
 from zope.intid.interfaces import IIntIds
@@ -26,6 +28,8 @@ from nti.app.products.courseware_scorm.interfaces import ISCORMRegistrationRemov
 from nti.app.products.courseware_scorm.interfaces import IUserRegistrationReportContainer
 
 from nti.containers.containers import CaseInsensitiveCheckingLastModifiedBTreeContainer
+
+from nti.contenttypes.completion.interfaces import UserProgressRemovedEvent
 
 from nti.contenttypes.courses.courses import CourseInstance
 
@@ -115,11 +119,17 @@ UserRegistrationReportContainerFactory = an_factory(UserRegistrationReportContai
 
 @component.adapter(ISCORMRegistrationRemovedEvent)
 def _on_scorm_registration_removed(event):
-    # Remove any stored registration report
     logger.debug(u'_on_scorm_registration_removed: regid=%s', event.registration_id)
-    metadata = ISCORMCourseMetadata(event.course)
+    user = event.user
+    course = event.course
+    metadata = ISCORMCourseMetadata(course)
+    # Remove any persisted CompletedItems
+    notify(UserProgressRemovedEvent(obj=metadata,
+                                    user=user,
+                                    context=course))
+    # Remove any stored registration report
     container = IUserRegistrationReportContainer(metadata)
-    container.remove_registration_report(event.user)
+    container.remove_registration_report(user)
 
 
 @interface.implementer(ISCORMIdentifier)
