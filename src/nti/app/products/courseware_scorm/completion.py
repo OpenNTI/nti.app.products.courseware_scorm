@@ -40,18 +40,26 @@ class SCORMProgress(Progress):
         self.Item = metadata
         self.CompletionContext = course
         self.registration_report = report
-
+        
+        super(SCORMProgress, self).__init__(User=user, LastModified=datetime.utcnow())
+    
+    @property
+    def AbsoluteProgress(self):
+        report = self.registration_report
         activity = report.activity
         if activity is not None:
             progress = 1 if (activity.complete or activity.completed) else 0
         else: 
             progress = 1 if report.complete else 0
-        self.AbsoluteProgress = progress
-            
-        self.MaxPossibleProgress = 1
-        self.HasProgress = report.total_time > 0
-        
-        super(SCORMProgress, self).__init__(User=user, LastModified=datetime.utcnow())
+        return progress
+    
+    @property
+    def HasProgress(self):
+        return self.registration_report.total_time > 0
+    
+    @property
+    def MaxPossibleProgress(self):
+        return 1
         
     
 @component.adapter(IUser, ISCORMCourseMetadata, ISCORMCourseInstance)
