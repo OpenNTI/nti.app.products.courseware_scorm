@@ -20,6 +20,7 @@ from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import has_entries
 from hamcrest import instance_of
+from hamcrest import has_properties
 does_not = is_not
 
 import shutil
@@ -301,6 +302,10 @@ class TestManagementViews(ApplicationLayerTest):
             progress = component.queryMultiAdapter((new_user, metadata, course),
                                                    IProgress)
             assert_that(progress, is_not(none()))
+            assert_that(progress,
+                        has_properties(u'AbsoluteProgress', 1,
+                                       u'HasProgress', True,
+                                       u'MaxPossibleProgress', 1))
             
             # Test completion policy
             policy = component.getMultiAdapter((metadata, course),

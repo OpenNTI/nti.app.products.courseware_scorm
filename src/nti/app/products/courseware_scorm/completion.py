@@ -32,30 +32,44 @@ from nti.contenttypes.completion.utils import update_completion
 from nti.coremetadata.interfaces import IUser
 
 
-@component.adapter(IUser, ISCORMCourseMetadata, ISCORMCourseInstance)
 @interface.implementer(ISCORMProgress)
 class SCORMProgress(Progress):
     
-    def __init__(self, user, metadata, course):
+    def __init__(self, user, metadata, course, report):
         self.NTIID = metadata.ntiid
         self.Item = metadata
         self.CompletionContext = course
-        
-        report_container = IUserRegistrationReportContainer(metadata)
-        report = report_container.get_registration_report(user)
         self.registration_report = report
-
+        
+        super(SCORMProgress, self).__init__(User=user, LastModified=datetime.utcnow())
+    
+    @property
+    def AbsoluteProgress(self):
+        report = self.registration_report
         activity = report.activity
         if activity is not None:
             progress = 1 if (activity.complete or activity.completed) else 0
         else: 
             progress = 1 if report.complete else 0
-        self.AbsoluteProgress = progress
-            
-        self.MaxPossibleProgress = 1
-        self.HasProgress = report.total_time > 0
+        return progress
+    
+    @property
+    def HasProgress(self):
+        return self.registration_report.total_time > 0
+    
+    @property
+    def MaxPossibleProgress(self):
+        return 1
         
-        super(SCORMProgress, self).__init__(User=user, LastModified=datetime.utcnow())
+    
+@component.adapter(IUser, ISCORMCourseMetadata, ISCORMCourseInstance)
+def _scorm_progress(user, metadata, course):
+    report_container = IUserRegistrationReportContainer(metadata)
+    report = report_container.get_registration_report(user)
+    return SCORMProgress(user,
+                         metadata,
+                         course,
+                         report)
         
 
 @component.adapter(ISCORMCourseInstance)
