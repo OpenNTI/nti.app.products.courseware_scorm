@@ -614,3 +614,24 @@ class ISCORMProgress(IProgress):
                                  required=True)
     registration_report.setTaggedValue('_ext_excluded_out', True)
     
+
+class ISCORMPackageLaunchEvent(interface.Interface):
+    """
+    An event that is sent after a SCORM package has been launched.
+    """
+    
+    user = Object(IUser,
+                  title=u'The user who launched the SCORM package.',
+                  required=True)
+    
+    course = Object(ICourseInstance,
+                    title=u'The course in which the SCORM package was launched.',
+                    required=True)
+    
+    metadata = Object(ISCORMCourseMetadata,
+                      title=u'The metadata object of the SCORM package that was launched.',
+                      required=True)
+    
+    timestamp = DateTime(title=u'The time at which the SCORM package was launched.',
+                         required=True)
+    
