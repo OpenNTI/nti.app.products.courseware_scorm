@@ -110,6 +110,7 @@ class ImportSCORMCourseView(AbstractAdminScormCourseView):
 
     def _do_call(self):
         sources = get_all_sources(self.request)
+        source = None
         if sources:
             source = self._handle_multipart(sources)
         if not source:
