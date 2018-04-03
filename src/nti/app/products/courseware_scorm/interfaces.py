@@ -662,3 +662,8 @@ class ISCORMRegistrationPostbackEvent(IAbstractSCORMInteractionEvent):
     An event that is sent after a SCORM registration postback is received.
     """
     
+
+@interface.implementer(ISCORMRegistrationPostbackEvent)
+class SCORMRegistrationPostbackEvent(AbstractSCORMInteractionEvent):
+    pass
+    
