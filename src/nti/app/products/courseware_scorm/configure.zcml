@@ -116,6 +116,10 @@
 				for=".interfaces.ISCORMCourseInstance" />
 	
 	<subscriber handler=".courses._on_scorm_registration_removed" />
+	
+	<configure zcml:condition="have testmode">
+		<subscriber handler=".tests.test_management_views._scorm_package_launched" />
+	</configure>
 
 	<!-- Client -->
 	<include package="." file="meta.zcml" />
