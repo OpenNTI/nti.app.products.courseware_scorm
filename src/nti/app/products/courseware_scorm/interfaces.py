@@ -655,4 +655,10 @@ class ISCORMPackageLaunchEvent(IAbstractSCORMInteractionEvent):
 @interface.implementer(ISCORMPackageLaunchEvent)
 class SCORMPackageLaunchEvent(AbstractSCORMInteractionEvent):
     pass
+
+
+class ISCORMRegistrationPostbackEvent(IAbstractSCORMInteractionEvent):
+    """
+    An event that is sent after a SCORM registration postback is received.
+    """
     
