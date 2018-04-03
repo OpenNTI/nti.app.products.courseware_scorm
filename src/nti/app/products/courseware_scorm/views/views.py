@@ -8,6 +8,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+from datetime import datetime
+
 from pyramid import httpexceptions as hexc
 
 from pyramid.view import view_config
@@ -32,6 +34,7 @@ from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
 from nti.app.products.courseware_scorm.interfaces import ISCORMIdentifier
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
+from nti.app.products.courseware_scorm.interfaces import SCORMPackageLaunchEvent
 from nti.app.products.courseware_scorm.interfaces import ISCORMRegistrationReport
 from nti.app.products.courseware_scorm.interfaces import IPostBackPasswordUtility
 from nti.app.products.courseware_scorm.interfaces import IUserRegistrationReportContainer
@@ -78,6 +81,9 @@ class AbstractSCORMLaunchView(AbstractAuthenticatedView):
 
     def _before_launch(self):
         pass
+    
+    def _after_launch(self):
+        pass
 
     def __call__(self):
         try:
@@ -93,6 +99,7 @@ class AbstractSCORMLaunchView(AbstractAuthenticatedView):
             if on_error_redirect:
                 return hexc.HTTPSeeOther(location=on_error_redirect)
             raise
+        self._after_launch()
         return hexc.HTTPSeeOther(location=launch_url)
 
 @view_config(route_name='objects.generic.traversal',
@@ -130,6 +137,11 @@ class LaunchSCORMCourseView(AbstractSCORMLaunchView):
     def _build_launch_url(self, redirect_url):
         client = component.getUtility(ISCORMCloudClient)
         return client.launch(self.context, self.remoteUser, redirect_url or u'message')
+    
+    def _after_launch(self):
+        course = self.context
+        metadata = ISCORMCourseMetadata(course)
+        notify(SCORMPackageLaunchEvent(self.remoteUser, course, metadata, datetime.utcnow()))
     
 @view_config(route_name='objects.generic.traversal',
              renderer='rest',
