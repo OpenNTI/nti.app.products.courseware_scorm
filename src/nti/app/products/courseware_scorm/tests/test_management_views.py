@@ -25,6 +25,8 @@ does_not = is_not
 
 import shutil
 
+from webtest import Upload
+
 from zope import component
 
 from nti.app.contenttypes.completion.views import completed_items_link as make_completed_items_link
@@ -146,17 +148,20 @@ class TestManagementViews(ApplicationLayerTest):
 
     @WithSharedApplicationMockDS(testapp=True, users=True)
     @fudge.patch('nti.app.products.courseware_scorm.courses.SCORMCourseMetadata.has_scorm_package',
-                 'nti.app.products.courseware_scorm.client.SCORMCloudClient.delete_course',
                  'nti.app.products.courseware_scorm.client.SCORMCloudClient.enrollment_registration_exists',
+                 'nti.app.products.courseware_scorm.tests.test_client.MockSCORMCloudService.get_course_service',
                  'nti.app.products.courseware_scorm.tests.test_client.MockSCORMCloudService.get_registration_service',
                  'nti.app.products.courseware_scorm.tests.test_management_views._do_on_scorm_package_launched')
-    def test_create_SCORM_course_view(self, mock_has_scorm, mock_delete_course, mock_has_enrollment_reg, mock_get_registration_service,
+    def test_create_SCORM_course_view(self, mock_has_scorm, mock_has_enrollment_reg, mock_get_course_service, mock_get_registration_service,
                                       mock_do_on_scorm_package_launched):
         """
         Validates SCORM course creation.
         """
         mock_has_scorm.is_callable().returns(False)
         mock_has_enrollment_reg.is_callable().returns(True)
+        
+        mock_course_service = fudge.Fake()
+        mock_get_course_service.is_callable().returns(mock_course_service)
         
         mock_registration_service = fudge.Fake()
         mock_get_registration_service.is_callable().returns(mock_registration_service)
@@ -201,6 +206,12 @@ class TestManagementViews(ApplicationLayerTest):
         assert_that(metadata, is_not(none()))
         assert_that(metadata[u'scorm_id'], is_(none()))
         assert_that(metadata, does_not(has_item(LINKS)))
+        
+        import_href = next((link for link in new_course[LINKS] if link['rel'] == IMPORT_REL), None)[HREF] 
+        assert_that(import_href, is_not(none())) 
+        mock_course_service.expects('import_uploaded_course') 
+        admin_environ = self._make_extra_environ() 
+        self.testapp.post(import_href, params=[('source', Upload('scorm.zip', b'data', 'application/zip'))])
 
         mock_has_scorm.is_callable().returns(True)
 
@@ -317,7 +328,7 @@ class TestManagementViews(ApplicationLayerTest):
         assert_that(catalog['ProviderUniqueID'], is_(new_course_key))
 
         # Delete
-        mock_delete_course.expects_call()
+        mock_course_service.expects('delete_course')
         mock_registration_service.expects('deleteRegistration')
         self.testapp.delete(course_delete_href)
         self.testapp.get(new_course_href, status=404)
