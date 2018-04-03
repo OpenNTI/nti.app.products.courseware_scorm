@@ -635,3 +635,13 @@ class ISCORMPackageLaunchEvent(interface.Interface):
     timestamp = DateTime(title=u'The time at which the SCORM package was launched.',
                          required=True)
     
+
+@interface.implementer(ISCORMPackageLaunchEvent)
+class SCORMPackageLaunchEvent(object):
+    
+    def __init__(self, user, course, metadata, timestamp):
+        self.user = user
+        self.course = course
+        self.metadata = metadata
+        self.timestamp = timestamp
+    
