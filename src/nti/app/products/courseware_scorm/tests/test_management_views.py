@@ -25,6 +25,8 @@ does_not = is_not
 
 import shutil
 
+from webtest import Upload
+
 from zope import component
 
 from nti.app.contenttypes.completion.views import completed_items_link as make_completed_items_link
@@ -44,6 +46,7 @@ from nti.app.products.courseware_scorm.decorators import PROGRESS_REL
 
 from nti.app.products.courseware_scorm.interfaces import ISCORMIdentifier
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
+from nti.app.products.courseware_scorm.interfaces import ISCORMPackageLaunchEvent
 from nti.app.products.courseware_scorm.interfaces import IUserRegistrationReportContainer
 
 from nti.app.products.courseware_scorm.tests import CoursewareSCORMTestLayer
@@ -98,6 +101,14 @@ LAUNCH_REL = LAUNCH_SCORM_COURSE_VIEW_NAME
 
 logger = __import__('logging').getLogger(__name__)
 
+    
+def _do_on_scorm_package_launched():
+    logger.debug('_scorm_package_launched')
+
+@component.adapter(ISCORMPackageLaunchEvent)
+def _scorm_package_launched(event):
+    _do_on_scorm_package_launched()
+
 
 def WithMockDSTrans(ds=None, site_name=None):
     def real_decorator(decorated_func):
@@ -137,18 +148,24 @@ class TestManagementViews(ApplicationLayerTest):
 
     @WithSharedApplicationMockDS(testapp=True, users=True)
     @fudge.patch('nti.app.products.courseware_scorm.courses.SCORMCourseMetadata.has_scorm_package',
-                 'nti.app.products.courseware_scorm.client.SCORMCloudClient.delete_course',
                  'nti.app.products.courseware_scorm.client.SCORMCloudClient.enrollment_registration_exists',
-                 'nti.app.products.courseware_scorm.tests.test_client.MockSCORMCloudService.get_registration_service')
-    def test_create_SCORM_course_view(self, mock_has_scorm, mock_delete_course, mock_has_enrollment_reg, mock_get_registration_service):
+                 'nti.app.products.courseware_scorm.tests.test_client.MockSCORMCloudService.get_course_service',
+                 'nti.app.products.courseware_scorm.tests.test_client.MockSCORMCloudService.get_registration_service',
+                 'nti.app.products.courseware_scorm.tests.test_management_views._do_on_scorm_package_launched')
+    def test_create_SCORM_course_view(self, mock_has_scorm, mock_has_enrollment_reg, mock_get_course_service, mock_get_registration_service,
+                                      mock_do_on_scorm_package_launched):
         """
         Validates SCORM course creation.
         """
         mock_has_scorm.is_callable().returns(False)
         mock_has_enrollment_reg.is_callable().returns(True)
         
+        mock_course_service = fudge.Fake()
+        mock_get_course_service.is_callable().returns(mock_course_service)
+        
         mock_registration_service = fudge.Fake()
         mock_get_registration_service.is_callable().returns(mock_registration_service)
+        mock_registration_service.provides('exists')
 
         admin_href = self._get_admin_href()
 
@@ -189,6 +206,11 @@ class TestManagementViews(ApplicationLayerTest):
         assert_that(metadata, is_not(none()))
         assert_that(metadata[u'scorm_id'], is_(none()))
         assert_that(metadata, does_not(has_item(LINKS)))
+        
+        import_href = next((link for link in new_course[LINKS] if link['rel'] == IMPORT_REL), None)[HREF] 
+        assert_that(import_href, is_not(none())) 
+        mock_course_service.expects('import_uploaded_course') 
+        self.testapp.post(import_href, params=[('source', Upload('scorm.zip', b'data', 'application/zip'))])
 
         mock_has_scorm.is_callable().returns(True)
 
@@ -198,13 +220,21 @@ class TestManagementViews(ApplicationLayerTest):
         metadata = new_course[u'Metadata']
         assert_that(metadata, is_not(none()))
         assert_that(metadata, has_entry(LINKS, has_item(has_entry('rel', LAUNCH_REL))))
-
-        catalog = self.testapp.get('%s/CourseCatalogEntry' % new_course_href)
+        
+        catalog_entry_href = '%s/CourseCatalogEntry' % new_course_href
+        catalog = self.testapp.get(catalog_entry_href)
         catalog = catalog.json_body
         entry_ntiid = catalog['NTIID']
         assert_that(entry_ntiid, not_none())
         
         self.course_ntiid = new_course['NTIID']
+        
+        # Disable preview mode
+        catalog_edit_href = next((link for link in catalog[LINKS] if link['rel'] == u'edit'), None)[HREF]
+        catalog_edit_params = {u'Preview': False}
+        self.testapp.put_json(catalog_edit_href, params=catalog_edit_params)
+        catalog = self.testapp.get(catalog_entry_href).json_body
+        assert_that(catalog[u'Preview'], is_(False))
         
         new_username1 = u'CapnCook'
         new_username2 = u'Krazy-8'
@@ -213,6 +243,8 @@ class TestManagementViews(ApplicationLayerTest):
             self._create_user(new_username1)
             self._create_user(new_username2)
             
+        new_user_env = self._make_extra_environ(new_username1)
+        
         self.progress_href = None
         self.postback_href = None
         self.completed_items_href = None
@@ -222,12 +254,20 @@ class TestManagementViews(ApplicationLayerTest):
         # Check for SCORM progress Link on enrollment records
         self._test_enrollment_links(new_username1)
         
+        # Test launch
+        new_course = self.testapp.get(new_course_href, extra_environ=new_user_env).json_body
+        metadata = new_course[u'Metadata']
+        launch_href = next((link for link in metadata[LINKS] if link['rel'] == LAUNCH_REL), None)[HREF]
+        mock_do_on_scorm_package_launched.expects_call()
+        mock_registration_service.expects('createRegistration')
+        mock_registration_service.expects('launch').returns(self.default_origin)
+        self.testapp.get(launch_href, extra_environ=new_user_env, status=303)
+        
         assert_that(self.progress_href, is_not(none()))
         self.testapp.get(self.progress_href, status=403)
         
         reg_report = RegistrationReport(format_='course')
         mock_registration_service.expects('get_registration_result').returns(reg_report)
-        new_user_env = self._make_extra_environ(new_username1)
         progress = self.testapp.get(self.progress_href, extra_environ=new_user_env, status=200).json_body
         assert_that(progress, is_not(none()))
         assert_that(progress, has_entries('complete', False,
@@ -268,9 +308,8 @@ class TestManagementViews(ApplicationLayerTest):
         self.sync_report_href = None
         self._get_completed_items_href(new_username2)
             
-        # Post to SyncRegistrationReport href
-        admin_environ = self._make_extra_environ()      
-        self.testapp.post(self.sync_report_href, extra_environ=admin_environ)
+        # Post to SyncRegistrationReport href      
+        self.testapp.post(self.sync_report_href)
         
         # Test CompletedItems    
         completed_items = self.testapp.get(self.completed_items_href).json_body['Items']
@@ -287,7 +326,7 @@ class TestManagementViews(ApplicationLayerTest):
         assert_that(catalog['ProviderUniqueID'], is_(new_course_key))
 
         # Delete
-        mock_delete_course.expects_call()
+        mock_course_service.expects('delete_course')
         mock_registration_service.expects('deleteRegistration')
         self.testapp.delete(course_delete_href)
         self.testapp.get(new_course_href, status=404)
