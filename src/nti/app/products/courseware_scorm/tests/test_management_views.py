@@ -210,7 +210,6 @@ class TestManagementViews(ApplicationLayerTest):
         import_href = next((link for link in new_course[LINKS] if link['rel'] == IMPORT_REL), None)[HREF] 
         assert_that(import_href, is_not(none())) 
         mock_course_service.expects('import_uploaded_course') 
-        admin_environ = self._make_extra_environ() 
         self.testapp.post(import_href, params=[('source', Upload('scorm.zip', b'data', 'application/zip'))])
 
         mock_has_scorm.is_callable().returns(True)
@@ -309,9 +308,8 @@ class TestManagementViews(ApplicationLayerTest):
         self.sync_report_href = None
         self._get_completed_items_href(new_username2)
             
-        # Post to SyncRegistrationReport href
-        admin_environ = self._make_extra_environ()      
-        self.testapp.post(self.sync_report_href, extra_environ=admin_environ)
+        # Post to SyncRegistrationReport href      
+        self.testapp.post(self.sync_report_href)
         
         # Test CompletedItems    
         completed_items = self.testapp.get(self.completed_items_href).json_body['Items']
