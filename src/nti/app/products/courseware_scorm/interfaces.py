@@ -614,10 +614,10 @@ class ISCORMProgress(IProgress):
                                  required=True)
     registration_report.setTaggedValue('_ext_excluded_out', True)
     
-
-class ISCORMPackageLaunchEvent(interface.Interface):
+    
+class ISCORMInteractionEvent(interface.Interface):
     """
-    An event that is sent after a SCORM package has been launched.
+    An event that is sent after an interaction with a SCORM package.
     """
     
     user = Object(IUser,
@@ -635,13 +635,35 @@ class ISCORMPackageLaunchEvent(interface.Interface):
     timestamp = DateTime(title=u'The time at which the SCORM package was launched.',
                          required=True)
     
-
-@interface.implementer(ISCORMPackageLaunchEvent)
-class SCORMPackageLaunchEvent(object):
+    
+@interface.implementer(ISCORMInteractionEvent)
+class SCORMInteractionEvent(object):
     
     def __init__(self, user, course, metadata, timestamp):
         self.user = user
         self.course = course
         self.metadata = metadata
         self.timestamp = timestamp
+    
+
+class ISCORMPackageLaunchEvent(ISCORMInteractionEvent):
+    """
+    An event that is sent after a SCORM package has been launched.
+    """
+
+
+@interface.implementer(ISCORMPackageLaunchEvent)
+class SCORMPackageLaunchEvent(SCORMInteractionEvent):
+    pass
+
+
+class ISCORMRegistrationPostbackEvent(ISCORMInteractionEvent):
+    """
+    An event that is sent after a SCORM registration postback is received.
+    """
+    
+
+@interface.implementer(ISCORMRegistrationPostbackEvent)
+class SCORMRegistrationPostbackEvent(SCORMInteractionEvent):
+    pass
     
