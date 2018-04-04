@@ -119,6 +119,7 @@
 	
 	<configure zcml:condition="have testmode">
 		<subscriber handler=".tests.test_management_views._scorm_package_launched" />
+		<subscriber handler=".tests.test_management_views._on_scorm_registration_postback" />
 	</configure>
 
 	<!-- Client -->

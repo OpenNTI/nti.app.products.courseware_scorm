@@ -35,8 +35,9 @@ from nti.app.products.courseware_scorm.interfaces import ISCORMIdentifier
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 from nti.app.products.courseware_scorm.interfaces import SCORMPackageLaunchEvent
-from nti.app.products.courseware_scorm.interfaces import ISCORMRegistrationReport
 from nti.app.products.courseware_scorm.interfaces import IPostBackPasswordUtility
+from nti.app.products.courseware_scorm.interfaces import ISCORMRegistrationReport
+from nti.app.products.courseware_scorm.interfaces import SCORMRegistrationPostbackEvent
 from nti.app.products.courseware_scorm.interfaces import IUserRegistrationReportContainer
 
 from nti.app.products.courseware_scorm.views import SCORM_PROGRESS_VIEW_NAME
@@ -212,6 +213,7 @@ class SCORMRegistrationResultPostBack(AbstractView):
                                         user=user,
                                         context=course))
         
+        notify(SCORMRegistrationPostbackEvent(user, course, metadata, datetime.utcnow()))
         logger.info(u"Registration report postback stored: user=%s", user.username)
 
         return hexc.HTTPNoContent()

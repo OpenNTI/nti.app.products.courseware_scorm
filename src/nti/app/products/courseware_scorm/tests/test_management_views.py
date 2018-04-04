@@ -47,6 +47,7 @@ from nti.app.products.courseware_scorm.decorators import PROGRESS_REL
 from nti.app.products.courseware_scorm.interfaces import ISCORMIdentifier
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 from nti.app.products.courseware_scorm.interfaces import ISCORMPackageLaunchEvent
+from nti.app.products.courseware_scorm.interfaces import ISCORMRegistrationPostbackEvent
 from nti.app.products.courseware_scorm.interfaces import IUserRegistrationReportContainer
 
 from nti.app.products.courseware_scorm.tests import CoursewareSCORMTestLayer
@@ -108,6 +109,14 @@ def _do_on_scorm_package_launched():
 @component.adapter(ISCORMPackageLaunchEvent)
 def _scorm_package_launched(event):
     _do_on_scorm_package_launched()
+    
+    
+def _do_on_scorm_registration_postback():
+    logger.debug('_on_scorm_registration_postback')
+
+@component.adapter(ISCORMRegistrationPostbackEvent)
+def _on_scorm_registration_postback(unused_event):
+    _do_on_scorm_registration_postback()
 
 
 def WithMockDSTrans(ds=None, site_name=None):
@@ -151,9 +160,10 @@ class TestManagementViews(ApplicationLayerTest):
                  'nti.app.products.courseware_scorm.client.SCORMCloudClient.enrollment_registration_exists',
                  'nti.app.products.courseware_scorm.tests.test_client.MockSCORMCloudService.get_course_service',
                  'nti.app.products.courseware_scorm.tests.test_client.MockSCORMCloudService.get_registration_service',
-                 'nti.app.products.courseware_scorm.tests.test_management_views._do_on_scorm_package_launched')
+                 'nti.app.products.courseware_scorm.tests.test_management_views._do_on_scorm_package_launched',
+                 'nti.app.products.courseware_scorm.tests.test_management_views._do_on_scorm_registration_postback')
     def test_create_SCORM_course_view(self, mock_has_scorm, mock_has_enrollment_reg, mock_get_course_service, mock_get_registration_service,
-                                      mock_do_on_scorm_package_launched):
+                                      mock_do_on_scorm_package_launched, mock_do_on_scorm_registration_postback):
         """
         Validates SCORM course creation.
         """
@@ -292,6 +302,7 @@ class TestManagementViews(ApplicationLayerTest):
         params = {'username': self.h_username,
                   'password': self.h_password,
                   'data': postback_data1}
+        mock_do_on_scorm_registration_postback.expects_call()
         self.testapp.post(self.postback_href, params=params, content_type='application/x-www-form-urlencoded')
         
         self._test_completion_providers(new_username1, mock_has_scorm)
