@@ -66,6 +66,8 @@ class SCORMProgress(Progress):
 def _scorm_progress(user, metadata, course):
     report_container = IUserRegistrationReportContainer(metadata)
     report = report_container.get_registration_report(user)
+    if report is None:
+        return None
     return SCORMProgress(user,
                          metadata,
                          course,
