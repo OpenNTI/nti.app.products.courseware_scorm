@@ -88,6 +88,7 @@ from nti.links.links import Link
 
 from nti.ntiids.ntiids import find_object_with_ntiid
 
+from nti.scorm_cloud.client.registration import Registration
 from nti.scorm_cloud.client.registration import RegistrationReport
 
 HREF = StandardExternalFields().HREF
@@ -217,6 +218,7 @@ class TestManagementViews(ApplicationLayerTest):
         assert_that(metadata[u'scorm_id'], is_(none()))
         assert_that(metadata, does_not(has_item(LINKS)))
         
+        # Test import
         import_href = next((link for link in new_course[LINKS] if link['rel'] == IMPORT_REL), None)[HREF] 
         assert_that(import_href, is_not(none())) 
         mock_course_service.expects('import_uploaded_course') 
@@ -275,6 +277,14 @@ class TestManagementViews(ApplicationLayerTest):
         
         assert_that(self.progress_href, is_not(none()))
         self.testapp.get(self.progress_href, status=403)
+        
+        # Test import-replace
+        assert_that(self.registration_id, is_not(none()))
+        registration = Registration(appId=u'appId', registrationId=self.registration_id, courseId=u'courseId')
+        mock_registration_service.provides('getRegistrationList').returns([registration])
+        mock_registration_service.expects('deleteRegistration')
+        self.testapp.post(import_href, params=[('source', Upload('scorm.zip', b'data', 'application/zip')),
+                                               ('reset-registrations', True)])
         
         reg_report = RegistrationReport(format_='course')
         mock_registration_service.expects('get_registration_result').returns(reg_report)
@@ -338,7 +348,6 @@ class TestManagementViews(ApplicationLayerTest):
 
         # Delete
         mock_course_service.expects('delete_course')
-        mock_registration_service.expects('deleteRegistration')
         self.testapp.delete(course_delete_href)
         self.testapp.get(new_course_href, status=404)
         courses = self.testapp.get(new_admin_href)
@@ -469,7 +478,6 @@ class TestManagementViews(ApplicationLayerTest):
                                              u'activity', None)))
             
         # Make sure registration reports are removed when a regid is removed
-        mock_registration_service.provides('deleteRegistration')
         mock_registration_service.expects('deleteRegistration')
         enrollment_manager = ICourseEnrollmentManager(course)
         enrollment_manager.drop(new_user)
