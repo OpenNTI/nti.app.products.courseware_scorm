@@ -8,6 +8,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+import os
+
 from persistent import Persistent
 
 from six.moves import cStringIO
@@ -30,6 +32,8 @@ from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 from nti.app.products.courseware_scorm.interfaces import ISCORMRegistrationRemovedEvent
 from nti.app.products.courseware_scorm.interfaces import IUserRegistrationReportContainer
 
+from nti.cabinet.filer import transfer_to_native_file
+
 from nti.containers.containers import CaseInsensitiveCheckingLastModifiedBTreeContainer
 
 from nti.contenttypes.completion.interfaces import UserProgressRemovedEvent
@@ -38,13 +42,17 @@ from nti.contenttypes.courses.courses import CourseInstance
 
 from nti.contenttypes.courses.exporter import BaseSectionExporter
 
+from nti.contenttypes.courses.importer import BaseSectionImporter
+
 from nti.contenttypes.courses.interfaces import ICourseSectionExporter
+from nti.contenttypes.courses.interfaces import ICourseSectionImporter
 
 from nti.contenttypes.courses.utils import is_course_instructor_or_editor
 
 from nti.dataserver import authorization as nauth
 
 from nti.ntiids.oids import to_external_ntiid_oid
+from nti.contentlibrary.interfaces import IFilesystemBucket
 
 SCORM_COURSE_METADATA_KEY = 'nti.app.produts.courseware_scorm.courses.metadata'
 SCORM_COURSE_MIME_TYPE = 'application/vnd.nextthought.courses.scormcourseinstance'
@@ -195,3 +203,28 @@ class CourseSCORMPackageExporter(BaseSectionExporter):
                    contentType='application/zip; charset=UTF-8',
                    bucket=bucket,
                    overwrite=True)
+        
+        
+@interface.implementer(ICourseSectionImporter)
+class CourseSCORMPackageImporter(BaseSectionImporter):
+    
+    def process(self, context, filer, writeout=True):
+        logger.debug("CourseSCORMPackageImporter.process")
+        course = ISCORMCourseInstance(context)
+        client = component.queryUtility(ISCORMCloudClient)
+        if client is None:
+            return
+        path = self.course_bucket_path(course) + SCORM_PACKAGE_NAME
+        source = self.safe_get(filer, path)
+        if source is None:
+            return
+        client.importCourse(course, source)
+        # Save source
+        if writeout and IFilesystemBucket.providedBy(course.root):
+            path = self.course_backet_path(course) + SCORM_PACKAGE_NAME
+            source = self.safe_get(filer, path) # Reload
+            if source is not None:
+                self.makedirs(course.root.absolute_path)
+                new_path = os.path.join(course.root.absolute_path,
+                                        SCORM_PACKAGE_NAME)
+                transfer_to_native_file(source, new_path)
