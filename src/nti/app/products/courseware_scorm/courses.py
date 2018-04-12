@@ -10,6 +10,8 @@ from __future__ import absolute_import
 
 from persistent import Persistent
 
+from six.moves import cStringIO
+
 from zope import component
 from zope import interface
 
@@ -22,6 +24,7 @@ from zope.container.contained import Contained
 from zope.intid.interfaces import IIntIds
 
 from nti.app.products.courseware_scorm.interfaces import ISCORMIdentifier
+from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 from nti.app.products.courseware_scorm.interfaces import ISCORMRegistrationRemovedEvent
@@ -32,6 +35,10 @@ from nti.containers.containers import CaseInsensitiveCheckingLastModifiedBTreeCo
 from nti.contenttypes.completion.interfaces import UserProgressRemovedEvent
 
 from nti.contenttypes.courses.courses import CourseInstance
+
+from nti.contenttypes.courses.exporter import BaseSectionExporter
+
+from nti.contenttypes.courses.interfaces import ICourseSectionExporter
 
 from nti.contenttypes.courses.utils import is_course_instructor_or_editor
 
@@ -164,3 +171,27 @@ class SCORMRegistrationIdentifier(object):
         intids = component.getUtility(IIntIds)
         parts = registration_id.split(u'-')
         return intids.queryObject(int(parts[0]))
+    
+
+SCORM_PACKAGE_NAME = u'SCORMPackage.zip'
+    
+@interface.implementer(ICourseSectionExporter)
+class CourseSCORMPackageExporter(BaseSectionExporter):
+    
+    def export(self, context, filer, backup=True, salt=None):
+        logger.debug("CourseSCORMPackageExporter.export")
+        course = ISCORMCourseInstance(context)
+        client = component.queryUtility(ISCORMCloudClient)
+        if client is None:
+            return
+        archive = client.get_archive(course)
+        if archive is None:
+            return
+        filer.default_bucket = bucket = self.course_bucket(course)
+        source = cStringIO(archive)
+        filename = SCORM_PACKAGE_NAME
+        filer.save(filename,
+                   source,
+                   contentType='application/zip; charset=UTF-8',
+                   bucket=bucket,
+                   overwrite=True)
