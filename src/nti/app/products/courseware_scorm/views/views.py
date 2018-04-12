@@ -143,6 +143,8 @@ class LaunchSCORMCourseView(AbstractSCORMLaunchView):
         course = self.context
         metadata = ISCORMCourseMetadata(course)
         notify(SCORMPackageLaunchEvent(self.remoteUser, course, metadata, datetime.utcnow()))
+        # Make sure we commit our job
+        self.request.environ['nti.request_had_transaction_side_effects'] = True
     
 @view_config(route_name='objects.generic.traversal',
              renderer='rest',
