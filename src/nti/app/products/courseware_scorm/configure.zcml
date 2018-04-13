@@ -17,6 +17,9 @@
 
 	<utility factory=".client.PostBackPasswordUtility"
 		 provides=".interfaces.IPostBackPasswordUtility" />
+		 
+	<utility factory=".courses.CourseSCORMPackageExporter" />
+	<utility factory=".courses.CourseSCORMPackageImporter" />
 
 	<configure zcml:condition="have devmode">
 	  <utility factory=".client.DevModePostbackURLGenerator"
