@@ -221,7 +221,7 @@ class CourseSCORMPackageImporter(BaseSectionImporter):
         client.import_course(course, source)
         # Save source
         if writeout and IFilesystemBucket.providedBy(course.root):
-            path = self.course_backet_path(course) + SCORM_PACKAGE_NAME
+            path = self.course_bucket_path(course) + SCORM_PACKAGE_NAME
             source = self.safe_get(filer, path) # Reload
             if source is not None:
                 self.makedirs(course.root.absolute_path)
