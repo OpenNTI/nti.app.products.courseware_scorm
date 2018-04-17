@@ -44,6 +44,7 @@ from nti.contenttypes.courses.exporter import BaseSectionExporter
 
 from nti.contenttypes.courses.importer import BaseSectionImporter
 
+from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseSectionExporter
 from nti.contenttypes.courses.interfaces import ICourseSectionImporter
 
@@ -210,7 +211,7 @@ class CourseSCORMPackageImporter(BaseSectionImporter):
     
     def process(self, context, filer, writeout=True):
         logger.debug("CourseSCORMPackageImporter.process")
-        course = ISCORMCourseInstance(context)
+        course = ICourseInstance(context)
         client = component.queryUtility(ISCORMCloudClient)
         if client is None:
             return
