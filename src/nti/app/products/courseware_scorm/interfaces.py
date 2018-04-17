@@ -42,7 +42,7 @@ from nti.schema.field import IndexedIterable as TypedIterable
 from nti.schema.field import DecodingValidTextLine as ValidTextLine
 
 
-class ISCORMCourseInstance(ICourseInstance, INonExportable):
+class ISCORMCourseInstance(ICourseInstance):
     """
     A concrete instance of a SCORM course.
     """
