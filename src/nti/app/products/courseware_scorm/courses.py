@@ -189,6 +189,8 @@ class CourseSCORMPackageExporter(BaseSectionExporter):
     
     def export(self, context, filer, backup=True, salt=None):
         logger.debug("CourseSCORMPackageExporter.export")
+        if not ISCORMCourseInstance.providedBy(context):
+            return
         course = ISCORMCourseInstance(context)
         client = component.queryUtility(ISCORMCloudClient)
         if client is None:
@@ -211,7 +213,9 @@ class CourseSCORMPackageImporter(BaseSectionImporter):
     
     def process(self, context, filer, writeout=True):
         logger.debug("CourseSCORMPackageImporter.process")
-        course = ICourseInstance(context)
+        if not ISCORMCourseInstance.providedBy(context):
+            return
+        course = ISCORMCourseInstance(context)
         client = component.queryUtility(ISCORMCloudClient)
         if client is None:
             return
