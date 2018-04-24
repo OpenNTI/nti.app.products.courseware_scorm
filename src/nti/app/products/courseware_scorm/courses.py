@@ -46,6 +46,7 @@ from nti.contenttypes.courses.importer import BaseSectionImporter
 
 from nti.contenttypes.courses.interfaces import ICourseSectionExporter
 from nti.contenttypes.courses.interfaces import ICourseSectionImporter
+from nti.contenttypes.courses.interfaces import ImportCourseTypeUnsupportedError
 
 from nti.contenttypes.courses.utils import is_course_instructor_or_editor
 
@@ -207,7 +208,7 @@ class CourseSCORMPackageExporter(BaseSectionExporter):
                    overwrite=True)
         
         
-class ImportSCORMArchiveUnsupportedError(Exception):
+class ImportSCORMArchiveUnsupportedError(ImportCourseTypeUnsupportedError):
     """
     An error raised when an unsupported SCORM package import is attempted.
     """
