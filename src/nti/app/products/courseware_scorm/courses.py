@@ -192,6 +192,7 @@ class CourseSCORMPackageExporter(BaseSectionExporter):
             return
         client = component.queryUtility(ISCORMCloudClient)
         if client is None:
+            logger.warn("Exporting SCORM course without client configured.")
             return
         archive = client.get_archive(course)
         if archive is None:
@@ -215,6 +216,7 @@ class CourseSCORMPackageImporter(BaseSectionImporter):
             return
         client = component.queryUtility(ISCORMCloudClient)
         if client is None:
+            logger.warn("Importing SCORM course without client configured.")
             return
         path = self.course_bucket_path(course) + SCORM_PACKAGE_NAME
         source = self.safe_get(filer, path)
