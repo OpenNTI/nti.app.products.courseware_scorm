@@ -186,11 +186,10 @@ SCORM_PACKAGE_NAME = u'SCORMPackage.zip'
 @interface.implementer(ICourseSectionExporter)
 class CourseSCORMPackageExporter(BaseSectionExporter):
     
-    def export(self, context, filer, backup=True, salt=None):
+    def export(self, course, filer, backup=True, salt=None):
         logger.debug("CourseSCORMPackageExporter.export")
-        if not ISCORMCourseInstance.providedBy(context):
+        if not ISCORMCourseInstance.providedBy(course):
             return
-        course = ISCORMCourseInstance(context)
         client = component.queryUtility(ISCORMCloudClient)
         if client is None:
             return
