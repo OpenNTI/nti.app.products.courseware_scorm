@@ -46,6 +46,7 @@ from nti.contenttypes.courses.importer import BaseSectionImporter
 
 from nti.contenttypes.courses.interfaces import ICourseSectionExporter
 from nti.contenttypes.courses.interfaces import ICourseSectionImporter
+from nti.contenttypes.courses.interfaces import ImportCourseTypeUnsupportedError
 
 from nti.contenttypes.courses.utils import is_course_instructor_or_editor
 
@@ -207,20 +208,26 @@ class CourseSCORMPackageExporter(BaseSectionExporter):
                    overwrite=True)
         
         
+class ImportSCORMArchiveUnsupportedError(ImportCourseTypeUnsupportedError):
+    """
+    An error raised when an unsupported SCORM package import is attempted.
+    """
+        
+        
 @interface.implementer(ICourseSectionImporter)
 class CourseSCORMPackageImporter(BaseSectionImporter):
     
     def process(self, course, filer, writeout=True):
         logger.debug("CourseSCORMPackageImporter.process")
-        if not ISCORMCourseInstance.providedBy(course):
-            return
-        client = component.queryUtility(ISCORMCloudClient)
-        if client is None:
-            logger.warn("Importing SCORM course without client configured.")
-            return
         path = self.course_bucket_path(course) + SCORM_PACKAGE_NAME
         source = self.safe_get(filer, path)
         if source is None:
+            return
+        if not ISCORMCourseInstance.providedBy(course): 
+            raise ImportSCORMArchiveUnsupportedError()
+        client = component.queryUtility(ISCORMCloudClient)
+        if client is None:
+            logger.warn("Importing SCORM course without client configured.")
             return
         client.import_course(course, source)
         # Save source
