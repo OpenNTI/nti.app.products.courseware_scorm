@@ -104,6 +104,10 @@
  			 for="nti.dataserver.interfaces.IUser 
  			 	  .interfaces.ISCORMCourseMetadata 
  			 	  .interfaces.ISCORMCourseInstance" />
+ 			 	  
+ 	<adapter factory=".courses.SCORMCourseInstanceReportFilter"
+ 			 provides="nti.contenttypes.reports.interfaces.IReportFilter"
+ 			 for=".interfaces.ISCORMCourseInstance" />
 
 	<!-- Subscribers -->
 	<subscriber handler=".subscribers._enrollment_record_dropped" />

@@ -50,6 +50,8 @@ from nti.contenttypes.courses.interfaces import ImportCourseTypeUnsupportedError
 
 from nti.contenttypes.courses.utils import is_course_instructor_or_editor
 
+from nti.contenttypes.reports.interfaces import IReportFilter
+
 from nti.dataserver import authorization as nauth
 
 from nti.ntiids.oids import to_external_ntiid_oid
@@ -239,3 +241,20 @@ class CourseSCORMPackageImporter(BaseSectionImporter):
                 new_path = os.path.join(course.root.absolute_path,
                                         SCORM_PACKAGE_NAME)
                 transfer_to_native_file(source, new_path)
+                
+
+@component.adapter(ISCORMCourseInstance)
+@interface.implementer(IReportFilter)
+class SCORMCourseInstanceReportFilter(object):
+    
+    def __init__(self, course):
+        self.course = course
+    
+    def should_exclude_report(self, report):
+        name = report.name
+        logger.debug("SCORMCourseInstanceReportFilter.should_exclude_report: name=%s", name)
+        if     name == "SelfAssessmentSummaryReport.pdf" \
+            or name == "SelfAssessmentReportCSV" \
+            or name == "InquiryReport.pdf":
+            return True
+        return False
