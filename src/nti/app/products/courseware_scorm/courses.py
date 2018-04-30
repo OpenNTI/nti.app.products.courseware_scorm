@@ -252,7 +252,6 @@ class SCORMCourseInstanceReportFilter(object):
     
     def should_exclude_report(self, report):
         name = report.name
-        logger.debug("SCORMCourseInstanceReportFilter.should_exclude_report: name=%s", name)
         if     name == "SelfAssessmentSummaryReport.pdf" \
             or name == "SelfAssessmentReportCSV" \
             or name == "InquiryReport.pdf":
