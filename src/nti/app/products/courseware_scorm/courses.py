@@ -36,6 +36,8 @@ from nti.cabinet.filer import transfer_to_native_file
 
 from nti.containers.containers import CaseInsensitiveCheckingLastModifiedBTreeContainer
 
+from nti.contentlibrary.presentationresource import DisplayableContentMixin
+
 from nti.contenttypes.completion.interfaces import UserProgressRemovedEvent
 
 from nti.contenttypes.courses.courses import CourseInstance
@@ -71,7 +73,7 @@ def is_course_admin(user, course):
 
 
 @interface.implementer(ISCORMCourseInstance)
-class SCORMCourseInstance(CourseInstance):
+class SCORMCourseInstance(CourseInstance, DisplayableContentMixin):
     """
     An instance of a SCORM course.
     """
