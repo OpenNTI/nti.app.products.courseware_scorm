@@ -38,7 +38,7 @@ def _enrollment_record_dropped(record, unused_event):
 
 
 @component.adapter(ISCORMCourseInstance, ICourseInstanceRemovedEvent)
-def _on_course_instance_removed(course, event):
+def _on_course_instance_removed(course, unused_event):
     metadata = ISCORMCourseMetadata(course, None)
     if metadata is not None and metadata.has_scorm_package():
         client = component.getUtility(ISCORMCloudClient)
@@ -56,4 +56,3 @@ class SCORMAllCoursesCollectionAcceptsProvider(object):
         if component.queryUtility(ISCORMCloudClient) is not None:
             return iter([SCORM_COURSE_MIME_TYPE])
         return iter(())
-    

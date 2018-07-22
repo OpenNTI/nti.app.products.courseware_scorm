@@ -9,6 +9,10 @@ from __future__ import absolute_import
 
 from nti.app.products.courseware.tests import PersistentInstructedCourseApplicationTestLayer
 
+from nti.app.testing.application_webtest import ApplicationLayerTest
+
+from nti.testing.base import AbstractTestBase
+
 from nti.testing.layers import find_test
 from nti.testing.layers import GCLayerMixin
 from nti.testing.layers import ZopeComponentLayer
@@ -45,29 +49,11 @@ class SharedConfiguringTestLayer(ZopeComponentLayer,
         pass
 
 
-import unittest
+class CoursewareSCORMLayerTest(ApplicationLayerTest):
 
+    layer = PersistentInstructedCourseApplicationTestLayer
 
-class CoursewareSCORMLayerTest(unittest.TestCase):
+    get_configuration_package = AbstractTestBase.get_configuration_package.__func__
 
-    layer = SharedConfiguringTestLayer
+    set_up_packages = ('nti.app.products.courseware_scorm',)
 
-
-class CoursewareSCORMTestLayer(PersistentInstructedCourseApplicationTestLayer):
-
-    set_up_packages = ('nti.dataserver', 'nti.app.products.courseware_scorm')
-
-    @classmethod
-    def setUp(cls):
-        PersistentInstructedCourseApplicationTestLayer.setUp()
-        # We need to use configure_packages instead of setUpPackages
-        # to avoid having zope.eventtesting.events.append duplicated
-        # as a handler. This is poorly documented in nti.testing 1.0.0.
-        # Passing in our context is critical.
-        cls.configure_packages(set_up_packages=cls.set_up_packages,
-                               features=cls.features,
-                               context=cls.configuration_context)
-
-    @classmethod
-    def testSetUp(cls):
-        pass
