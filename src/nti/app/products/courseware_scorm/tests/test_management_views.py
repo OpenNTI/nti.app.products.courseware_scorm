@@ -89,7 +89,7 @@ from nti.ntiids.ntiids import find_object_with_ntiid
 from nti.scorm_cloud.client.registration import Registration
 from nti.scorm_cloud.client.registration import RegistrationReport
 
-HREF = StandardExternalFields().HREF
+HREF = StandardExternalFields.HREF
 ITEMS = StandardExternalFields.ITEMS
 CLASS = StandardExternalFields.CLASS
 LINKS = StandardExternalFields.LINKS
