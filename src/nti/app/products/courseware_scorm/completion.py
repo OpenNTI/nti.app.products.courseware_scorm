@@ -25,11 +25,15 @@ from nti.contenttypes.completion.completion import CompletedItem
 
 from nti.contenttypes.completion.interfaces import IUserProgressUpdatedEvent
 
+from nti.contenttypes.completion.policies import AbstractCompletableItemCompletionPolicy
+
 from nti.contenttypes.completion.progress import Progress
 
 from nti.contenttypes.completion.utils import update_completion
 
 from nti.coremetadata.interfaces import IUser
+
+from nti.externalization.persistence import NoPickle
 
 
 @interface.implementer(ISCORMProgress)
@@ -89,9 +93,10 @@ class _SCORMCompletableItemProvider(object):
         return items
 
 
+@NoPickle
 @component.adapter(ISCORMCourseMetadata, ISCORMCourseInstance)
 @interface.implementer(ICompletableItemCompletionPolicy)
-class SCORMCompletionPolicy(object):
+class SCORMCompletionPolicy(AbstractCompletableItemCompletionPolicy):
 
     def __init__(self, metadata, course):
         self.metadata = metadata
