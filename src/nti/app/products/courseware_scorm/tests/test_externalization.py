@@ -26,7 +26,7 @@ from nti.app.products.courseware_scorm.interfaces import ISCORMRegistrationRepor
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
 from nti.externalization.externalization import toExternalObject
-from nti.externalization.externalization import StandardExternalFields
+from nti.externalization.interfaces import StandardExternalFields
 
 from nti.externalization.testing import externalizes
 
@@ -140,7 +140,7 @@ class TestExternal(ApplicationLayerTest):
                                              'instances', has_item(has_entries('instance_id', 'instanceId',
                                                                                'course_version', 'version',
                                                                                'update_date', 'updateDate')))))
-    
+
     def test_scorm_objective(self):
         mock_objective = Objective(id_=u'id',
                                    measurestatus=True,
@@ -150,7 +150,7 @@ class TestExternal(ApplicationLayerTest):
                                    score_scaled=u'1.0',
                                    score_min=u'0',
                                    score_raw=u'100',
-                                   success_status=u'passed', 
+                                   success_status=u'passed',
                                    completion_status=u'completed',
                                    progress_measure=u'1',
                                    description=u'description')
@@ -169,7 +169,7 @@ class TestExternal(ApplicationLayerTest):
                                              'completion_status', u'completed',
                                              'progress_measure', 1.0,
                                              'description', u'description')))
-        
+
     def test_scorm_interaction(self):
         mock_objective = Objective(id_=u'o-id')
         mock_response = Response(id_=u'r-id', value=u'r-value')
@@ -207,7 +207,7 @@ class TestExternal(ApplicationLayerTest):
                                                                                 'description', None)),
                                              'correct_responses', has_item(has_entries(ID, u'',
                                                                                        'value', u'r-value')))))
-    
+
     def test_scorm_runtime(self):
         mock_static = Static(completion_threshold=u'0.5',
                              launch_data=u's-launch-data',
@@ -300,7 +300,7 @@ class TestExternal(ApplicationLayerTest):
                                                                                 'completion_status', None,
                                                                                 'progress_measure', None,
                                                                                 'description', None)))))
-        
+
     def test_scorm_activity(self):
         mock_objective = Objective(id_=u'o-id')
         mock_child = Activity(id_=u'c-id', title=u'child-title')
