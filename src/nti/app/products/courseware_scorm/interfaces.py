@@ -23,10 +23,8 @@ from zope.location.interfaces import IContained
 from nti.contenttypes.completion.interfaces import IProgress
 from nti.contenttypes.completion.interfaces import ICompletableItem
 
-from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
-
-from nti.contenttypes.courses.interfaces import INonExportable
 from nti.contenttypes.courses.interfaces import ICourseInstance
+from nti.contenttypes.courses.interfaces import IDoNotCreateDefaultOutlineCourseInstance
 
 from nti.coremetadata.interfaces import IUser
 
@@ -36,13 +34,12 @@ from nti.schema.field import Choice
 from nti.schema.field import Number
 from nti.schema.field import Object
 from nti.schema.field import DateTime
-from nti.schema.field import Iterable
 from nti.schema.field import ListOrTuple
 from nti.schema.field import IndexedIterable as TypedIterable
 from nti.schema.field import DecodingValidTextLine as ValidTextLine
 
 
-class ISCORMCourseInstance(ICourseInstance):
+class ISCORMCourseInstance(ICourseInstance, IDoNotCreateDefaultOutlineCourseInstance):
     """
     A concrete instance of a SCORM course.
     """
@@ -67,7 +64,7 @@ class IPostBackURLUtility(interface.Interface):
         """
         Returns a url that should be used for registration result postbacks
         """
-    
+
 class IPostBackPasswordUtility(interface.Interface):
 
     def credentials_for_enrollment(reg_id):
@@ -151,7 +148,7 @@ class ISCORMCloudClient(interface.Interface):
         """
         Returns progress for the registration of the specified user and course.
         """
-        
+
     def enrollment_registration_exists(course, user):
         """
         Returns whether a registration exists for the given course and user.
@@ -161,7 +158,7 @@ class ISCORMCloudClient(interface.Interface):
         """
         Returns whether a registration with the given ID exists.
         """
-        
+
     def get_archive(course):
         """
         Returns the SCORM archive for the specified course.
@@ -239,60 +236,60 @@ class ISCORMObjective(interface.Interface):
     """
     An object containing summary information about an activity objective.
     """
-    
+
     id = ValidTextLine(title=u'A unique label for the objective.',
                        required=True)
-    
+
     measure_status = Bool(title=u'The measure status.',
                           required=True)
-    
+
     normalized_measure = Number(title=u'The normalized measure.',
                                 required=True)
-    
+
     progress_status = Bool(title=u'The progress status.',
                            required=True)
-    
+
     satisfied_status = Bool(title=u'The satisfied status.',
                             required=True)
-    
+
     score_scaled = Number(title=u'A number that reflects the performance of the learner for the objective.',
                           required=False)
-    
+
     score_min = Number(title=u'The minimum value, for the objective, in the range for the raw score.',
                        required=False)
-    
+
     score_raw = Number(title=u'A number that reflects the performance of the learner, for the objective, \
                                relative to the range bounded by the values of min and max.',
                        required=False)
-    
+
     success_status = Bool(title=u'Indicates whether the learner has mastered the objective.',
                           required=False,
                           default=None)
-    
+
     completion_status = Choice(title=u'Indicates whether the learner has completed the associated objective.',
                                values=('completed', 'incomplete', 'not attempted', 'unknown'),
                                default=None,
                                required=False)
-    
+
     progress_measure = Number(title=u'A measure of the progress the learner has made \
                                       toward completing the objective (in 0...1).',
                               required=False)
-    
+
     description = ValidTextLine(title=u'A brief informative description of the objective.',
                                 required=False)
-    
-    
+
+
 class ISCORMComment(interface.Interface):
     """
     An object representing a comment or annotation associated with a SCO.
     """
-    
+
     value = ValidTextLine(title=u'The comment text.',
                           required=False)
-    
+
     location = ValidTextLine(title=u'The point in the SCO to which the comment applies.',
                              required=False)
-    
+
     date_time = DateTime(title=u'The point in time at which the comment was created or most recently changed.',
                          required=False)
 
@@ -301,10 +298,10 @@ class ISCORMResponse(interface.Interface):
     """
     An object representing data generated when a learner responds to an interaction.
     """
-    
+
     id = ValidTextLine(title=u'The response ID.',
                        required=False)
-    
+
     value = ValidTextLine(title=u'The response value.',
                           required=False)
 
@@ -313,238 +310,238 @@ class ISCORMInteraction(interface.Interface):
     """
     An object which represents the results of a question response.
     """
-    
+
     id = ValidTextLine(title=u'A unique label for the interaction.',
                        required=True)
-    
+
     result = Choice(title=u'A judgment of the correctness of the learner response.',
                     values=('correct', 'incorrect', 'unanticipated', 'neutral'),
                     default=None,
                     required=False)
-    
+
     latency = Number(title=u'The time elapsed between the time the interaction was made \
                             available to the learner for response and the time of the first response.',
                             required=False)
-    
+
     timestamp = Number(title=u'The point in time at which the interaction was first made available to the learner \
                                for learner interaction and response.',
                                required=False)
-    
+
     weighting = Number(title=u'The weight given to the interaction relative to other interactions.',
                        required=False)
-    
+
     objectives = TypedIterable(title=u'The objectives associated with the interaction.',
                                value_type=Object(ISCORMObjective),
                                required=True)
-    
+
     description = ValidTextLine(title=u'A brief informative description of the interaction.',
                                 required=False)
-    
+
     learner_response = Object(ISCORMResponse,
                               title=u'The data generated when a learner responds to an interaction.',
                               required=False)
-    
+
     correct_responses = TypedIterable(title=u'The correct response patterns for the interaction.',
                                       value_type=Object(ISCORMResponse),
                                       default=None,
                                       required=False)
-    
-    
+
+
 class ISCORMLearnerPreference(interface.Interface):
     """
     An object which represents a learner's preferences in an SCO.
     """
-    
+
     language = ValidTextLine(title=u'The learner’s preferred language for SCOs with multilingual capability.',
                              required=False)
-    
+
     audio_level = Number(title=u'Specifies an intended change in perceived audio level.',
                          required=False)
-    
+
     delivery_speed = Number(title=u'The learner’s preferred relative speed of content delivery.',
                             required=False)
-    
+
     audio_captioning = Choice(title=u'Specifies whether captioning text corresponding to audio is displayed.',
                               values=('-1', '0', '1'),
                               default=None,
                               required=False)
-    
-    
+
+
 class ISCORMStatic(interface.Interface):
     """
     An object which represents static information about a SCORM runtime.
     """
-    
+
     learner_id = ValidTextLine(title=u'The learner ID.',
                                required=False)
-    
+
     launch_data = ValidTextLine(title=u'The launch data.',
                                 required=False)
-    
+
     learner_name = ValidTextLine(title=u'The learner name.',
                                  required=False)
-    
+
     max_time_allowed = Number(title=u'The amount of accumulated time the learner is allowed to use an SCO.',
                               required=False)
-    
+
     time_limit_action = Choice(title=u'Indicates what the SCO should do when max_time_allowed is exceeded.',
                                values=('exit,message', 'continue,message', 'exit,no message', 'continue,no message'),
                                default=None,
                                required=False)
-    
+
     completion_threshold = Number(title=u'Used to determine whether the SCO should be considered complete (in 0...1).',
                                   required=False)
-    
+
     scaled_passing_score = Number(title=u'Scaled passing score required to master the SCO (in -1...1).',
                                   required=False)
-    
+
 
 class ISCORMRuntime(interface.Interface):
     """
     An object containing summary information about an SCO runtime.
     """
-    
+
     mode = Choice(title=u'Identifies one of three possible modes in which the SCO may be presented to the learner.',
                   values=('browse', 'normal', 'review'),
                   default=None,
                   required=False)
-    
+
     exit = Choice(title=u'Indicates how or why the learner left the SCO.',
                   values=('timeout', 'suspend', 'logout', 'normal'),
                   default=None,
                   required=False)
-    
+
     entry = ValidTextLine(title=u'Asserts whether the learner has previously accessed the SCO.',
                           required=False)
-    
+
     credit = Bool(title=u'Indicates whether the learner will be credited for performance in the SCO.',
                   required=False)
-    
+
     static = Object(ISCORMStatic,
                     title=u'Static information about the SCO runtime.',
                     default=None,
                     required=False)
-    
+
     location = ValidTextLine(title=u'The learner’s current location in the SCO.',
                              required=False)
-    
+
     score_raw = Number(title=u'Number that reflects the performance of the learner, for the objective, \
                                relative to the range bounded by the values of min and max.',
                        required=False)
-    
+
     objectives = TypedIterable(title=u'The objectives.',
                                value_type=Object(ISCORMObjective),
                                required=True)
-    
+
     total_time = Number(title=u'The sum of all of the learner’s session times accumulated in the current learner attempt.',
                                required=False)
-    
+
     time_tracked = Number(title=u'The amount of time that the learner has spent in the current learner session for this SCO.',
                                  required=False)
-    
+
     interactions = TypedIterable(title=u'The interactions associated with the SCO.',
                                  value_type=Object(ISCORMInteraction),
                                  required=True)
-    
+
     score_scaled = Number(title=u'Number that reflects the performance of the learner, from -1 to 1.',
                           required=False)
-    
+
     suspend_data = ValidTextLine(title=u'Provides space to store and retrieve data between learner sessions.',
                                  required=False)
-    
+
     success_status = Bool(title=u'Indicates whether the learner has mastered the SCO (in 0...1).',
                           default=None,
                           required=False)
-    
+
     progress_measure = Number(title=u'A measure of the progress the learner has made toward completing the SCO (in 0...1).',
                               required=False)
-    
+
     completion_status = Choice(title=u'Indicates whether the learner has completed the SCO.',
                                values=('completed', 'incomplete', 'not attempted', 'unknown'),
                                default=None,
                                required=False)
-    
+
     learner_preference = Object(ISCORMLearnerPreference,
                                 title=u'The learner\'s preferences.',
                                 default=None,
                                 required=False)
-    
+
     comments_from_lms = TypedIterable(title=u'The comments from the LMS.',
                                       value_type=Object(ISCORMComment),
                                       required=True)
-    
+
     comments_from_learner = TypedIterable(title=u'The comments from the learner.',
                                           value_type=Object(ISCORMComment),
                                           required=True)
-    
+
 
 class ISCORMActivity(interface.Interface):
     """
     An object containing summary information about a registration activity.
     """
-    
+
     id = ValidTextLine(title=u'The activity ID.',
                        required=True)
-    
+
     title = ValidTextLine(title=u'The activity title.',
                           required=True)
-    
+
     complete = Bool(title=u'Whether the activity has been completed.',
                     required=False,
                     default=None)
-    
+
     success = Bool(title=u'Whether the activity has been passed or failed.',
                    required=False,
                    default=None)
-    
+
     satisfied = Bool(title=u'Whether the activity has been satisfied.',
                      required=True)
-    
+
     completed = Bool(title=u'Whether the activity has been completed.',
                      required=True)
-    
+
     progress_status = Bool(title=u'The progress status.',
                            required=True)
 
     attempts = Number(title=u'The number of attempts.',
                       required=True)
-    
+
     suspended = Bool(title=u'Whether the activity has been suspended.',
                      required=True)
-    
+
     time = Number(title=u'The time spent on the activity.',
                    required=False,
                    default=None)
-    
+
     score = Number(title=u'The activity score, from 0 to 1.',
                    required=False,
                    default=None)
-    
+
     objectives = List(title=u'The activity objectives.',
                       required=True)
-    
+
     children = List(title=u'The activity children.',
                     required=True)
-    
+
     runtime = Object(ISCORMRuntime,
                      title=u'The activity runtime.',
                      required=False,
                      default=None)
-    
+
 
 class ISCORMRegistrationReport(interface.Interface):
     """
     An object containing high-level information about a registration result.
     """
-    
+
     format = Choice(title=u'The results format.',
                     values=(u'course', u'activity', u'full'),
                     required=True)
-    
+
     registration_id = ValidTextLine(title=u'The registration ID.',
                                     default=None,
                                     required=False)
-    
+
     instance_id = ValidTextLine(title=u'The instance ID.',
                                 default=None,
                                 required=False)
@@ -557,31 +554,31 @@ class ISCORMRegistrationReport(interface.Interface):
 
     total_time = Number(title=u'The total time tracked by the content player in seconds; \
                                 that is, how long the learner had the course open.')
-    
+
     activity = Object(ISCORMActivity,
                       title=u'A textual representation of registration activity in the course.',
                       required=False,
                       default=None)
-        
-        
+
+
 class IUserRegistrationReportContainer(IContainer):
     """
     Contains :class:`ISCORMRegistrationReport` that have been generated by users in a SCORM SCO.
     """
-    
+
     contains(ISCORMRegistrationReport)
-    
+
     def add_registration_report(registration_report, user):
         """
         Adds a :class:`ISCORMRegistrationReport` to this container for the given :class:`IUser`.
         """
-        
+
     def get_registration_report(user):
         """
         Returns the :class:`ISCORMRegistrationReport` from this container given a :class:`IUser`,
         or None if it does not exist.
         """
-    
+
     def remove_registration_report(user):
         """
         Removes from this container the :class:`ISCORMRegistrationReport` for the given :class:`IUser`.
@@ -591,14 +588,14 @@ class ISCORMRegistrationRemovedEvent(interface.Interface):
     """
     An event that is sent after a SCORM registration has been removed.
     """
-    
+
     registration_id = ValidTextLine(title=u'The registration ID that was removed.',
                                     required=True)
-    
+
     course = Object(ISCORMCourseInstance,
                     title=u'The course from which the registration was removed.',
                     required=True)
-    
+
     user = Object(IUser,
                   title=u'The user for whom the registration was removed.',
                   required=True)
@@ -608,43 +605,43 @@ class ISCORMProgress(IProgress):
     """
     An :class:`IProgress` object for SCORM content.
     """
-    
+
     registration_report = Object(ISCORMRegistrationReport,
                                  title=u'The SCORM registration report.',
                                  required=True)
     registration_report.setTaggedValue('_ext_excluded_out', True)
-    
-    
+
+
 class ISCORMInteractionEvent(interface.Interface):
     """
     An event that is sent after an interaction with a SCORM package.
     """
-    
+
     user = Object(IUser,
                   title=u'The user who launched the SCORM package.',
                   required=True)
-    
+
     course = Object(ICourseInstance,
                     title=u'The course in which the SCORM package was launched.',
                     required=True)
-    
+
     metadata = Object(ISCORMCourseMetadata,
                       title=u'The metadata object of the SCORM package that was launched.',
                       required=True)
-    
+
     timestamp = DateTime(title=u'The time at which the SCORM package was launched.',
                          required=True)
-    
-    
+
+
 @interface.implementer(ISCORMInteractionEvent)
 class SCORMInteractionEvent(object):
-    
+
     def __init__(self, user, course, metadata, timestamp):
         self.user = user
         self.course = course
         self.metadata = metadata
         self.timestamp = timestamp
-    
+
 
 class ISCORMPackageLaunchEvent(ISCORMInteractionEvent):
     """
@@ -661,9 +658,8 @@ class ISCORMRegistrationPostbackEvent(ISCORMInteractionEvent):
     """
     An event that is sent after a SCORM registration postback is received.
     """
-    
+
 
 @interface.implementer(ISCORMRegistrationPostbackEvent)
 class SCORMRegistrationPostbackEvent(SCORMInteractionEvent):
     pass
-    

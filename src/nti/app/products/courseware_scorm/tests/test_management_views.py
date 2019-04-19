@@ -242,6 +242,12 @@ class TestManagementViews(CoursewareSCORMLayerTest):
         entry_ntiid = catalog['NTIID']
         assert_that(entry_ntiid, not_none())
 
+        with mock_dataserver.mock_db_trans(site_name='janux.ou.edu'):
+            # Ensure no default outline
+            entry = find_object_with_ntiid(entry_ntiid)
+            course = ICourseInstance(entry)
+            assert_that(course.Outline, has_length(0))
+
         self.course_ntiid = new_course['NTIID']
 
         # Disable preview mode
