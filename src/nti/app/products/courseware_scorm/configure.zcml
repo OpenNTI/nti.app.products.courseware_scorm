@@ -17,7 +17,7 @@
 
 	<utility factory=".client.PostBackPasswordUtility"
 		 provides=".interfaces.IPostBackPasswordUtility" />
-		 
+
 	<utility factory=".courses.CourseSCORMPackageExporter" />
 	<utility factory=".courses.CourseSCORMPackageImporter" />
 
@@ -30,9 +30,9 @@
 	  <utility factory=".client.PostBackURLGenerator"
 		   provides=".interfaces.IPostBackURLUtility" />
 	</configure>
-	
+
 	<adapter factory=".courses.SCORMCourseInstanceMetadataFactory" />
-	
+
 	<adapter factory=".courses.UserRegistrationReportContainerFactory" />
 
 	<adapter factory=".courses.SCORMIdentifier"
@@ -62,49 +62,49 @@
 	 <adapter factory=".model.SCORMRegistrationReport"
  			 for="nti.scorm_cloud.client.registration.RegistrationReport"
  			 provides=".interfaces.ISCORMRegistrationReport" />
- 			 
+
  	<adapter factory=".model.SCORMObjective"
  			 for="nti.scorm_cloud.client.registration.Objective"
  			 provides=".interfaces.ISCORMObjective" />
- 	
+
  	<adapter factory=".model.SCORMResponse"
  			 for="nti.scorm_cloud.client.registration.Response"
  			 provides=".interfaces.ISCORMResponse" />
- 	
+
  	<adapter factory=".model.SCORMInteraction"
  			 for="nti.scorm_cloud.client.registration.Interaction"
  			 provides=".interfaces.ISCORMInteraction" />
- 	
+
  	<adapter factory=".model.SCORMComment"
  			 for="nti.scorm_cloud.client.registration.Comment"
  			 provides=".interfaces.ISCORMComment" />
- 	
+
  	<adapter factory=".model.SCORMLearnerPreference"
  			 for="nti.scorm_cloud.client.registration.LearnerPreference"
  			 provides=".interfaces.ISCORMLearnerPreference" />
- 	
+
  	<adapter factory=".model.SCORMStatic"
  			 for="nti.scorm_cloud.client.registration.Static"
  			 provides=".interfaces.ISCORMStatic" />
- 			 
+
  	<adapter factory=".model.SCORMRuntime"
  			 for="nti.scorm_cloud.client.registration.Runtime"
  			 provides=".interfaces.ISCORMRuntime" />
- 			 
+
  	<adapter factory=".model.SCORMActivity"
  			 for="nti.scorm_cloud.client.registration.Activity"
  			 provides=".interfaces.ISCORMActivity" />
- 			 
+
  	<adapter factory=".completion.SCORMCompletionPolicy"
  			 for=".interfaces.ISCORMCourseMetadata .interfaces.ISCORMCourseInstance"
  			 provides="nti.contenttypes.completion.interfaces.ICompletableItemCompletionPolicy" />
- 			 
+
  	<adapter factory=".completion._scorm_progress"
- 			 provides=".interfaces.ISCORMProgress" 
- 			 for="nti.dataserver.interfaces.IUser 
- 			 	  .interfaces.ISCORMCourseMetadata 
+ 			 provides=".interfaces.ISCORMProgress"
+ 			 for="nti.dataserver.interfaces.IUser
+ 			 	  .interfaces.ISCORMCourseMetadata
  			 	  .interfaces.ISCORMCourseInstance" />
- 			 	  
+
  	<adapter factory=".courses.SCORMCourseInstanceReportFilter"
  			 provides="nti.contenttypes.reports.interfaces.IReportFilter"
  			 for=".interfaces.ISCORMCourseInstance" />
@@ -112,18 +112,18 @@
 	<!-- Subscribers -->
 	<subscriber handler=".subscribers._enrollment_record_dropped" />
 	<subscriber handler=".subscribers._on_course_instance_removed" />
-	
+
 	<subscriber handler=".completion._on_user_progress_updated" />
 
 	<subscriber factory=".subscribers.SCORMAllCoursesCollectionAcceptsProvider"
 				provides="nti.app.products.courseware.interfaces.IAllCoursesCollectionAcceptsProvider" />
-				
+
 	<subscriber factory=".completion._SCORMCompletableItemProvider"
 				provides="nti.contenttypes.completion.interfaces.IRequiredCompletableItemProvider"
 				for=".interfaces.ISCORMCourseInstance" />
-	
+
 	<subscriber handler=".courses._on_scorm_registration_removed" />
-	
+
 	<configure zcml:condition="have testmode">
 		<subscriber handler=".tests.test_management_views._scorm_package_launched" />
 		<subscriber handler=".tests.test_management_views._on_scorm_registration_postback" />
@@ -158,10 +158,10 @@
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"
 				for=".interfaces.ISCORMCourseMetadata
 				     pyramid.interfaces.IRequest" />
-	
+
 	<subscriber factory=".decorators._CourseInstanceEnrollmentDecorator"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"
-				for=".interfaces.ICourseInstanceEnrollment
+				for="nti.app.products.courseware.interfaces.ICourseInstanceEnrollment
 				     pyramid.interfaces.IRequest" />
 
 	<!-- Externalization -->
