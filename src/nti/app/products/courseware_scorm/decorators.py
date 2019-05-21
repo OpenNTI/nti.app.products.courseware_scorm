@@ -17,8 +17,9 @@ from nti.app.products.courseware.utils import PreviewCourseAccessPredicateDecora
 
 from nti.app.products.courseware_scorm.courses import is_course_admin
 
-from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
+from nti.app.products.courseware_scorm.interfaces import ISCORMContentRef
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
+from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
 
 from nti.app.products.courseware_scorm.views import UPDATE_SCORM_VIEW_NAME
 from nti.app.products.courseware_scorm.views import SCORM_PROGRESS_VIEW_NAME
@@ -41,6 +42,8 @@ from nti.externalization.interfaces import IExternalObjectDecorator
 from nti.links.externalization import render_link
 
 from nti.links.links import Link
+
+from nti.ntiids.ntiids import find_object_with_ntiid
 
 from nti.traversal.traversal import find_interface
 
@@ -90,10 +93,10 @@ class _SCORMCourseInstanceMetadataDecorator(PreviewCourseAccessPredicateDecorato
             course = self.course
             _links = external.setdefault(LINKS, [])
             element = LAUNCH_SCORM_COURSE_VIEW_NAME
-            if is_admin_or_content_admin_or_site_admin(self.remoteUser) \
+            if    is_admin_or_content_admin_or_site_admin(self.remoteUser) \
                or is_course_instructor_or_editor(course, self.remoteUser):
                 element = PREVIEW_SCORM_COURSE_VIEW_NAME
-            
+
             _links.append(
                 Link(course, rel=LAUNCH_REL, elements=(element,))
             )
@@ -102,14 +105,21 @@ class _SCORMCourseInstanceMetadataDecorator(PreviewCourseAccessPredicateDecorato
 @component.adapter(ICourseInstanceEnrollment)
 @interface.implementer(IExternalObjectDecorator)
 class _CourseInstanceEnrollmentDecorator(AbstractAuthenticatedRequestAwareDecorator):
-    
+
     def _predicate(self, original, unused_external):
         return ISCORMCourseInstance.providedBy(original.CourseInstance)
-    
+
     def _do_decorate_external(self, original, external):
         _links = external.setdefault(LINKS, [])
         # Render link now because we're already in the second pass
         _links.append(render_link(Link(original,
                                       rel=PROGRESS_REL,
                                       elements=(PROGRESS_REL,))))
-        
+
+
+@component.adapter(ISCORMContentRef)
+@interface.implementer(IExternalObjectDecorator)
+class _SCORMContentRefDecorator(AbstractAuthenticatedRequestAwareDecorator):
+
+    def _do_decorate_external(self, context, external):
+        external['SCORMContent'] = find_object_with_ntiid(context.target)

@@ -21,8 +21,6 @@ from zope.annotation import factory as an_factory
 
 from zope.event import notify
 
-from zope.container.contained import Contained
-
 from zope.intid.interfaces import IIntIds
 
 from nti.app.products.courseware_scorm.interfaces import ISCORMIdentifier
@@ -32,9 +30,14 @@ from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 from nti.app.products.courseware_scorm.interfaces import ISCORMRegistrationRemovedEvent
 from nti.app.products.courseware_scorm.interfaces import IUserRegistrationReportContainer
 
+from nti.app.products.courseware_scorm.model import SCORMContent
+from nti.app.products.courseware_scorm.model import SCORMContentContainer
+
 from nti.cabinet.filer import transfer_to_native_file
 
 from nti.containers.containers import CaseInsensitiveCheckingLastModifiedBTreeContainer
+
+from nti.contentlibrary.interfaces import IFilesystemBucket
 
 from nti.contentlibrary.presentationresource import DisplayableContentMixin
 
@@ -56,10 +59,9 @@ from nti.contenttypes.reports.interfaces import IReportFilter
 
 from nti.dataserver import authorization as nauth
 
-from nti.ntiids.oids import to_external_ntiid_oid
-from nti.contentlibrary.interfaces import IFilesystemBucket
-
 SCORM_COURSE_METADATA_KEY = 'nti.app.produts.courseware_scorm.courses.metadata'
+SCORM_CONTENT_CONTAINER_KEY = 'nti.app.products.courseware_scorm.courses.content_container'
+
 SCORM_COURSE_MIME_TYPE = 'application/vnd.nextthought.courses.scormcourseinstance'
 
 USER_REGISTRATION_REPORT_CONTAINER_KEY = 'nti.app.products.courseware_scorm.courses.registration-report-container'
@@ -85,22 +87,21 @@ class SCORMCourseInstance(CourseInstance, DisplayableContentMixin):
 
 @component.adapter(ISCORMCourseInstance)
 @interface.implementer(ISCORMCourseMetadata)
-class SCORMCourseMetadata(Persistent, Contained):
+class SCORMCourseMetadata(SCORMContent):
     """
     A metadata object for a SCORM course instance.
     """
 
-    scorm_id = None
-
-    @property
-    def ntiid(self):
-        return to_external_ntiid_oid(self)
-
     def has_scorm_package(self):
         return self.scorm_id is not None
 
+
 SCORMCourseInstanceMetadataFactory = an_factory(SCORMCourseMetadata,
                                                 SCORM_COURSE_METADATA_KEY)
+
+
+SCORMContentContainerFactory = an_factory(SCORMContentContainer,
+                                          SCORM_CONTENT_CONTAINER_KEY)
 
 
 @interface.implementer(ISCORMRegistrationRemovedEvent)
@@ -184,13 +185,13 @@ class SCORMRegistrationIdentifier(object):
         intids = component.getUtility(IIntIds)
         parts = registration_id.split(u'-')
         return intids.queryObject(int(parts[0]))
-    
+
 
 SCORM_PACKAGE_NAME = u'SCORMPackage.zip'
-    
+
 @interface.implementer(ICourseSectionExporter)
 class CourseSCORMPackageExporter(BaseSectionExporter):
-    
+
     def export(self, course, filer, backup=True, salt=None):
         logger.debug("CourseSCORMPackageExporter.export")
         if not ISCORMCourseInstance.providedBy(course):
@@ -210,24 +211,24 @@ class CourseSCORMPackageExporter(BaseSectionExporter):
                    contentType='application/zip; charset=UTF-8',
                    bucket=bucket,
                    overwrite=True)
-        
-        
+
+
 class ImportSCORMArchiveUnsupportedError(ImportCourseTypeUnsupportedError):
     """
     An error raised when an unsupported SCORM package import is attempted.
     """
-        
-        
+
+
 @interface.implementer(ICourseSectionImporter)
 class CourseSCORMPackageImporter(BaseSectionImporter):
-    
+
     def process(self, course, filer, writeout=True):
         logger.debug("CourseSCORMPackageImporter.process")
         path = self.course_bucket_path(course) + SCORM_PACKAGE_NAME
         source = self.safe_get(filer, path)
         if source is None:
             return
-        if not ISCORMCourseInstance.providedBy(course): 
+        if not ISCORMCourseInstance.providedBy(course):
             raise ImportSCORMArchiveUnsupportedError()
         client = component.queryUtility(ISCORMCloudClient)
         if client is None:
@@ -243,15 +244,15 @@ class CourseSCORMPackageImporter(BaseSectionImporter):
                 new_path = os.path.join(course.root.absolute_path,
                                         SCORM_PACKAGE_NAME)
                 transfer_to_native_file(source, new_path)
-                
+
 
 @component.adapter(ISCORMCourseInstance)
 @interface.implementer(IReportFilter)
 class SCORMCourseInstanceReportFilter(object):
-    
+
     def __init__(self, course):
         self.course = course
-    
+
     def should_exclude_report(self, report):
         name = report.name
         if     name == "SelfAssessmentSummaryReport.pdf" \

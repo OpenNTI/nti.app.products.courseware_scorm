@@ -54,7 +54,7 @@ from nti.contenttypes.courses.utils import is_course_instructor_or_editor
 from nti.dataserver.authorization import ACT_READ
 from nti.dataserver.authorization import is_admin_or_content_admin_or_site_admin
 
-from nti.dataserver.users.users import User 
+from nti.dataserver.users.users import User
 
 from nti.scorm_cloud.client.registration import RegistrationReport
 
@@ -82,7 +82,7 @@ class AbstractSCORMLaunchView(AbstractAuthenticatedView):
 
     def _before_launch(self):
         pass
-    
+
     def _after_launch(self):
         pass
 
@@ -103,6 +103,7 @@ class AbstractSCORMLaunchView(AbstractAuthenticatedView):
         self._after_launch()
         return hexc.HTTPSeeOther(location=launch_url)
 
+
 @view_config(route_name='objects.generic.traversal',
              renderer='rest',
              context=ICourseInstance,
@@ -119,10 +120,10 @@ class PreviewSCORMCourseVIew(AbstractSCORMLaunchView):
         return client.preview(self.context, redirect_url or u'message')
 
     def _before_launch(self):
-        if not is_admin_or_content_admin_or_site_admin(self.remoteUser) \
+        if     not is_admin_or_content_admin_or_site_admin(self.remoteUser) \
            and not is_course_instructor_or_editor(self.context, self.remoteUser):
             raise hexc.HTTPForbidden()
-        
+
 
 @view_config(route_name='objects.generic.traversal',
              renderer='rest',
@@ -138,14 +139,15 @@ class LaunchSCORMCourseView(AbstractSCORMLaunchView):
     def _build_launch_url(self, redirect_url):
         client = component.getUtility(ISCORMCloudClient)
         return client.launch(self.context, self.remoteUser, redirect_url or u'message')
-    
+
     def _after_launch(self):
         course = self.context
         metadata = ISCORMCourseMetadata(course)
         notify(SCORMPackageLaunchEvent(self.remoteUser, course, metadata, datetime.utcnow()))
         # Make sure we commit our job
         self.request.environ['nti.request_had_transaction_side_effects'] = True
-    
+
+
 @view_config(route_name='objects.generic.traversal',
              renderer='rest',
              context=ICourseInstanceEnrollment,
@@ -156,13 +158,13 @@ class SCORMProgressView(AbstractAuthenticatedView):
     """
     A view for observing SCORM registration progress.
     """
-    
+
     def _results_format(self):
         return CaseInsensitiveDict(self.request.params).get(u'resultsFormat')
 
     def __call__(self):
         client = component.getUtility(ISCORMCloudClient)
-        user = User.get_user(self.context.Username) 
+        user = User.get_user(self.context.Username)
         return client.get_registration_progress(self.context.CourseInstance, user, self._results_format())
 
 
@@ -193,14 +195,14 @@ class SCORMRegistrationResultPostBack(AbstractView):
         except (UnicodeEncodeError, ExpatError) as error:
             logger.exception(u"Postback data cannot be parsed into XML: %s", error)
             return hexc.HTTPUnprocessableEntity()
-        
+
         nodes = xmldoc.getElementsByTagName('registrationreport')
         report = RegistrationReport.fromMinidom(nodes[0]) if nodes else None
         if report is None:
             logger.info(u"Postback XML cannot be parsed into RegistrationReport")
             return hexc.HTTPUnprocessableEntity()
         report = ISCORMRegistrationReport(report)
-        
+
         user = User.get_user(self.context.Username)
         course = self.context.CourseInstance
         registration_id = self._get_registration_id(course, user)
@@ -214,14 +216,14 @@ class SCORMRegistrationResultPostBack(AbstractView):
         notify(UserProgressUpdatedEvent(obj=metadata,
                                         user=user,
                                         context=course))
-        
+
         notify(SCORMRegistrationPostbackEvent(user, course, metadata, datetime.utcnow()))
         logger.info(u"Registration report postback stored: user=%s", user.username)
 
         return hexc.HTTPNoContent()
-    
+
     def _get_registration_id(self, course, user):
         identifier = component.getMultiAdapter((user, course),
                                                ISCORMIdentifier)
         return identifier.get_id()
-        
+

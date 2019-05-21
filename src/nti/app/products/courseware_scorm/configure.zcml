@@ -31,6 +31,9 @@
 		   provides=".interfaces.IPostBackURLUtility" />
 	</configure>
 
+    <adapter factory=".adapters._scormref_to_scormcontent" />
+
+	<adapter factory=".courses.SCORMContentContainerFactory" />
 	<adapter factory=".courses.SCORMCourseInstanceMetadataFactory" />
 
 	<adapter factory=".courses.UserRegistrationReportContainerFactory" />
@@ -164,6 +167,13 @@
 				for="nti.app.products.courseware.interfaces.ICourseInstanceEnrollment
 				     pyramid.interfaces.IRequest" />
 
+    <subscriber factory=".decorators._SCORMContentRefDecorator"
+                provides="nti.externalization.interfaces.IExternalObjectDecorator"
+                for="nti.app.products.courseware_scorm.interfaces.ISCORMContentRef
+                     pyramid.interfaces.IRequest" />
+
+    <utility factory=".ntiids._SCORMContentRefResolver" name="SCORMContentRef" />
+
 	<!-- Externalization -->
 	<include package="nti.externalization" file="meta.zcml" />
 	<include package="nti.externalization" />
@@ -171,10 +181,13 @@
 	<ext:registerAutoPackageIO
 					root_interfaces=".interfaces.ISCORMCourseMetadata
 									 .interfaces.IScormInstance
+									 .interfaces.ISCORMContent
+									 .interfaces.ISCORMContentContainer
 									 .interfaces.IScormRegistration
 									 .interfaces.ISCORMRegistrationReport
 									 .interfaces.ISCORMObjective
 									 .interfaces.ISCORMResponse
+									 .interfaces.ISCORMContentRef
 									 .interfaces.ISCORMInteraction
 									 .interfaces.ISCORMComment
 									 .interfaces.ISCORMLearnerPreference

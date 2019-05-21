@@ -13,17 +13,46 @@ from datetime import datetime
 from zope import component
 from zope import interface
 
+from zope.cachedescriptors.property import Lazy
+from zope.cachedescriptors.property import readproperty
+
+from zope.container.contained import Contained
+
+from zope.container.interfaces import INameChooser
+
 from nti.app.products.courseware_scorm.interfaces import ISCORMStatic
+from nti.app.products.courseware_scorm.interfaces import ISCORMContent
 from nti.app.products.courseware_scorm.interfaces import ISCORMComment
 from nti.app.products.courseware_scorm.interfaces import ISCORMRuntime
 from nti.app.products.courseware_scorm.interfaces import ISCORMActivity
 from nti.app.products.courseware_scorm.interfaces import IScormInstance
 from nti.app.products.courseware_scorm.interfaces import ISCORMResponse
 from nti.app.products.courseware_scorm.interfaces import ISCORMObjective
+from nti.app.products.courseware_scorm.interfaces import ISCORMContentRef
 from nti.app.products.courseware_scorm.interfaces import ISCORMInteraction
 from nti.app.products.courseware_scorm.interfaces import IScormRegistration
+from nti.app.products.courseware_scorm.interfaces import ISCORMContentContainer
 from nti.app.products.courseware_scorm.interfaces import ISCORMLearnerPreference
 from nti.app.products.courseware_scorm.interfaces import ISCORMRegistrationReport
+
+from nti.containers.containers import AbstractNTIIDSafeNameChooser
+from nti.containers.containers import CaseInsensitiveCheckingLastModifiedBTreeContainer
+
+from nti.contenttypes.courses.interfaces import ICourseInstance
+
+from nti.contenttypes.presentation.mixins import PersistentPresentationAsset
+
+from nti.dublincore.datastructures import PersistentCreatedModDateTrackingObject
+
+from nti.ntiids.oids import to_external_ntiid_oid
+
+from nti.property.property import alias
+
+from nti.schema.eqhash import EqHash
+
+from nti.schema.fieldproperty import createDirectFieldProperties
+
+from nti.schema.schema import PermissiveSchemaConfigured as SchemaConfigured
 
 from nti.scorm_cloud.client.registration import Static
 from nti.scorm_cloud.client.registration import Comment
@@ -50,7 +79,7 @@ def _parse_float(str_value, name):
         logger.info(u'Found non-float value %s for property %s',
                     str_value, name)
     return float_value
-    
+
 
 def _parse_int(str_value, name):
     int_value = None
@@ -76,6 +105,7 @@ def _parse_time(str_value, name):
         logger.info('%s: %s', name, error)
     return time
 
+
 def _parse_datetime(str_value, name):
     datetime_value = None
     if str_value is None:
@@ -86,6 +116,7 @@ def _parse_datetime(str_value, name):
         logger.info('%s: %s', name, error)
     return datetime_value
 
+
 def _response(value):
     response = None
     if value is None:
@@ -95,7 +126,93 @@ def _response(value):
     else:
         response = Response(id_=u'', value=value)
     return ISCORMResponse(response)
-    
+
+
+@interface.implementer(ISCORMContent)
+class SCORMContent(SchemaConfigured,
+                   PersistentCreatedModDateTrackingObject,
+                   Contained):
+    """
+    A metadata object for scorm content.
+    """
+
+    __external_can_create__ = True
+
+    id = alias('__name__')
+
+    createDirectFieldProperties(ISCORMContent)
+
+    mimeType = mime_type = "application/vnd.nextthought.scorm.scorm_content"
+
+    scorm_id = None
+
+    @property
+    def ntiid(self):
+        return to_external_ntiid_oid(self)
+
+
+@component.adapter(ICourseInstance)
+@interface.implementer(ISCORMContentContainer)
+class SCORMContentContainer(CaseInsensitiveCheckingLastModifiedBTreeContainer,
+                            SchemaConfigured):
+
+    __external_can_create__ = False
+
+    mimeType = mime_type = "application/vnd.nextthought.scorm.scorm_content_container"
+
+    createDirectFieldProperties(ISCORMContentContainer)
+
+    creator = None
+
+    def __init__(self, *args, **kwargs):
+        CaseInsensitiveCheckingLastModifiedBTreeContainer.__init__(self)
+        SchemaConfigured.__init__(self, *args, **kwargs)
+
+    def store_content(self, content):
+        if not getattr(content, 'id', None):
+            content.id = INameChooser(self).chooseName(content.scorm_id, content)
+        self[content.id] = content
+        return content
+
+    def remove_content(self, content):
+        key = getattr(content, 'id', content)
+        try:
+            del self[key]
+            result = True
+        except KeyError:
+            result = False
+        return result
+
+    @Lazy
+    def ntiid(self):
+        return to_external_ntiid_oid(self)
+
+
+@component.adapter(ISCORMContentContainer)
+@interface.implementer(INameChooser)
+class _ScormContentNameChooser(AbstractNTIIDSafeNameChooser):
+    """
+    Handles NTIID-safe name choosing for scorm content.
+    """
+    leaf_iface = ISCORMContentContainer
+
+
+@EqHash('target')
+@interface.implementer(ISCORMContentRef)
+class SCORMContentRef(PersistentPresentationAsset):
+
+    createDirectFieldProperties(ISCORMContentRef)
+
+    __external_class_name__ = "SCORMContentRef"
+    mime_type = mimeType = 'application/vnd.nextthought.scormcontentref'
+
+    __name__ = alias('ntiid')
+
+    @readproperty
+    def ntiid(self):  # pylint: disable=method-hidden
+        self.ntiid = self.generate_ntiid(u'SCORMContentRef')
+        return self.ntiid
+
 
 @component.adapter(Instance)
 @interface.implementer(IScormInstance)
@@ -157,7 +274,7 @@ class SCORMRegistrationReport(object):
 @component.adapter(Objective)
 @interface.implementer(ISCORMObjective)
 class SCORMObjective(object):
-    
+
     def __init__(self, objective):
         self.id = objective.id
         self.measure_status = objective.measurestatus
@@ -170,13 +287,13 @@ class SCORMObjective(object):
         self.success_status = {u'passed': True, u'failed': False}.get(objective.success_status)
         self.completion_status = objective.completion_status
         self.progress_measure = _parse_float(objective.progress_measure, u'SCORMObjective.progress_measure')
-        self.description = objective.description        
+        self.description = objective.description
 
 
 @component.adapter(Activity)
 @interface.implementer(ISCORMActivity)
 class SCORMActivity(object):
-    
+
     def __init__(self, activity):
         self.id = activity.id
         self.title = activity.title
@@ -200,7 +317,7 @@ class SCORMActivity(object):
 @component.adapter(Response)
 @interface.implementer(ISCORMResponse)
 class SCORMResponse(object):
-            
+
         def __init__(self, response):
             self.id = response.id
             self.value = response.value
@@ -209,7 +326,7 @@ class SCORMResponse(object):
 @component.adapter(Interaction)
 @interface.implementer(ISCORMInteraction)
 class SCORMInteraction(object):
-    
+
     def __init__(self, interaction):
         self.id = interaction.id
         self.result = interaction.result
@@ -223,12 +340,12 @@ class SCORMInteraction(object):
             self.correct_responses = [_response(r) for r in interaction.correct_responses]
         else:
             self.correct_responses = None
-        
+
 
 @component.adapter(Comment)
 @interface.implementer(ISCORMComment)
 class SCORMComment(object):
-        
+
         def __init__(self, comment):
             self.value = comment.value
             self.location = comment.location
@@ -238,7 +355,7 @@ class SCORMComment(object):
 @component.adapter(LearnerPreference)
 @interface.implementer(ISCORMLearnerPreference)
 class SCORMLearnerPreference(object):
-    
+
     def __init__(self, learner_preference):
         self.language = learner_preference.language
         self.audio_level = _parse_float(learner_preference.audio_level, u'SCORMLearnerPreference.audio_level')
@@ -249,7 +366,7 @@ class SCORMLearnerPreference(object):
 @component.adapter(Static)
 @interface.implementer(ISCORMStatic)
 class SCORMStatic(object):
-    
+
     def __init__(self, static):
         self.learner_id = static.learner_id
         self.launch_data = static.launch_data
@@ -258,12 +375,12 @@ class SCORMStatic(object):
         self.time_limit_action = static.time_limit_action
         self.completion_threshold = _parse_float(static.completion_threshold, u'SCORMStatic.completion_threshold')
         self.scaled_passing_score = _parse_float(static.scaled_passing_score, u'SCORMStatic.scaled_passing_score')
-        
-        
+
+
 @component.adapter(Runtime)
 @interface.implementer(ISCORMRuntime)
 class SCORMRuntime(object):
-    
+
     def __init__(self, runtime):
         self.mode = runtime.mode
         self.exit = runtime.exit
@@ -290,4 +407,3 @@ class SCORMRuntime(object):
             self.learner_preference = None
         self.comments_from_lms = [ISCORMComment(c) for c in runtime.comments_from_lms]
         self.comments_from_learner = [ISCORMComment(c) for c in runtime.comments_from_learner]
-        
