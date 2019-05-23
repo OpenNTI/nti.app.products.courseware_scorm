@@ -20,14 +20,12 @@ from zope.container.interfaces import IContainer
 
 from zope.location.interfaces import IContained
 
-from nti.contenttypes.presentation.interfaces import IAssetRef
+from nti.appserver.workspaces.interfaces import IContainerCollection
+
 from nti.contenttypes.presentation.interfaces import INTIIDIdentifiable
 from nti.contenttypes.presentation.interfaces import IGroupOverViewable
 from nti.contenttypes.presentation.interfaces import INonExportableAsset
 from nti.contenttypes.presentation.interfaces import ICoursePresentationAsset
-
-from nti.base.interfaces import ICreated
-from nti.base.interfaces import ILastModified
 
 from nti.contenttypes.completion.interfaces import IProgress
 from nti.contenttypes.completion.interfaces import ICompletableItem
@@ -36,9 +34,6 @@ from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import IDoNotCreateDefaultOutlineCourseInstance
 
 from nti.coremetadata.interfaces import IUser
-from nti.coremetadata.interfaces import IShouldHaveTraversablePath
-
-from nti.ntiids.schema import ValidNTIID
 
 from nti.schema.field import Bool
 from nti.schema.field import List
@@ -51,54 +46,32 @@ from nti.schema.field import IndexedIterable as TypedIterable
 from nti.schema.field import DecodingValidTextLine as ValidTextLine
 
 
-class ISCORMContent(ICreated, ILastModified, IContained, IAttributeAnnotatable, ICompletableItem):
-    """
-    A basic scorm content holder, pointing to scorm content.
-    """
-
-    scorm_id = ValidTextLine(title=u"The SCORM ID",
-                             required=False)
-
-
-class ISCORMContentContainer(IShouldHaveTraversablePath, ILastModified, IContainer):
-    """
-    A storage container for :class:`ISCORMContent`.
-    """
-
-    contains(ISCORMContent)
-
-    def store_content(content):
-        """
-        Store the given :class:`IScormContent` into this container.
-        """
-
-    def remove_content(content):
-        """
-        Remove the given :class:`IScormContent`.
-        """
-
-
 class ISCORMCourseInstance(ICourseInstance, IDoNotCreateDefaultOutlineCourseInstance):
     """
-    A concrete instance of a SCORM course, where the outline is only a
-    :class:`IScormContent`.
+    A course, where the outline is only a :class:`IScormContent`.
     """
 
 
-class ISCORMContentRef(IAssetRef, IGroupOverViewable, INTIIDIdentifiable,
+class ISCORMContentRef(IGroupOverViewable,
+                       INTIIDIdentifiable,
                        ICoursePresentationAsset,
-                       INonExportableAsset):
+                       INonExportableAsset,
+                       ICompletableItem):
     """
     A presentation asset ref pointing towards scorm content.
     """
 
-    target = ValidNTIID(title=u"Target NTIID", required=True)
+    scorm_id = ValidTextLine(title=u"The SCORM ID",
+                             required=True)
 
 
-class ISCORMCourseMetadata(ISCORMContent):
+class ISCORMCourseMetadata(IContained, IAttributeAnnotatable, ICompletableItem):
     """
     Metadata for a SCORM course.
     """
+
+    scorm_id = ValidTextLine(title=u"The SCORM ID",
+                             required=True)
 
     def has_scorm_package():
         """
@@ -126,6 +99,12 @@ class IPostBackPasswordUtility(interface.Interface):
         """
         Returns true if the username and password is correct for the enrollment.
         """
+
+
+class IGlobalSCORMCollection(IContainerCollection):
+    """
+    A SCORM collection contained within the global workspace.
+    """
 
 
 class ISCORMCloudClient(interface.Interface):
@@ -217,6 +196,11 @@ class ISCORMCloudClient(interface.Interface):
     def get_metadata(course):
         """
         Returns the SCORM metadata associated with the specified course.
+        """
+
+    def get_scorm_instances():
+        """
+        Returns all available :class:`IScormInstance` content objects.
         """
 
 

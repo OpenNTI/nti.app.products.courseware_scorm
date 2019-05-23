@@ -18,7 +18,6 @@ from hamcrest import has_entries
 
 from datetime import datetime
 
-from nti.app.products.courseware_scorm.interfaces import ISCORMContent
 from nti.app.products.courseware_scorm.interfaces import ISCORMRuntime
 from nti.app.products.courseware_scorm.interfaces import ISCORMActivity
 from nti.app.products.courseware_scorm.interfaces import ISCORMObjective
@@ -26,8 +25,7 @@ from nti.app.products.courseware_scorm.interfaces import ISCORMInteraction
 from nti.app.products.courseware_scorm.interfaces import IScormRegistration
 from nti.app.products.courseware_scorm.interfaces import ISCORMRegistrationReport
 
-from nti.app.products.courseware_scorm.model import SCORMContent,\
-    SCORMContentRef
+from nti.app.products.courseware_scorm.model import SCORMContentRef
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
@@ -57,26 +55,11 @@ ID = StandardExternalFields.ID
 
 class TestExternal(ApplicationLayerTest):
 
-    def test_scorm_content(self):
-        content = SCORMContent(scorm_id=u'123456')
-
-        ext_obj = toExternalObject(content)
-        assert_that(ext_obj, has_entries(u'scorm_id', u'123456'))
-
-        assert_that(find_factory_for(ext_obj),
-                    not_none())
-
-        internal = find_factory_for(ext_obj)()
-        update_from_external_object(internal,
-                                    ext_obj,
-                                    require_updater=True)
-        assert_that(internal.scorm_id, is_(u'123456'))
-
     def test_scorm_content_ref(self):
-        ntiid = u'tag:nextthought.com,2011-10:NTI-3663246001124377908_4744212239739874217'
-        ref = SCORMContentRef(target=ntiid)
+        scorm_id = u'tag:nextthought.com,2011-10:NTI-3663246001124377908_4744212239739874217'
+        ref = SCORMContentRef(scorm_id=scorm_id)
         ext_obj = toExternalObject(ref)
-        assert_that(ext_obj, has_entries(u'target', ntiid))
+        assert_that(ext_obj, has_entries(u'scorm_id', scorm_id))
 
         assert_that(find_factory_for(ext_obj),
                     not_none())
@@ -85,7 +68,7 @@ class TestExternal(ApplicationLayerTest):
         update_from_external_object(internal,
                                     ext_obj,
                                     require_updater=True)
-        assert_that(internal.target, is_(ntiid))
+        assert_that(internal.scorm_id, is_(scorm_id))
 
     def test_scorm_progress(self):
         report = RegistrationReport(format_=u'course',

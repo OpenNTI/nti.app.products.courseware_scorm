@@ -87,7 +87,7 @@ class PostBackURLGenerator(object):
         url = render_link(link)
         return request.relative_url(url)
 
-    
+
 @interface.implementer(IPostBackURLUtility)
 class DevModePostbackURLGenerator(PostBackURLGenerator):
     """
@@ -100,13 +100,14 @@ class DevModePostbackURLGenerator(PostBackURLGenerator):
         logger.debug('postback url doesnt work in devmode. %s', url)
         return None
 
-    
+
 _USER_SECRET = 'R9P3KouL>FQW?qjYxYQDgYDRetpMVV'
 _PASS_SECRET = '6AUyRy%mRX{RcqcXwcebHTc7VtFQKa'
 
+
 @interface.implementer(IPostBackPasswordUtility)
 class PostBackPasswordUtility(object):
-    
+
     def _compute_hash(self, parts):
         m = hashlib.sha256()
         for part in parts:
@@ -117,15 +118,15 @@ class PostBackPasswordUtility(object):
         identifier = component.getMultiAdapter((user, course),
                                                ISCORMIdentifier)
         return identifier.get_id()
-    
+
     def credentials_for_enrollment(self, enrollment):
         course = enrollment.CourseInstance
         user = User.get_user(enrollment.Username)
         reg_id = self._get_registration_id(course, user)
-        
+
         username = self._compute_hash((reg_id, _USER_SECRET))
         password = self._compute_hash((username, _PASS_SECRET))
-        
+
         return username, password
 
     def validate_credentials_for_enrollment(self, enrollment, username, password):
@@ -277,7 +278,7 @@ class SCORMCloudClient(object):
         if url:
             password_manager = component.getUtility(IPostBackPasswordUtility)
             user, password = password_manager.credentials_for_enrollment(enrollment)
-            
+
         self._create_registration(course_id,
                                   registration_id,
                                   first_name,

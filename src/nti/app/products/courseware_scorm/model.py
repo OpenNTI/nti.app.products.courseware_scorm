@@ -13,15 +13,9 @@ from datetime import datetime
 from zope import component
 from zope import interface
 
-from zope.cachedescriptors.property import Lazy
 from zope.cachedescriptors.property import readproperty
 
-from zope.container.contained import Contained
-
-from zope.container.interfaces import INameChooser
-
 from nti.app.products.courseware_scorm.interfaces import ISCORMStatic
-from nti.app.products.courseware_scorm.interfaces import ISCORMContent
 from nti.app.products.courseware_scorm.interfaces import ISCORMComment
 from nti.app.products.courseware_scorm.interfaces import ISCORMRuntime
 from nti.app.products.courseware_scorm.interfaces import ISCORMActivity
@@ -31,28 +25,16 @@ from nti.app.products.courseware_scorm.interfaces import ISCORMObjective
 from nti.app.products.courseware_scorm.interfaces import ISCORMContentRef
 from nti.app.products.courseware_scorm.interfaces import ISCORMInteraction
 from nti.app.products.courseware_scorm.interfaces import IScormRegistration
-from nti.app.products.courseware_scorm.interfaces import ISCORMContentContainer
 from nti.app.products.courseware_scorm.interfaces import ISCORMLearnerPreference
 from nti.app.products.courseware_scorm.interfaces import ISCORMRegistrationReport
 
-from nti.containers.containers import AbstractNTIIDSafeNameChooser
-from nti.containers.containers import CaseInsensitiveCheckingLastModifiedBTreeContainer
-
-from nti.contenttypes.courses.interfaces import ICourseInstance
-
 from nti.contenttypes.presentation.mixins import PersistentPresentationAsset
-
-from nti.dublincore.datastructures import PersistentCreatedModDateTrackingObject
-
-from nti.ntiids.oids import to_external_ntiid_oid
 
 from nti.property.property import alias
 
 from nti.schema.eqhash import EqHash
 
 from nti.schema.fieldproperty import createDirectFieldProperties
-
-from nti.schema.schema import PermissiveSchemaConfigured as SchemaConfigured
 
 from nti.scorm_cloud.client.registration import Static
 from nti.scorm_cloud.client.registration import Comment
@@ -128,76 +110,7 @@ def _response(value):
     return ISCORMResponse(response)
 
 
-@interface.implementer(ISCORMContent)
-class SCORMContent(SchemaConfigured,
-                   PersistentCreatedModDateTrackingObject,
-                   Contained):
-    """
-    A metadata object for scorm content.
-    """
-
-    __external_can_create__ = True
-
-    id = alias('__name__')
-
-    createDirectFieldProperties(ISCORMContent)
-
-    mimeType = mime_type = "application/vnd.nextthought.scorm.scorm_content"
-
-    scorm_id = None
-
-    @property
-    def ntiid(self):
-        return to_external_ntiid_oid(self)
-
-
-@component.adapter(ICourseInstance)
-@interface.implementer(ISCORMContentContainer)
-class SCORMContentContainer(CaseInsensitiveCheckingLastModifiedBTreeContainer,
-                            SchemaConfigured):
-
-    __external_can_create__ = False
-
-    mimeType = mime_type = "application/vnd.nextthought.scorm.scorm_content_container"
-
-    createDirectFieldProperties(ISCORMContentContainer)
-
-    creator = None
-
-    def __init__(self, *args, **kwargs):
-        CaseInsensitiveCheckingLastModifiedBTreeContainer.__init__(self)
-        SchemaConfigured.__init__(self, *args, **kwargs)
-
-    def store_content(self, content):
-        if not getattr(content, 'id', None):
-            content.id = INameChooser(self).chooseName(content.scorm_id, content)
-        self[content.id] = content
-        return content
-
-    def remove_content(self, content):
-        key = getattr(content, 'id', content)
-        try:
-            del self[key]
-            result = True
-        except KeyError:
-            result = False
-        return result
-
-    @Lazy
-    def ntiid(self):
-        return to_external_ntiid_oid(self)
-
-
-@component.adapter(ISCORMContentContainer)
-@interface.implementer(INameChooser)
-class _ScormContentNameChooser(AbstractNTIIDSafeNameChooser):
-    """
-    Handles NTIID-safe name choosing for scorm content.
-    """
-    leaf_iface = ISCORMContentContainer
-
-
-@EqHash('target')
+@EqHash('scorm_id')
 @interface.implementer(ISCORMContentRef)
 class SCORMContentRef(PersistentPresentationAsset):
 

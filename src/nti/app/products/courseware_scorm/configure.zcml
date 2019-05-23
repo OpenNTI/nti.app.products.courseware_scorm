@@ -31,9 +31,6 @@
 		   provides=".interfaces.IPostBackURLUtility" />
 	</configure>
 
-    <adapter factory=".adapters._scormref_to_scormcontent" />
-
-	<adapter factory=".courses.SCORMContentContainerFactory" />
 	<adapter factory=".courses.SCORMCourseInstanceMetadataFactory" />
 
 	<adapter factory=".courses.UserRegistrationReportContainerFactory" />
@@ -151,6 +148,11 @@
  			service_url="https://cloud.scorm.com/EngineWebServices" />
 	</configure>
 
+    <!-- Workspaces -->
+    <subscriber factory=".workspaces.scorm_instance_collection"
+                provides="nti.appserver.workspaces.interfaces.IGlobalCollection"
+                for="nti.appserver.workspaces.interfaces.IWorkspace" />
+
 	<!-- Decorators -->
 	<subscriber factory=".decorators._SCORMCourseInstanceDecorator"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"
@@ -181,8 +183,6 @@
 	<ext:registerAutoPackageIO
 					root_interfaces=".interfaces.ISCORMCourseMetadata
 									 .interfaces.IScormInstance
-									 .interfaces.ISCORMContent
-									 .interfaces.ISCORMContentContainer
 									 .interfaces.IScormRegistration
 									 .interfaces.ISCORMRegistrationReport
 									 .interfaces.ISCORMObjective

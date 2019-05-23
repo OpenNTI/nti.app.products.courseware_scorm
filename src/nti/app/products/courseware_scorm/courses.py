@@ -19,6 +19,8 @@ from zope import interface
 
 from zope.annotation import factory as an_factory
 
+from zope.container.contained import Contained
+
 from zope.event import notify
 
 from zope.intid.interfaces import IIntIds
@@ -29,9 +31,6 @@ from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 from nti.app.products.courseware_scorm.interfaces import ISCORMRegistrationRemovedEvent
 from nti.app.products.courseware_scorm.interfaces import IUserRegistrationReportContainer
-
-from nti.app.products.courseware_scorm.model import SCORMContent
-from nti.app.products.courseware_scorm.model import SCORMContentContainer
 
 from nti.cabinet.filer import transfer_to_native_file
 
@@ -58,6 +57,8 @@ from nti.contenttypes.courses.utils import is_course_instructor_or_editor
 from nti.contenttypes.reports.interfaces import IReportFilter
 
 from nti.dataserver import authorization as nauth
+
+from nti.ntiids.oids import to_external_ntiid_oid
 
 SCORM_COURSE_METADATA_KEY = 'nti.app.produts.courseware_scorm.courses.metadata'
 SCORM_CONTENT_CONTAINER_KEY = 'nti.app.products.courseware_scorm.courses.content_container'
@@ -87,10 +88,16 @@ class SCORMCourseInstance(CourseInstance, DisplayableContentMixin):
 
 @component.adapter(ISCORMCourseInstance)
 @interface.implementer(ISCORMCourseMetadata)
-class SCORMCourseMetadata(SCORMContent):
+class SCORMCourseMetadata(Persistent, Contained):
     """
     A metadata object for a SCORM course instance.
     """
+
+    scorm_id = None
+
+    @property
+    def ntiid(self):
+        return to_external_ntiid_oid(self)
 
     def has_scorm_package(self):
         return self.scorm_id is not None
@@ -98,10 +105,6 @@ class SCORMCourseMetadata(SCORMContent):
 
 SCORMCourseInstanceMetadataFactory = an_factory(SCORMCourseMetadata,
                                                 SCORM_COURSE_METADATA_KEY)
-
-
-SCORMContentContainerFactory = an_factory(SCORMContentContainer,
-                                          SCORM_CONTENT_CONTAINER_KEY)
 
 
 @interface.implementer(ISCORMRegistrationRemovedEvent)

@@ -16,7 +16,6 @@ from nti.app.products.courseware_scorm.courses import SCORMCourseInstance
 
 from nti.app.products.courseware_scorm.interfaces import ISCORMIdentifier
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
-from nti.app.products.courseware_scorm.interfaces import ISCORMContentContainer
 from nti.app.products.courseware_scorm.interfaces import IUserRegistrationReportContainer
 
 from nti.app.products.courseware_scorm.tests import CoursewareSCORMLayerTest
@@ -41,8 +40,3 @@ class TestCourses(CoursewareSCORMLayerTest):
         course_instance = SCORMCourseInstance()
         scorm_id = ISCORMIdentifier(course_instance)
         assert_that(scorm_id, is_not(none()))
-
-    def test_content_container(self):
-        course_instance = ContentCourseInstance()
-        container = ISCORMContentContainer(course_instance)
-        assert_that(container, is_not(none()))
