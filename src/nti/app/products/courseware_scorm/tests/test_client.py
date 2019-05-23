@@ -10,9 +10,12 @@ from __future__ import absolute_import
 from hamcrest import none
 from hamcrest import is_not
 from hamcrest import assert_that
+does_not = is_not
 
 from zope import component
 from zope import interface
+
+from nti.app.products.courseware_scorm.client import SCORMCloudClient
 
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 
@@ -61,6 +64,16 @@ class MockSCORMCloudService(object):
 
 
 class TestClient(CoursewareSCORMLayerTest):
+
+    def setUp(self):
+        # A non-None client for tests
+        self.client = SCORMCloudClient(app_id=u'app_id',
+                                      secret_key=u'secret_key',
+                                      service_url=u'service_url')
+        component.getGlobalSiteManager().registerUtility(self.client, ISCORMCloudClient)
+
+    def tearDown(self):
+        component.getGlobalSiteManager().unregisterUtility(self.client)
 
     def test_client(self):
         service = component.getUtility(IScormCloudService)

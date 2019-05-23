@@ -7,7 +7,15 @@ from __future__ import absolute_import
 
 # pylint: disable=protected-access,too-many-public-methods,arguments-differ
 
+from zope import component
+
+import zope.testing.cleanup
+
 from nti.app.products.courseware.tests import PersistentInstructedCourseApplicationTestLayer
+
+from nti.app.products.courseware_scorm.client import SCORMCloudClient
+
+from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
@@ -20,8 +28,6 @@ from nti.testing.layers import ConfiguringLayerMixin
 
 from nti.dataserver.tests.mock_dataserver import DSInjectorMixin
 
-import zope.testing.cleanup
-
 
 class SharedConfiguringTestLayer(ZopeComponentLayer,
                                  GCLayerMixin,
@@ -33,9 +39,15 @@ class SharedConfiguringTestLayer(ZopeComponentLayer,
     @classmethod
     def setUp(cls):
         cls.setUpPackages()
+        # A non-None client for tests
+        cls.client = SCORMCloudClient(app_id=u'app_id',
+                                      secret_key=u'secret_key',
+                                      service_url=u'service_url')
+        component.getGlobalSiteManager().registerUtility(cls.client, ISCORMCloudClient)
 
     @classmethod
     def tearDown(cls):
+        component.getGlobalSiteManager().unregisterUtility(cls.client)
         cls.tearDownPackages()
         zope.testing.cleanup.cleanUp()
 
@@ -47,6 +59,13 @@ class SharedConfiguringTestLayer(ZopeComponentLayer,
     @classmethod
     def testTearDown(cls):
         pass
+
+
+class SCORMLayerTest(ApplicationLayerTest):
+
+    layer = SharedConfiguringTestLayer
+
+    get_configuration_package = AbstractTestBase.get_configuration_package.__func__
 
 
 class CoursewareSCORMLayerTest(ApplicationLayerTest):

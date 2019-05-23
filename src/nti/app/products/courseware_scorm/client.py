@@ -32,6 +32,7 @@ from nti.app.products.courseware_scorm.courses import SCORMRegistrationRemovedEv
 
 from nti.app.products.courseware_scorm.interfaces import ISCORMIdentifier
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
+from nti.app.products.courseware_scorm.interfaces import ISCORMContentInfo
 from nti.app.products.courseware_scorm.interfaces import IScormRegistration
 from nti.app.products.courseware_scorm.interfaces import IPostBackURLUtility
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
@@ -424,3 +425,8 @@ class SCORMCloudClient(object):
         # pylint: disable=too-many-function-args
         course_id = ISCORMIdentifier(course).get_id()
         return service.get_metadata(course_id)
+
+    def get_scorm_instances(self):
+        service = self.cloud.get_course_service()
+        scorm_content = service.get_course_list()
+        return [ISCORMContentInfo(x) for x in scorm_content or ()]

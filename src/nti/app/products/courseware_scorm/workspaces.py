@@ -53,7 +53,7 @@ class SCORMInstanceCollection(Contained):
     name = alias('__name__', __name__)
 
     def __init__(self, container):
-        self.__parent__ = container.__parent__
+        self.__parent__ = container
 
     @Lazy
     def scorm_instances(self):

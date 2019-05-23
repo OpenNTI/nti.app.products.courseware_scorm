@@ -47,9 +47,13 @@
 			 for="nti.contenttypes.courses.interfaces.ICourseInstanceEnrollmentRecord"
 			 provides=".interfaces.ISCORMIdentifier" />
 
-	 <adapter factory=".courses.SCORMRegistrationIdentifier"
+	<adapter factory=".courses.SCORMRegistrationIdentifier"
  			 for="nti.dataserver.interfaces.IUser nti.contenttypes.courses.interfaces.ICourseInstance"
  			 provides=".interfaces.ISCORMIdentifier" />
+
+    <adapter factory=".model.ScormContentInfo"
+             for="nti.scorm_cloud.client.course.CourseData"
+             provides=".interfaces.ISCORMContentInfo" />
 
 	<adapter factory=".model.ScormInstance"
  			 for="nti.scorm_cloud.client.registration.Instance"
@@ -142,10 +146,12 @@
 	</configure>
 
 	<configure zcml:condition="have devmode">
-		<scorm:registerSCORMCloudClient
-			app_id="AQYJPZXZAY"
-			secret_key="G9M1J6uv1hr3ll7wnkPWGFXutMqQXbdhXX8dZnE8"
- 			service_url="https://cloud.scorm.com/EngineWebServices" />
+	    <configure zcml:condition="not-have testmode">
+		  <scorm:registerSCORMCloudClient
+			     app_id="AQYJPZXZAY"
+			     secret_key="G9M1J6uv1hr3ll7wnkPWGFXutMqQXbdhXX8dZnE8"
+ 			     service_url="https://cloud.scorm.com/EngineWebServices" />
+ 		</configure>
 	</configure>
 
     <!-- Workspaces -->
@@ -193,6 +199,7 @@
 	<ext:registerAutoPackageIO
 					root_interfaces=".interfaces.ISCORMCourseMetadata
 									 .interfaces.IScormInstance
+									 .interfaces.ISCORMContentInfo
 									 .interfaces.IScormRegistration
 									 .interfaces.ISCORMRegistrationReport
 									 .interfaces.ISCORMObjective

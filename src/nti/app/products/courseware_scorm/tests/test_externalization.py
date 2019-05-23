@@ -21,6 +21,7 @@ from datetime import datetime
 from nti.app.products.courseware_scorm.interfaces import ISCORMRuntime
 from nti.app.products.courseware_scorm.interfaces import ISCORMActivity
 from nti.app.products.courseware_scorm.interfaces import ISCORMObjective
+from nti.app.products.courseware_scorm.interfaces import ISCORMContentInfo
 from nti.app.products.courseware_scorm.interfaces import ISCORMInteraction
 from nti.app.products.courseware_scorm.interfaces import IScormRegistration
 from nti.app.products.courseware_scorm.interfaces import ISCORMRegistrationReport
@@ -38,6 +39,8 @@ from nti.externalization.internalization import update_from_external_object
 
 from nti.externalization.testing import externalizes
 
+from nti.scorm_cloud.client.course import CourseData
+
 from nti.scorm_cloud.client.registration import Static
 from nti.scorm_cloud.client.registration import Comment
 from nti.scorm_cloud.client.registration import Runtime
@@ -54,6 +57,31 @@ ID = StandardExternalFields.ID
 
 
 class TestExternal(ApplicationLayerTest):
+
+    def test_scorm_content(self):
+        course_data = CourseData()
+        course_data.title = u'new title'
+        course_data.courseId = u'123456'
+        course_data.numberOfVersions = u'2'
+        course_data.numberOfRegistrations = u'18'
+        content = ISCORMContentInfo(course_data)
+        ext_obj = toExternalObject(content)
+        assert_that(ext_obj, has_entries(u'title', u'new title',
+                                         u'scorm_id', u'123456',
+                                         u'course_version', u'2',
+                                         u'registration_count', 18))
+
+        assert_that(find_factory_for(ext_obj),
+                    not_none())
+
+        # Bad data
+        course_data.numberOfRegistrations = u'aaa'
+        content = ISCORMContentInfo(course_data)
+        ext_obj = toExternalObject(content)
+        assert_that(ext_obj, has_entries(u'title', u'new title',
+                                         u'scorm_id', u'123456',
+                                         u'course_version', u'2',
+                                         u'registration_count', none()))
 
     def test_scorm_content_ref(self):
         scorm_id = u'tag:nextthought.com,2011-10:NTI-3663246001124377908_4744212239739874217'

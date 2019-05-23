@@ -222,9 +222,26 @@ class ISCORMIdentifier(interface.Interface):
         """
 
 
+class ISCORMContentInfo(interface.Interface):
+    """
+    A scorm course content info. This represents the scorm content or
+    course on scorm cloud.
+    """
+
+    scorm_id = ValidTextLine(title=u'The ID of the scorm content.',
+                             required=True)
+
+    title = ValidTextLine(title=u'The scorm content title',
+                          required=True)
+
+    course_version = ValidTextLine(title=u'The course version.')
+
+    registration_count = Number(title=u'The registration count.')
+
+
 class IScormInstance(interface.Interface):
     """
-    A registration instance in a SCORM course.
+    A registration instance to a SCORM course.
     """
 
     instance_id = ValidTextLine(title=u'The ID of the instance.',

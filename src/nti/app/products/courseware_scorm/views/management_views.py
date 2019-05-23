@@ -32,6 +32,7 @@ from nti.app.products.courseware_scorm import MessageFactory as _
 from nti.app.products.courseware_scorm.courses import is_course_admin
 from nti.app.products.courseware_scorm.courses import SCORMCourseInstance
 
+from nti.app.products.courseware_scorm.interfaces import ISCORMCollection
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 
 from nti.app.products.courseware_scorm.views import UPDATE_SCORM_VIEW_NAME
@@ -43,9 +44,16 @@ from nti.common.string import is_true
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseAdministrativeLevel
 
+from nti.externalization.interfaces import LocatedExternalDict
+from nti.externalization.interfaces import StandardExternalFields
+
 from nti.scorm_cloud.client.mixins import get_source
 
 from nti.scorm_cloud.client.request import ScormCloudError
+
+ITEMS = StandardExternalFields.ITEMS
+TOTAL = StandardExternalFields.TOTAL
+ITEM_COUNT = StandardExternalFields.ITEM_COUNT
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -188,3 +196,30 @@ class UpdateSCORMView(AbstractAdminScormCourseView):
             if source:
                 break
         return source
+
+
+@view_config(route_name='objects.generic.traversal',
+             renderer='rest',
+             context=ISCORMCollection,
+             request_method='GET')
+class SCORMCollectionView(AbstractAuthenticatedView):
+    """
+    A view for fetching :class:`ISCORMInstance` objects. This is open to all
+    users.
+    """
+
+    def __call__(self):
+        client = component.queryUtility(ISCORMCloudClient)
+        if client is None:
+            raise_json_error(self.request,
+                             hexc.HTTPNotFound,
+                             {
+                                 'message': u'SCORM client not registered.',
+                                 'code': u'SCORMClientNotFoundError'
+                             },
+                             None)
+        items = client.get_scorm_instances()
+        result = LocatedExternalDict()
+        result[ITEMS] = items
+        result[ITEM_COUNT] = result[TOTAL] = len(items)
+        return result

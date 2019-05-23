@@ -35,8 +35,11 @@ from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
 
 from nti.app.products.courseware_admin import VIEW_COURSE_ADMIN_LEVELS
 
+from nti.app.products.courseware_scorm.client import SCORMCloudClient
 from nti.app.products.courseware_scorm.client import PostBackURLGenerator
 from nti.app.products.courseware_scorm.client import PostBackPasswordUtility
+
+from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 
 from nti.app.products.courseware_scorm.completion import _SCORMCompletableItemProvider
 
@@ -133,11 +136,19 @@ class TestManagementViews(CoursewareSCORMLayerTest):
 
     default_origin = 'http://janux.ou.edu'
 
+    def setUp(self):
+        # A non-None client for tests
+        self.client = SCORMCloudClient(app_id=u'app_id',
+                                      secret_key=u'secret_key',
+                                      service_url=u'service_url')
+        component.getGlobalSiteManager().registerUtility(self.client, ISCORMCloudClient)
+
     @WithSharedApplicationMockDS(testapp=True, users=True)
     def tearDown(self):
         """
         Our janux.ou.edu site should have no courses in it.
         """
+        component.getGlobalSiteManager().unregisterUtility(self.client)
         with mock_dataserver.mock_db_trans(site_name='janux.ou.edu'):
             library = component.getUtility(IContentPackageLibrary)
             enumeration = IDelimitedHierarchyContentPackageEnumeration(library)

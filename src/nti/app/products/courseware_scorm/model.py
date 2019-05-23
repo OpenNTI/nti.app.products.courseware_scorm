@@ -23,6 +23,7 @@ from nti.app.products.courseware_scorm.interfaces import IScormInstance
 from nti.app.products.courseware_scorm.interfaces import ISCORMResponse
 from nti.app.products.courseware_scorm.interfaces import ISCORMObjective
 from nti.app.products.courseware_scorm.interfaces import ISCORMContentRef
+from nti.app.products.courseware_scorm.interfaces import ISCORMContentInfo
 from nti.app.products.courseware_scorm.interfaces import ISCORMInteraction
 from nti.app.products.courseware_scorm.interfaces import IScormRegistration
 from nti.app.products.courseware_scorm.interfaces import ISCORMLearnerPreference
@@ -47,6 +48,7 @@ from nti.scorm_cloud.client.registration import Interaction
 from nti.scorm_cloud.client.registration import Registration
 from nti.scorm_cloud.client.registration import LearnerPreference
 from nti.scorm_cloud.client.registration import RegistrationReport
+from nti.scorm_cloud.client.course import CourseData
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -125,6 +127,23 @@ class SCORMContentRef(PersistentPresentationAsset):
     def ntiid(self):  # pylint: disable=method-hidden
         self.ntiid = self.generate_ntiid(u'SCORMContentRef')
         return self.ntiid
+
+
+@component.adapter(CourseData)
+@interface.implementer(ISCORMContentInfo)
+class ScormContentInfo(object):
+
+    def __init__(self, course_data):
+        """
+        Initializes `self` using the data from an `CourseData` object.
+        """
+        self.scorm_id = course_data.courseId
+        self.course_version = course_data.numberOfVersions
+        self.title = course_data.title
+        try:
+            self.registration_count = int(course_data.numberOfRegistrations)
+        except (TypeError, ValueError):
+            self.registration_count = None
 
 
 @component.adapter(Instance)
