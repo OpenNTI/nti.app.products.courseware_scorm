@@ -149,9 +149,19 @@
 	</configure>
 
     <!-- Workspaces -->
-    <subscriber factory=".workspaces.scorm_instance_collection"
-                provides="nti.appserver.workspaces.interfaces.IGlobalCollection"
-                for="nti.appserver.workspaces.interfaces.IWorkspace" />
+    <!-- A subscriber for enumeration -->
+    <subscriber factory=".workspaces.SCORMWorkspace"
+                provides=".interfaces.ISCORMWorkspace" />
+
+    <adapter name="SCORM"
+             for="nti.coremetadata.interfaces.IUser
+                  pyramid.interfaces.IRequest"
+             factory=".workspaces.SCORMPathAdapter"
+             provides="zope.traversing.interfaces.IPathAdapter" />
+
+    <!-- And an adapter for direct access -->
+    <adapter factory=".workspaces.SCORMWorkspace"
+             provides=".interfaces.ISCORMWorkspace" />
 
 	<!-- Decorators -->
 	<subscriber factory=".decorators._SCORMCourseInstanceDecorator"

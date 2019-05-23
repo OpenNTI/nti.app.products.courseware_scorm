@@ -20,6 +20,7 @@ from zope.container.interfaces import IContainer
 
 from zope.location.interfaces import IContained
 
+from nti.appserver.workspaces.interfaces import IWorkspace
 from nti.appserver.workspaces.interfaces import IContainerCollection
 
 from nti.contenttypes.presentation.interfaces import INTIIDIdentifiable
@@ -101,9 +102,15 @@ class IPostBackPasswordUtility(interface.Interface):
         """
 
 
-class IGlobalSCORMCollection(IContainerCollection):
+class ISCORMWorkspace(IWorkspace):
     """
-    A SCORM collection contained within the global workspace.
+    A workspace to hold SCORM information.
+    """
+
+
+class ISCORMCollection(IContainerCollection):
+    """
+    Contains a collection of :class:`IScormInstance` objects.
     """
 
 
