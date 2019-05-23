@@ -7,7 +7,6 @@ from __future__ import absolute_import
 
 # pylint: disable=protected-access,too-many-public-methods
 
-from hamcrest import none
 from hamcrest import is_not
 from hamcrest import has_item
 from hamcrest import not_none
@@ -16,13 +15,16 @@ from hamcrest import has_entries
 from hamcrest import assert_that
 does_not = is_not
 
+import fudge
+
 from zope import component
-from zope import interface
 
 from nti.app.products.courseware_scorm.client import SCORMCloudClient
 
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 from nti.app.products.courseware_scorm.interfaces import ISCORMWorkspace
+
+from nti.app.products.courseware_scorm.model import ScormContentInfo
 
 from nti.app.products.courseware_scorm.tests import CoursewareSCORMLayerTest
 
@@ -34,9 +36,7 @@ from nti.appserver.workspaces.interfaces import IUserService
 
 from nti.dataserver.tests import mock_dataserver
 
-from nti.scorm_cloud.client.config import Configuration
-
-from nti.scorm_cloud.interfaces import IScormCloudService
+from nti.scorm_cloud.client.course import CourseData
 
 from nti.testing.matchers import verifiably_provides
 
@@ -54,10 +54,19 @@ class TestConfiguredWorkspace(CoursewareSCORMLayerTest):
         component.getGlobalSiteManager().unregisterUtility(self.client)
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
-    def test_workspace(self):
+    @fudge.patch('nti.app.products.courseware_scorm.client.SCORMCloudClient.get_scorm_instances')
+    def test_workspace(self, mock_content):
         """
         In the layer, with registered scorm client. We have access to the workspace.
         """
+        course_data = CourseData()
+        course_data.title = u'SCORM Content'
+        course_data.courseId = u'123456'
+        course_data.numberOfVersions = u'2'
+        course_data.numberOfRegistrations = u'18'
+        content_info = ScormContentInfo(course_data)
+        mock_content.is_callable().returns((content_info,))
+
         service_url = '/dataserver2/service/'
 
         def _get_scorm_collection(environ=None):
