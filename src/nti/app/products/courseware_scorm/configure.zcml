@@ -190,6 +190,11 @@
                 for="nti.app.products.courseware_scorm.interfaces.ISCORMContentRef
                      pyramid.interfaces.IRequest" />
 
+    <subscriber factory=".decorators._CourseInstanceDecorator"
+                provides="nti.externalization.interfaces.IExternalObjectDecorator"
+                for="nti.contenttypes.courses.interfaces.ICourseInstance
+                     pyramid.interfaces.IRequest" />
+
     <utility factory=".ntiids._SCORMContentRefResolver" name="SCORMContentRef" />
 
 	<!-- Externalization -->

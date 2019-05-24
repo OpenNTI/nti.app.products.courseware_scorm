@@ -15,9 +15,12 @@ from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
 
 from nti.app.products.courseware.utils import PreviewCourseAccessPredicateDecorator
 
+from nti.app.products.courseware_scorm import SCORM_COLLECTION_NAME
+
 from nti.app.products.courseware_scorm.courses import is_course_admin
 
 from nti.app.products.courseware_scorm.interfaces import ISCORMContentRef
+from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
 
@@ -30,9 +33,13 @@ from nti.app.products.courseware_scorm.views import PREVIEW_SCORM_COURSE_VIEW_NA
 
 from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
+from nti.appserver.pyramid_authorization import has_permission
+
 from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.contenttypes.courses.utils import is_course_instructor_or_editor
+
+from nti.dataserver.authorization import ACT_CONTENT_EDIT
 
 from nti.dataserver.authorization import is_admin_or_content_admin_or_site_admin
 
@@ -123,3 +130,23 @@ class _SCORMContentRefDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
     def _do_decorate_external(self, context, external):
         external['SCORMContent'] = find_object_with_ntiid(context.target)
+
+
+@component.adapter(ICourseInstance)
+@interface.implementer(IExternalObjectDecorator)
+class _CourseInstanceDecorator(AbstractAuthenticatedRequestAwareDecorator):
+    """
+    Decorate scorm collection rel for this course instance.
+    """
+
+    def _predicate(self, context, unused_external):
+        return  component.queryUtility(ISCORMCloudClient) is not None \
+            and has_permission(ACT_CONTENT_EDIT, context, self.request)
+
+    def _do_decorate_external(self, context, external):
+        _links = external.setdefault(LINKS, [])
+        _links.append(
+            Link(context,
+                 rel=SCORM_COLLECTION_NAME,
+                 elements=(SCORM_COLLECTION_NAME,))
+        )
