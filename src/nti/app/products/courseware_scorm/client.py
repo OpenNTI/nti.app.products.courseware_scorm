@@ -426,7 +426,7 @@ class SCORMCloudClient(object):
         course_id = ISCORMIdentifier(course).get_id()
         return service.get_metadata(course_id)
 
-    def get_scorm_instances(self):
+    def get_scorm_instances(self, filter_id=None, tags=None):
         service = self.cloud.get_course_service()
-        scorm_content = service.get_course_list()
+        scorm_content = service.get_course_list(courseIdFilterRegex=filter_id, tags=tags)
         return [ISCORMContentInfo(x) for x in scorm_content or ()]

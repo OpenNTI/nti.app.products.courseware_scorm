@@ -18,6 +18,8 @@ from zope import component
 
 from zope.cachedescriptors.property import Lazy
 
+from zope.component.hooks import getSite
+
 from nti.app.base.abstract_views import get_all_sources
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
@@ -26,6 +28,8 @@ from nti.app.externalization.error import raise_json_error
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
 from nti.app.products.courseware_admin.views.management_views import CreateCourseView
+
+from nti.app.products.courseware_scorm import SCORM_COLLECTION_NAME
 
 from nti.app.products.courseware_scorm import MessageFactory as _
 
@@ -42,7 +46,12 @@ from nti.app.products.courseware_scorm.views import IMPORT_SCORM_COURSE_VIEW_NAM
 from nti.common.string import is_true
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
+from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 from nti.contenttypes.courses.interfaces import ICourseAdministrativeLevel
+
+from nti.dataserver.authorization import ACT_CONTENT_EDIT
+
+from nti.dataserver.authorization import is_admin_or_content_admin_or_site_admin
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
@@ -204,11 +213,11 @@ class UpdateSCORMView(AbstractAdminScormCourseView):
              request_method='GET')
 class SCORMCollectionView(AbstractAuthenticatedView):
     """
-    A view for fetching :class:`ISCORMInstance` objects. This is open to all
-    users.
+    A view for fetching :class:`ISCORMInstance` objects. This is open only
+    to global editors and admins.
     """
 
-    def __call__(self):
+    def _get_client(self):
         client = component.queryUtility(ISCORMCloudClient)
         if client is None:
             raise_json_error(self.request,
@@ -218,8 +227,51 @@ class SCORMCollectionView(AbstractAuthenticatedView):
                                  'code': u'SCORMClientNotFoundError'
                              },
                              None)
-        items = client.get_scorm_instances()
+        return client
+
+    @Lazy
+    def filter_tag_str(self):
+        return getSite().__name__
+
+    def _include_filter(self, scorm_content):
+        return self.filter_tag_str in scorm_content.tags
+
+    def _get_scorm_instances(self, client):
+        if not is_admin_or_content_admin_or_site_admin(self.remoteUser):
+            raise_json_error(self.request,
+                             hexc.HTTPForbidden,
+                             {
+                                 'code': u'SCORMForbiddenError'
+                             },
+                             None)
+        return client.get_scorm_instances()
+
+    def __call__(self):
+        client = self._get_client()
+        items = self.get_scorm_instances(client)
+        filtered_items = [x for x in items if self._include_filter(x)]
         result = LocatedExternalDict()
-        result[ITEMS] = items
-        result[ITEM_COUNT] = result[TOTAL] = len(items)
+        result[ITEMS] = filtered_items
+        result[ITEM_COUNT] = len(filtered_items)
+        result[TOTAL] = len(items)
         return result
+
+
+@view_config(route_name='objects.generic.traversal',
+             renderer='rest',
+             context=ICourseInstance,
+             request_method='GET',
+             permission=ACT_CONTENT_EDIT,
+             name=SCORM_COLLECTION_NAME)
+class SCORMCourseCollectionView(SCORMCollectionView):
+    """
+    A view for fetching :class:`ISCORMInstance` objects tied to
+    this particular course.
+    """
+
+    @Lazy
+    def filter_tag_str(self):
+        return ICourseCatalogEntry(self.context).ntiid
+
+    def _include_filter(self, scorm_content):
+        return self.filter_tag_str in scorm_content.tags

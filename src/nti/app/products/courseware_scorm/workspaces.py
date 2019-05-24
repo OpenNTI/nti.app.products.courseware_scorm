@@ -26,10 +26,13 @@ from zope.traversing.interfaces import IPathAdapter
 from nti.appserver.workspaces.interfaces import IUserService
 
 from nti.app.products.courseware_scorm import SCORM_WORKSPACE
+from nti.app.products.courseware_scorm import SCORM_COLLECTION_NAME
 
 from nti.app.products.courseware_scorm.interfaces import ISCORMWorkspace
 from nti.app.products.courseware_scorm.interfaces import ISCORMCollection
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
+
+from nti.dataserver.authorization import is_admin_or_content_admin_or_site_admin
 
 from nti.dataserver.interfaces import IUser
 
@@ -45,7 +48,7 @@ class SCORMInstanceCollection(Contained):
     This also acts as a proxy for uploading new scorm content to scorm cloud.
     """
 
-    __name__ = u'SCORMInstances'
+    __name__ = SCORM_COLLECTION_NAME
 
     accepts = ()
     links = ()
@@ -107,9 +110,9 @@ class _SCORMWorkspace(object):
         return len(self.collections)
 
     def predicate(self):
-        # XXX: This is available to all users
         scorm_utility = component.queryUtility(ISCORMCloudClient)
-        return scorm_utility is not None
+        return  scorm_utility is not None \
+            and is_admin_or_content_admin_or_site_admin(self.user)
 
 
 @interface.implementer(ISCORMWorkspace)
