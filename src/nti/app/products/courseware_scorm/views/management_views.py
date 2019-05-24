@@ -15,6 +15,7 @@ from pyramid import httpexceptions as hexc
 from pyramid.view import view_config
 
 from zope import component
+from zope import interface
 
 from zope.cachedescriptors.property import Lazy
 
@@ -38,6 +39,8 @@ from nti.app.products.courseware_scorm.courses import SCORMCourseInstance
 
 from nti.app.products.courseware_scorm.interfaces import ISCORMCollection
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
+from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
+from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 
 from nti.app.products.courseware_scorm.views import UPDATE_SCORM_VIEW_NAME
 from nti.app.products.courseware_scorm.views import CREATE_SCORM_COURSE_VIEW_NAME
@@ -55,6 +58,8 @@ from nti.dataserver.authorization import is_admin_or_content_admin_or_site_admin
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
+
+from nti.externalization.proxy import removeAllProxies
 
 from nti.scorm_cloud.client.mixins import get_source
 
@@ -139,10 +144,8 @@ class ImportSCORMCourseView(AbstractAdminScormCourseView):
                              None)
         client = component.getUtility(ISCORMCloudClient)
         try:
-            client.import_course(self.context,
-                                 source,
-                                 request=self.request,
-                                 unregister=self.unregister_users)
+            scorm_id = client.import_scorm_content(source,
+                                                   request=self.request)
         except ScormCloudError as exc:
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
@@ -150,6 +153,22 @@ class ImportSCORMCourseView(AbstractAdminScormCourseView):
                                  'message': exc.message,
                              },
                              None)
+        metadata = ISCORMCourseMetadata(self.context)
+        if metadata.has_scorm_package() and self.unregister_users:
+            # Unregister users. We'll rely on launching to re-register users as
+            # needed.
+            try:
+                client.unregister_users_for_scorm_content(source)
+            except ScormCloudError as exc:
+                raise_json_error(self.request,
+                                 hexc.HTTPUnprocessableEntity,
+                                 {
+                                     'message': exc.message,
+                                 },
+                                 None)
+        course = removeAllProxies(self.context)
+        interface.alsoProvides(course, ISCORMCourseInstance)
+        metadata.scorm_id = scorm_id
         return self.context
 
     def _handle_multipart(self, sources):
@@ -183,8 +202,9 @@ class UpdateSCORMView(AbstractAdminScormCourseView):
                              },
                              None)
         client = component.getUtility(ISCORMCloudClient)
+        metadata = ISCORMCourseMetadata(self.context)
         try:
-            client.update_assets(self.context, source, self.request)
+            client.update_assets(metadata.scorm_id, source, self.request)
         except ScormCloudError as exc:
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,

@@ -68,7 +68,10 @@ class DeleteAllRegistrationsView(AbstractAuthenticatedView):
 
     def __call__(self):
         client = component.getUtility(ISCORMCloudClient)
-        client.delete_all_registrations(self.context)
+        metadata = ISCORMCourseMetadata(self.context, None)
+        scorm_id = getattr(metadata, 'scorm_id', None)
+        if scorm_id:
+            client.unregister_users_for_scorm_content(scorm_id)
         return hexc.HTTPNoContent()
 
 
@@ -85,7 +88,11 @@ class GetRegistrationListView(AbstractAuthenticatedView):
 
     def __call__(self):
         client = component.getUtility(ISCORMCloudClient)
-        registration_list = client.get_registration_list(self.context)
+        metadata = ISCORMCourseMetadata(self.context, None)
+        scorm_id = getattr(metadata, 'scorm_id', None)
+        registration_list = []
+        if scorm_id:
+            registration_list = client.get_registration_list(scorm_id)
         result = LocatedExternalDict()
         result[ITEMS] = registration_list
         result[ITEM_COUNT] = result[TOTAL] = len(registration_list)
@@ -105,10 +112,12 @@ class GetArchiveView(AbstractAuthenticatedView):
     def __call__(self):
         if not is_course_admin(user=self.remoteUser, course=self.context):
             return hexc.HTTPForbidden(_(u"You do not have access to this SCORM content."))
+        metadata = ISCORMCourseMetadata(self.context, None)
+        scorm_id = getattr(metadata, 'scorm_id', None)
         client = component.getUtility(ISCORMCloudClient)
-        result = client.get_archive(self.context)
+        result = client.get_archive(scorm_id)
         zip_bytes = result
-        metadata = client.get_metadata(self.context)
+        metadata = client.get_metadata(scorm_id)
         return self._export_archive(zip_bytes, metadata, self.request.response)
 
     def _export_archive(self, zip_bytes, metadata, response):
@@ -120,7 +129,7 @@ class GetArchiveView(AbstractAuthenticatedView):
         zip_io = cStringIO(zip_bytes)
         response.body_file = zip_io
         return response
-    
+
 
 @view_config(route_name='objects.generic.traversal',
              renderer='rest',
@@ -128,10 +137,10 @@ class GetArchiveView(AbstractAuthenticatedView):
              request_method='POST',
              name=SYNC_REGISTRATION_REPORT_VIEW_NAME)
 class SyncRegistrationReportView(AbstractAuthenticatedView):
-    
+
     def _results_format(self):
         return CaseInsensitiveDict(self.request.params).get(u'resultsFormat')
-    
+
     def __call__(self):
         user = User.get_user(self.context.Username)
         course = self.context.CourseInstance
@@ -150,4 +159,3 @@ class SyncRegistrationReportView(AbstractAuthenticatedView):
         else:
             container.remove_registration_report(user)
             return hexc.HTTPNoContent()
-            

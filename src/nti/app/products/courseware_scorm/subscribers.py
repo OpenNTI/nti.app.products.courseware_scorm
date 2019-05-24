@@ -42,7 +42,7 @@ def _on_course_instance_removed(course, unused_event):
     metadata = ISCORMCourseMetadata(course, None)
     if metadata is not None and metadata.has_scorm_package():
         client = component.getUtility(ISCORMCloudClient)
-        client.delete_course(course)
+        client.delete_course(metadata.scorm_id)
 
 
 @component.adapter(IAllCoursesCollection)
