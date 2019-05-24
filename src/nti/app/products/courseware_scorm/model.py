@@ -140,6 +140,7 @@ class ScormContentInfo(object):
         self.scorm_id = course_data.courseId
         self.course_version = course_data.numberOfVersions
         self.title = course_data.title
+        self.tags = course_data.tags or ()
         try:
             self.registration_count = int(course_data.numberOfRegistrations)
         except (TypeError, ValueError):

@@ -238,6 +238,8 @@ class ISCORMContentInfo(interface.Interface):
 
     registration_count = Number(title=u'The registration count.')
 
+    tags = ListOrTuple(title=u'The scorm content tags.')
+
 
 class IScormInstance(interface.Interface):
     """
