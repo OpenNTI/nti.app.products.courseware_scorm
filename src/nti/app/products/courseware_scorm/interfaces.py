@@ -210,6 +210,26 @@ class ISCORMCloudClient(interface.Interface):
         Returns all available :class:`IScormInstance` content objects.
         """
 
+    def get_scorm_tags(scorm_id):
+        """
+        Returns an iterable of tags for the given scorm id.
+        """
+
+    def set_scorm_tags(scorm_id, tags):
+        """
+        Set the given iterable of tags on the scorm id.
+        """
+
+    def add_scorm_tag(scorm_id, tag):
+        """
+        Add the given tag.
+        """
+
+    def remove_scorm_tag(scorm_id, tag):
+        """
+        Remove the given tag.
+        """
+
 
 class ISCORMIdentifier(interface.Interface):
     """

@@ -135,7 +135,7 @@ def _generate_scorm_id():
     """
     Generate a guaranteed unique scorm id.
     """
-    return str(uuid.uuid4().time_low)
+    return str(uuid.uuid4())
 
 
 @interface.implementer(ISCORMCloudClient)
@@ -406,3 +406,20 @@ class SCORMCloudClient(object):
         service = self.cloud.get_course_service()
         scorm_content = service.get_course_list(courseIdFilterRegex=filter_id, tags=tags)
         return [ISCORMContentInfo(x) for x in scorm_content or ()]
+
+    def get_scorm_tags(self, scorm_id):
+        service = self.cloud.get_tag_service()
+        tags = service.get_scorm_tags(scorm_id)
+        return tags
+
+    def set_scorm_tags(self, scorm_id, tags):
+        service = self.cloud.get_tag_service()
+        service.set_scorm_tags(scorm_id, tags)
+
+    def add_scorm_tag(self, scorm_id, tag):
+        service = self.cloud.get_tag_service()
+        service.add_scorm_tag(scorm_id, tag)
+
+    def remove_scorm_tag(self, scorm_id, tag):
+        service = self.cloud.get_tag_service()
+        service.remove_scorm_tag(scorm_id, tag)
