@@ -56,6 +56,8 @@ from nti.dataserver.authorization import ACT_CONTENT_EDIT
 
 from nti.dataserver.authorization import is_admin_or_content_admin_or_site_admin
 
+from nti.dataserver.interfaces import ISiteAdminManagerUtility
+
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
 
@@ -120,12 +122,39 @@ class AbstractAdminScormCourseView(AbstractAuthenticatedView,
         return self._do_call()
 
 
+class SCORMContentUploadMixin(object):
+    """
+    A class that is responsible for uploading scorm content as
+    well as optionally tagging the content.
+    """
+
+    def upload_content(self, source, tags=None):
+        """
+        Upload the content to scorm cloud, optionally tagging it as requested.
+
+        Returns the newly created scorm content scorm_id.
+        """
+        client = component.getUtility(ISCORMCloudClient)
+        try:
+            scorm_id = client.import_scorm_content(source,
+                                                   request=self.request)
+            if tags:
+                client.set_scorm_tags(scorm_id, tags)
+        except ScormCloudError as exc:
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                 'message': exc.message,
+                             },
+                             None)
+        return scorm_id
 @view_config(route_name='objects.generic.traversal',
              renderer='rest',
              context=ICourseInstance,
              request_method='POST',
              name=IMPORT_SCORM_COURSE_VIEW_NAME)
-class ImportSCORMCourseView(AbstractAdminScormCourseView):
+class ImportSCORMCourseView(AbstractAdminScormCourseView,
+                            SCORMContentUploadMixin):
     """
     A view for importing uploaded SCORM courses to SCORM Cloud.
     """
@@ -142,21 +171,13 @@ class ImportSCORMCourseView(AbstractAdminScormCourseView):
                                  'message': _(u"No SCORM zip file was included with request."),
                              },
                              None)
-        client = component.getUtility(ISCORMCloudClient)
-        try:
-            scorm_id = client.import_scorm_content(source,
-                                                   request=self.request)
-        except ScormCloudError as exc:
-            raise_json_error(self.request,
-                             hexc.HTTPUnprocessableEntity,
-                             {
-                                 'message': exc.message,
-                             },
-                             None)
+        entry_ntiid = ICourseCatalogEntry(self.context).ntiid
+        scorm_id = self.upload_content(source, tags=(entry_ntiid,))
         metadata = ISCORMCourseMetadata(self.context)
         if metadata.has_scorm_package() and self.unregister_users:
             # Unregister users. We'll rely on launching to re-register users as
             # needed.
+            client = component.getUtility(ISCORMCloudClient)
             try:
                 client.unregister_users_for_scorm_content(source)
             except ScormCloudError as exc:
@@ -249,6 +270,66 @@ class SCORMCollectionView(AbstractAuthenticatedView):
                              None)
         return client
 
+    def _get_parent_site_name(self):
+        site_admin_manager = component.getUtility(ISiteAdminManagerUtility)
+        result = site_admin_manager.get_parent_site_name()
+        if result and result != 'dataserver2':
+            return result
+
+    @Lazy
+    def site_filter_tag_strs(self):
+        result = (getSite().__name__,)
+        parent_name = self._get_parent_site_name()
+        if parent_name:
+            result = (getSite().__name__, parent_name)
+        return result
+
+    def _include_filter(self, scorm_content):
+        return set(self.site_filter_tag_strs) & set(scorm_content.tags or ())
+
+    def _get_scorm_instances(self, client):
+        if not is_admin_or_content_admin_or_site_admin(self.remoteUser):
+            raise_json_error(self.request,
+                             hexc.HTTPForbidden,
+                             {
+                                 'code': u'SCORMForbiddenError'
+                             },
+                             None)
+        return client.get_scorm_instances()
+
+    def __call__(self):
+        client = self._get_client()
+        items = self.get_scorm_instances(client)
+        filtered_items = [x for x in items if self._include_filter(x)]
+        result = LocatedExternalDict()
+        result[ITEMS] = filtered_items
+        result[ITEM_COUNT] = len(filtered_items)
+        result[TOTAL] = len(items)
+        return result
+
+
+@view_config(route_name='objects.generic.traversal',
+             renderer='rest',
+             context=ISCORMCollection,
+             request_method='PUT')
+class SCORMCollectionPutView(AbstractAuthenticatedView):
+    """
+    A view for fetching :class:`ISCORMInstance` objects. This is open only
+    to global editors and admins.
+    """
+
+    def _get_client(self):
+        client = component.queryUtility(ISCORMCloudClient)
+        if client is None:
+            raise_json_error(self.request,
+                             hexc.HTTPNotFound,
+                             {
+                                 'message': u'SCORM client not registered.',
+                                 'code': u'SCORMClientNotFoundError'
+                             },
+                             None)
+        return client
+
     @Lazy
     def filter_tag_str(self):
         return getSite().__name__
@@ -290,8 +371,9 @@ class SCORMCourseCollectionView(SCORMCollectionView):
     """
 
     @Lazy
-    def filter_tag_str(self):
+    def course_filter_tag_str(self):
         return ICourseCatalogEntry(self.context).ntiid
 
     def _include_filter(self, scorm_content):
-        return self.filter_tag_str in scorm_content.tags
+        return self.course_filter_tag_str in scorm_content.tags \
+            or super(SCORMCourseCollectionView, self)._include_filter(scorm_content)
