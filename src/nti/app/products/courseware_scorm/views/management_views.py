@@ -128,16 +128,27 @@ class SCORMContentUploadMixin(object):
     well as optionally tagging the content.
     """
 
+    def _get_scorm_client(self):
+        client = component.queryUtility(ISCORMCloudClient)
+        if client is None:
+            raise_json_error(self.request,
+                             hexc.HTTPNotFound,
+                             {
+                                 'message': u'SCORM client not registered.',
+                                 'code': u'SCORMClientNotFoundError'
+                             },
+                             None)
+        return client
+
     def upload_content(self, source, tags=None):
         """
         Upload the content to scorm cloud, optionally tagging it as requested.
 
         Returns the newly created scorm content scorm_id.
         """
-        client = component.getUtility(ISCORMCloudClient)
+        client = self._get_scorm_client()
         try:
-            scorm_id = client.import_scorm_content(source,
-                                                   request=self.request)
+            scorm_id = client.import_scorm_content(source)
             if tags:
                 client.set_scorm_tags(scorm_id, tags)
         except ScormCloudError as exc:
@@ -148,6 +159,33 @@ class SCORMContentUploadMixin(object):
                              },
                              None)
         return scorm_id
+
+    def _handle_multipart(self, sources):
+        """
+        Returns a file source from the sources sent in a multi-part request.
+        """
+        for key in sources:
+            raw_source = sources.get(key)
+            source = get_source(raw_source)
+            if source:
+                break
+        return source
+
+    def _get_scorm_source(self):
+        sources = get_all_sources(self.request)
+        source = None
+        if sources:
+            source = self._handle_multipart(sources)
+        if not source:
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                 'message': _(u"No SCORM zip file was included with request."),
+                             },
+                             None)
+        return source
+
+
 @view_config(route_name='objects.generic.traversal',
              renderer='rest',
              context=ICourseInstance,
@@ -160,24 +198,14 @@ class ImportSCORMCourseView(AbstractAdminScormCourseView,
     """
 
     def _do_call(self):
-        sources = get_all_sources(self.request)
-        source = None
-        if sources:
-            source = self._handle_multipart(sources)
-        if not source:
-            raise_json_error(self.request,
-                             hexc.HTTPUnprocessableEntity,
-                             {
-                                 'message': _(u"No SCORM zip file was included with request."),
-                             },
-                             None)
+        source = self._get_scorm_source()
         entry_ntiid = ICourseCatalogEntry(self.context).ntiid
         scorm_id = self.upload_content(source, tags=(entry_ntiid,))
         metadata = ISCORMCourseMetadata(self.context)
         if metadata.has_scorm_package() and self.unregister_users:
             # Unregister users. We'll rely on launching to re-register users as
             # needed.
-            client = component.getUtility(ISCORMCloudClient)
+            client = self._get_scorm_client()
             try:
                 client.unregister_users_for_scorm_content(source)
             except ScormCloudError as exc:
@@ -192,37 +220,18 @@ class ImportSCORMCourseView(AbstractAdminScormCourseView,
         metadata.scorm_id = scorm_id
         return self.context
 
-    def _handle_multipart(self, sources):
-        """
-        Returns a file source from the sources sent in a multi-part request.
-        """
-        for key in sources:
-            raw_source = sources.get(key)
-            source = get_source(raw_source)
-            if source:
-                break
-        return source
-
 
 @view_config(route_name='objects.generic.traversal',
              renderer='rest',
              context=ICourseInstance,
              request_method='POST',
              name=UPDATE_SCORM_VIEW_NAME)
-class UpdateSCORMView(AbstractAdminScormCourseView):
+class UpdateSCORMView(AbstractAdminScormCourseView,
+                      SCORMContentUploadMixin):
 
     def _do_call(self):
-        sources = get_all_sources(self.request)
-        if sources:
-            source = self._handle_multipart(sources)
-        if not source:
-            raise_json_error(self.request,
-                             hexc.HTTPUnprocessableEntity,
-                             {
-                                 'message': _(u"No SCORM zip file was included with request."),
-                             },
-                             None)
-        client = component.getUtility(ISCORMCloudClient)
+        source = self._get_scorm_source()
+        client = self._get_scorm_client()
         metadata = ISCORMCourseMetadata(self.context)
         try:
             client.update_assets(metadata.scorm_id, source, self.request)
@@ -236,21 +245,11 @@ class UpdateSCORMView(AbstractAdminScormCourseView):
 
         return self.context
 
-    def _handle_multipart(self, sources):
-        """
-        Returns a file source from the sources sent in a multi-part request.
-        """
-        for key in sources:
-            raw_source = sources.get(key)
-            source = get_source(raw_source)
-            if source:
-                break
-        return source
-
 
 @view_config(route_name='objects.generic.traversal',
              renderer='rest',
              context=ISCORMCollection,
+             permission=ACT_CONTENT_EDIT,
              request_method='GET')
 class SCORMCollectionView(AbstractAuthenticatedView):
     """
@@ -299,57 +298,7 @@ class SCORMCollectionView(AbstractAuthenticatedView):
 
     def __call__(self):
         client = self._get_client()
-        items = self.get_scorm_instances(client)
-        filtered_items = [x for x in items if self._include_filter(x)]
-        result = LocatedExternalDict()
-        result[ITEMS] = filtered_items
-        result[ITEM_COUNT] = len(filtered_items)
-        result[TOTAL] = len(items)
-        return result
-
-
-@view_config(route_name='objects.generic.traversal',
-             renderer='rest',
-             context=ISCORMCollection,
-             request_method='PUT')
-class SCORMCollectionPutView(AbstractAuthenticatedView):
-    """
-    A view for fetching :class:`ISCORMInstance` objects. This is open only
-    to global editors and admins.
-    """
-
-    def _get_client(self):
-        client = component.queryUtility(ISCORMCloudClient)
-        if client is None:
-            raise_json_error(self.request,
-                             hexc.HTTPNotFound,
-                             {
-                                 'message': u'SCORM client not registered.',
-                                 'code': u'SCORMClientNotFoundError'
-                             },
-                             None)
-        return client
-
-    @Lazy
-    def filter_tag_str(self):
-        return getSite().__name__
-
-    def _include_filter(self, scorm_content):
-        return self.filter_tag_str in scorm_content.tags
-
-    def _get_scorm_instances(self, client):
-        if not is_admin_or_content_admin_or_site_admin(self.remoteUser):
-            raise_json_error(self.request,
-                             hexc.HTTPForbidden,
-                             {
-                                 'code': u'SCORMForbiddenError'
-                             },
-                             None)
-        return client.get_scorm_instances()
-
-    def __call__(self):
-        client = self._get_client()
-        items = self.get_scorm_instances(client)
+        items = self._get_scorm_instances(client)
         filtered_items = [x for x in items if self._include_filter(x)]
         result = LocatedExternalDict()
         result[ITEMS] = filtered_items
@@ -370,6 +319,9 @@ class SCORMCourseCollectionView(SCORMCollectionView):
     this particular course.
     """
 
+    def _get_scorm_instances(self, client):
+        return client.get_scorm_instances()
+
     @Lazy
     def course_filter_tag_str(self):
         return ICourseCatalogEntry(self.context).ntiid
@@ -377,3 +329,48 @@ class SCORMCourseCollectionView(SCORMCollectionView):
     def _include_filter(self, scorm_content):
         return self.course_filter_tag_str in scorm_content.tags \
             or super(SCORMCourseCollectionView, self)._include_filter(scorm_content)
+
+
+@view_config(route_name='objects.generic.traversal',
+             renderer='rest',
+             context=ISCORMCollection,
+             permission=ACT_CONTENT_EDIT,
+             request_method='PUT')
+class SCORMCollectionPutView(AbstractAuthenticatedView,
+                             ModeledContentUploadRequestUtilsMixin,
+                             SCORMContentUploadMixin):
+    """
+    A view for uploading a scorm package to our site-specific
+    :class:`ISCORMCollection`.
+    """
+
+    def __call__(self):
+        source = self._get_scorm_source()
+        site_name = getSite().__name__
+        scorm_id = self.upload_content(source, tags=(site_name,))
+        result = LocatedExternalDict()
+        result['scorm_id'] = scorm_id
+        return result
+
+
+@view_config(route_name='objects.generic.traversal',
+             renderer='rest',
+             context=ICourseInstance,
+             request_method='PUT',
+             permission=ACT_CONTENT_EDIT,
+             name=SCORM_COLLECTION_NAME)
+class SCORMCourseCollectionPutView(AbstractAuthenticatedView,
+                                   ModeledContentUploadRequestUtilsMixin,
+                                   SCORMContentUploadMixin):
+    """
+    A view for uploading a scorm package to our course-specific
+    :class:`ISCORMCollection`.
+    """
+
+    def __call__(self):
+        source = self._get_scorm_source()
+        entry_ntiid = ICourseCatalogEntry(self.context).ntiid
+        scorm_id = self.upload_content(source, tags=(entry_ntiid,))
+        result = LocatedExternalDict()
+        result['scorm_id'] = scorm_id
+        return result
