@@ -43,6 +43,8 @@ from nti.testing.matchers import verifiably_provides
 
 class TestConfiguredWorkspace(CoursewareSCORMLayerTest):
 
+    default_origin = 'http://janux.ou.edu'
+
     def setUp(self):
         # A non-None client for tests
         self.client = SCORMCloudClient(app_id=u'app_id',
@@ -90,7 +92,28 @@ class TestConfiguredWorkspace(CoursewareSCORMLayerTest):
 
         # Admin
         scorm_collection = _get_scorm_collection()
-        scorm_res = self.testapp.get(scorm_collection['href'])
+        scorm_collection_href = scorm_collection['href']
+
+        # No site means our scorm content is filtered out
+        scorm_res = self.testapp.get(scorm_collection_href)
+        scorm_res = scorm_res.json_body
+        scorm_items = scorm_res.get('Items')
+        assert_that(scorm_items, has_length(0))
+
+        # Incorrect site is filtered out
+        course_data.tags = ('alpha.nextthought.com',)
+        content_info = ScormContentInfo(course_data)
+        mock_content.is_callable().returns((content_info,))
+        scorm_res = self.testapp.get(scorm_collection_href)
+        scorm_res = scorm_res.json_body
+        scorm_items = scorm_res.get('Items')
+        assert_that(scorm_items, has_length(0))
+
+        # Filter lines up
+        course_data.tags = ('janux.ou.edu',)
+        content_info = ScormContentInfo(course_data)
+        mock_content.is_callable().returns((content_info,))
+        scorm_res = self.testapp.get(scorm_collection_href)
         scorm_res = scorm_res.json_body
         scorm_items = scorm_res.get('Items')
         assert_that(scorm_items, has_length(1))
