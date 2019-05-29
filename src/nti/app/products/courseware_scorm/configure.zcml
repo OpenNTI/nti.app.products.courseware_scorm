@@ -165,6 +165,12 @@
              factory=".workspaces.SCORMPathAdapter"
              provides="zope.traversing.interfaces.IPathAdapter" />
 
+    <adapter name="SCORMInstances"
+             for="nti.contenttypes.courses.interfaces.ICourseInstance
+                  pyramid.interfaces.IRequest"
+             factory=".workspaces.course_scorm_collection_path_adapter"
+             provides="zope.traversing.interfaces.IPathAdapter" />
+
     <!-- And an adapter for direct access -->
     <adapter factory=".workspaces.SCORMWorkspace"
              provides=".interfaces.ISCORMWorkspace" />

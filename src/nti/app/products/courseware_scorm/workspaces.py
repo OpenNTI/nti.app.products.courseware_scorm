@@ -17,6 +17,8 @@ from zope import component
 
 from zope.cachedescriptors.property import Lazy
 
+from zope.component.hooks import getSite
+
 from zope.container.contained import Contained
 
 from zope.location.interfaces import IContained
@@ -32,9 +34,12 @@ from nti.app.products.courseware_scorm.interfaces import ISCORMWorkspace
 from nti.app.products.courseware_scorm.interfaces import ISCORMCollection
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 
+from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
+
 from nti.dataserver.authorization import is_admin_or_content_admin_or_site_admin
 
 from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import ISiteAdminManagerUtility
 
 from nti.property.property import alias
 
@@ -58,6 +63,23 @@ class SCORMInstanceCollection(Contained):
     def __init__(self, container):
         self.__parent__ = container
 
+    def _get_parent_site_name(self):
+        site_admin_manager = component.getUtility(ISiteAdminManagerUtility)
+        result = site_admin_manager.get_parent_site_name()
+        if result and result != 'dataserver2':
+            return result
+
+    @Lazy
+    def tags(self):
+        result = (getSite().__name__,)
+        parent_name = self._get_parent_site_name()
+        if parent_name:
+            result = (getSite().__name__, parent_name)
+        return result
+
+    def _include_filter(self, scorm_content):
+        return set(self.tags) & set(scorm_content.tags or ())
+
     @Lazy
     def scorm_instances(self):
         """
@@ -67,6 +89,7 @@ class SCORMInstanceCollection(Contained):
         result = ()
         if scorm_utility is not None:
             result = scorm_utility.get_scorm_instances()
+            result = [x for x in result if self._include_filter(x)]
         return result
 
     @Lazy
@@ -130,3 +153,18 @@ def SCORMPathAdapter(context, unused_request):
     service = IUserService(context)
     workspace = ISCORMWorkspace(service)
     return workspace
+
+
+class CourseScormInstanceCollection(SCORMInstanceCollection):
+
+    @Lazy
+    def tags(self):
+        return (ICourseCatalogEntry(self.context).ntiid,)
+
+    def _include_filter(self, scorm_content):
+        return set(self.tags) & set(scorm_content.tags or ()) \
+            or super(CourseScormInstanceCollection, self)._include_filter(scorm_content)
+
+
+def course_scorm_collection_path_adapter(course, unused_request):
+    return CourseScormInstanceCollection(course)

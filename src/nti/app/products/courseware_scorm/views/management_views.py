@@ -19,8 +19,6 @@ from zope import interface
 
 from zope.cachedescriptors.property import Lazy
 
-from zope.component.hooks import getSite
-
 from nti.app.base.abstract_views import get_all_sources
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
@@ -29,8 +27,6 @@ from nti.app.externalization.error import raise_json_error
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
 from nti.app.products.courseware_admin.views.management_views import CreateCourseView
-
-from nti.app.products.courseware_scorm import SCORM_COLLECTION_NAME
 
 from nti.app.products.courseware_scorm import MessageFactory as _
 
@@ -52,11 +48,8 @@ from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 from nti.contenttypes.courses.interfaces import ICourseAdministrativeLevel
 
+from nti.dataserver.authorization import ACT_READ
 from nti.dataserver.authorization import ACT_CONTENT_EDIT
-
-from nti.dataserver.authorization import is_admin_or_content_admin_or_site_admin
-
-from nti.dataserver.interfaces import ISiteAdminManagerUtility
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
@@ -249,7 +242,7 @@ class UpdateSCORMView(AbstractAdminScormCourseView,
 @view_config(route_name='objects.generic.traversal',
              renderer='rest',
              context=ISCORMCollection,
-             permission=ACT_CONTENT_EDIT,
+             permission=ACT_READ,
              request_method='GET')
 class SCORMCollectionView(AbstractAuthenticatedView):
     """
@@ -257,78 +250,11 @@ class SCORMCollectionView(AbstractAuthenticatedView):
     to global editors and admins.
     """
 
-    def _get_client(self):
-        client = component.queryUtility(ISCORMCloudClient)
-        if client is None:
-            raise_json_error(self.request,
-                             hexc.HTTPNotFound,
-                             {
-                                 'message': u'SCORM client not registered.',
-                                 'code': u'SCORMClientNotFoundError'
-                             },
-                             None)
-        return client
-
-    def _get_parent_site_name(self):
-        site_admin_manager = component.getUtility(ISiteAdminManagerUtility)
-        result = site_admin_manager.get_parent_site_name()
-        if result and result != 'dataserver2':
-            return result
-
-    @Lazy
-    def site_filter_tag_strs(self):
-        result = (getSite().__name__,)
-        parent_name = self._get_parent_site_name()
-        if parent_name:
-            result = (getSite().__name__, parent_name)
-        return result
-
-    def _include_filter(self, scorm_content):
-        return set(self.site_filter_tag_strs) & set(scorm_content.tags or ())
-
-    def _get_scorm_instances(self, client):
-        if not is_admin_or_content_admin_or_site_admin(self.remoteUser):
-            raise_json_error(self.request,
-                             hexc.HTTPForbidden,
-                             {
-                                 'code': u'SCORMForbiddenError'
-                             },
-                             None)
-        return client.get_scorm_instances()
-
     def __call__(self):
-        client = self._get_client()
-        items = self._get_scorm_instances(client)
-        filtered_items = [x for x in items if self._include_filter(x)]
         result = LocatedExternalDict()
-        result[ITEMS] = filtered_items
-        result[ITEM_COUNT] = len(filtered_items)
-        result[TOTAL] = len(items)
+        result[ITEMS] = items = self.context.scorm_instances
+        result[ITEM_COUNT] = result[TOTAL] = len(items)
         return result
-
-
-@view_config(route_name='objects.generic.traversal',
-             renderer='rest',
-             context=ICourseInstance,
-             request_method='GET',
-             permission=ACT_CONTENT_EDIT,
-             name=SCORM_COLLECTION_NAME)
-class SCORMCourseCollectionView(SCORMCollectionView):
-    """
-    A view for fetching :class:`ISCORMInstance` objects tied to
-    this particular course.
-    """
-
-    def _get_scorm_instances(self, client):
-        return client.get_scorm_instances()
-
-    @Lazy
-    def course_filter_tag_str(self):
-        return ICourseCatalogEntry(self.context).ntiid
-
-    def _include_filter(self, scorm_content):
-        return self.course_filter_tag_str in scorm_content.tags \
-            or super(SCORMCourseCollectionView, self)._include_filter(scorm_content)
 
 
 @view_config(route_name='objects.generic.traversal',
@@ -346,31 +272,7 @@ class SCORMCollectionPutView(AbstractAuthenticatedView,
 
     def __call__(self):
         source = self._get_scorm_source()
-        site_name = getSite().__name__
-        scorm_id = self.upload_content(source, tags=(site_name,))
-        result = LocatedExternalDict()
-        result['scorm_id'] = scorm_id
-        return result
-
-
-@view_config(route_name='objects.generic.traversal',
-             renderer='rest',
-             context=ICourseInstance,
-             request_method='PUT',
-             permission=ACT_CONTENT_EDIT,
-             name=SCORM_COLLECTION_NAME)
-class SCORMCourseCollectionPutView(AbstractAuthenticatedView,
-                                   ModeledContentUploadRequestUtilsMixin,
-                                   SCORMContentUploadMixin):
-    """
-    A view for uploading a scorm package to our course-specific
-    :class:`ISCORMCollection`.
-    """
-
-    def __call__(self):
-        source = self._get_scorm_source()
-        entry_ntiid = ICourseCatalogEntry(self.context).ntiid
-        scorm_id = self.upload_content(source, tags=(entry_ntiid,))
+        scorm_id = self.upload_content(source, tags=self.context.tags)
         result = LocatedExternalDict()
         result['scorm_id'] = scorm_id
         return result
