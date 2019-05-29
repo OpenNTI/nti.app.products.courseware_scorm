@@ -20,8 +20,6 @@ from nti.app.products.courseware_scorm.interfaces import IUserRegistrationReport
 
 from nti.app.products.courseware_scorm.tests import CoursewareSCORMLayerTest
 
-from nti.contenttypes.courses.courses import ContentCourseInstance
-
 
 class TestCourses(CoursewareSCORMLayerTest):
 

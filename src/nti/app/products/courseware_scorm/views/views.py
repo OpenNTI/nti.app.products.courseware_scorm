@@ -29,6 +29,8 @@ from zope.event import notify
 from nti.app.base.abstract_views import AbstractView
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
+from nti.app.externalization.error import raise_json_error
+
 from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
 
 from nti.app.products.courseware_scorm.interfaces import ISCORMIdentifier
@@ -86,11 +88,25 @@ class AbstractSCORMLaunchView(AbstractAuthenticatedView):
     def _after_launch(self):
         pass
 
+    def _get_scorm_id(self):
+        metadata = ISCORMCourseMetadata(self.context, None)
+        scorm_id = getattr(metadata, 'scorm_id', None)
+        if not scorm_id:
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                 'message': _(u"No metadata scorm_id associated with course."),
+                                 'code': u'NoScormIdFoundError'
+                             },
+                             None)
+        return scorm_id
+
     def __call__(self):
+        scorm_id = self._get_scorm_id()
         try:
             self._before_launch()
             redirect_url = self._redirect_uri()
-            launch_url = self._build_launch_url(redirect_url)
+            launch_url = self._build_launch_url(scorm_id, redirect_url)
         except Exception as e:
             logger.exception('Unable to generate scorm cloud launch url')
             # This is a fairly wide catch but this view is intended to be browser rendered
@@ -115,9 +131,9 @@ class PreviewSCORMCourseVIew(AbstractSCORMLaunchView):
     A view for previewing a course on SCORM Cloud.
     """
 
-    def _build_launch_url(self, redirect_url):
+    def _build_launch_url(self, scorm_id, redirect_url):
         client = component.getUtility(ISCORMCloudClient)
-        return client.preview(self.context, redirect_url or u'message')
+        return client.preview(scorm_id, redirect_url or u'message')
 
     def _before_launch(self):
         if     not is_admin_or_content_admin_or_site_admin(self.remoteUser) \
@@ -136,9 +152,9 @@ class LaunchSCORMCourseView(AbstractSCORMLaunchView):
     A view for launching a course on SCORM Cloud.
     """
 
-    def _build_launch_url(self, redirect_url):
+    def _build_launch_url(self, scorm_id, redirect_url):
         client = component.getUtility(ISCORMCloudClient)
-        return client.launch(self.context, self.remoteUser, redirect_url or u'message')
+        return client.launch(scorm_id, self.context, self.remoteUser, redirect_url or u'message')
 
     def _after_launch(self):
         course = self.context

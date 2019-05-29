@@ -332,11 +332,12 @@ class SCORMCloudClient(object):
         reg_id = self._get_registration_id(course, user)
         self._remove_registration(reg_id)
 
-    def launch(self, course, user, redirect_url):
+    def launch(self, scorm_id, course, user, redirect_url):
         service = self.cloud.get_registration_service()
         registration_id = self._get_registration_id(course, user)
         if not self.registration_exists(registration_id):
             self.create_registration(registration_id=registration_id,
+                                     scorm_id=scorm_id,
                                      user=user,
                                      course=course)
         logger.info("Launching registration: regid=%s", registration_id)
