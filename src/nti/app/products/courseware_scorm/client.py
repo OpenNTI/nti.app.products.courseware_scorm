@@ -77,7 +77,7 @@ class PostBackURLGenerator(object):
     def url_for_registration_postback(self, enrollment, request=None):
         if request is None:
             request = get_current_request()
-        link = Link(enrollment, elements=('@@'+REGISTRATION_RESULT_POSTBACK_VIEW_NAME,))
+        link = Link(enrollment, elements=('@@' + REGISTRATION_RESULT_POSTBACK_VIEW_NAME,))
         interface.alsoProvides(link, ILinkExternalHrefOnly)
         url = render_link(link)
         return request.relative_url(url)

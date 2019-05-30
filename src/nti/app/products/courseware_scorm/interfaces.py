@@ -24,6 +24,7 @@ from nti.appserver.workspaces.interfaces import IWorkspace
 from nti.appserver.workspaces.interfaces import IContainerCollection
 
 from nti.contenttypes.presentation.interfaces import INTIIDIdentifiable
+from nti.contenttypes.presentation.interfaces import IAssetTitleDescribed
 from nti.contenttypes.presentation.interfaces import IGroupOverViewable
 from nti.contenttypes.presentation.interfaces import INonExportableAsset
 from nti.contenttypes.presentation.interfaces import ICoursePresentationAsset
@@ -53,7 +54,8 @@ class ISCORMCourseInstance(ICourseInstance, IDoNotCreateDefaultOutlineCourseInst
     """
 
 
-class ISCORMContentRef(IGroupOverViewable,
+class ISCORMContentRef(IAssetTitleDescribed,
+                       IGroupOverViewable,
                        INTIIDIdentifiable,
                        ICoursePresentationAsset,
                        INonExportableAsset,

@@ -85,9 +85,13 @@ class TestExternal(ApplicationLayerTest):
 
     def test_scorm_content_ref(self):
         scorm_id = u'tag:nextthought.com,2011-10:NTI-3663246001124377908_4744212239739874217'
-        ref = SCORMContentRef(scorm_id=scorm_id)
+        ref = SCORMContentRef(scorm_id=scorm_id,
+                              title=u'scorm content title',
+                              description=u'scorm description')
         ext_obj = toExternalObject(ref)
-        assert_that(ext_obj, has_entries(u'scorm_id', scorm_id))
+        assert_that(ext_obj, has_entries(u'scorm_id', scorm_id,
+                                         u'title', u'scorm content title',
+                                         u'description', u'scorm description'))
 
         assert_that(find_factory_for(ext_obj),
                     not_none())
@@ -97,6 +101,8 @@ class TestExternal(ApplicationLayerTest):
                                     ext_obj,
                                     require_updater=True)
         assert_that(internal.scorm_id, is_(scorm_id))
+        assert_that(internal.title, is_(u'scorm content title'))
+        assert_that(internal.description, is_(u'scorm description'))
 
     def test_scorm_progress(self):
         report = RegistrationReport(format_=u'course',

@@ -89,23 +89,18 @@ class _SCORMCourseInstanceDecorator(AbstractAuthenticatedRequestAwareDecorator):
 @interface.implementer(IExternalObjectDecorator)
 class _SCORMCourseInstanceMetadataDecorator(PreviewCourseAccessPredicateDecorator):
 
-    @property
-    def course(self):
-        # TODO: Adapter
-        return find_interface(self.context, ICourseInstance, strict=True)
-
     # pylint: disable=arguments-differ
     def _do_decorate_external(self, original, external):
         if original.has_scorm_package():
-            course = self.course
+            context = find_interface(self.context, ICourseInstance, strict=True)
             _links = external.setdefault(LINKS, [])
             element = LAUNCH_SCORM_COURSE_VIEW_NAME
             if    is_admin_or_content_admin_or_site_admin(self.remoteUser) \
-               or is_course_instructor_or_editor(course, self.remoteUser):
+               or is_course_instructor_or_editor(context, self.remoteUser):
                 element = PREVIEW_SCORM_COURSE_VIEW_NAME
 
             _links.append(
-                Link(course, rel=LAUNCH_REL, elements=(element,))
+                Link(context, rel=LAUNCH_REL, elements=(element,))
             )
 
 
@@ -130,6 +125,16 @@ class _SCORMContentRefDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
     def _do_decorate_external(self, context, external):
         external['SCORMContent'] = find_object_with_ntiid(context.target)
+        course = find_interface(self.context, ICourseInstance, strict=True)
+        _links = external.setdefault(LINKS, [])
+        element = LAUNCH_SCORM_COURSE_VIEW_NAME
+        if    is_admin_or_content_admin_or_site_admin(self.remoteUser) \
+           or is_course_instructor_or_editor(course, self.remoteUser):
+            element = PREVIEW_SCORM_COURSE_VIEW_NAME
+
+        _links.append(
+            Link(context, rel=LAUNCH_REL, elements=(element,))
+        )
 
 
 @component.adapter(ICourseInstance)
