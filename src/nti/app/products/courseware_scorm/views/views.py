@@ -33,7 +33,7 @@ from nti.app.externalization.error import raise_json_error
 
 from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
 
-from nti.app.products.courseware_scorm.interfaces import ISCORMIdentifier
+from nti.app.products.courseware_scorm.interfaces import ISCORMContentRef
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 from nti.app.products.courseware_scorm.interfaces import SCORMPackageLaunchEvent
@@ -41,6 +41,9 @@ from nti.app.products.courseware_scorm.interfaces import IPostBackPasswordUtilit
 from nti.app.products.courseware_scorm.interfaces import ISCORMRegistrationReport
 from nti.app.products.courseware_scorm.interfaces import SCORMRegistrationPostbackEvent
 from nti.app.products.courseware_scorm.interfaces import IUserRegistrationReportContainer
+
+from nti.app.products.courseware_scorm.utils import parse_registration_id
+from nti.app.products.courseware_scorm.utils import get_registration_id_for_user_and_course
 
 from nti.app.products.courseware_scorm.views import SCORM_PROGRESS_VIEW_NAME
 from nti.app.products.courseware_scorm.views import LAUNCH_SCORM_COURSE_VIEW_NAME
@@ -59,6 +62,8 @@ from nti.dataserver.authorization import is_admin_or_content_admin_or_site_admin
 from nti.dataserver.users.users import User
 
 from nti.scorm_cloud.client.registration import RegistrationReport
+
+from nti.traversal.traversal import find_interface
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -89,17 +94,7 @@ class AbstractSCORMLaunchView(AbstractAuthenticatedView):
         pass
 
     def _get_scorm_id(self):
-        metadata = ISCORMCourseMetadata(self.context, None)
-        scorm_id = getattr(metadata, 'scorm_id', None)
-        if not scorm_id:
-            raise_json_error(self.request,
-                             hexc.HTTPUnprocessableEntity,
-                             {
-                                 'message': _(u"No metadata scorm_id associated with course."),
-                                 'code': u'NoScormIdFoundError'
-                             },
-                             None)
-        return scorm_id
+        pass
 
     def __call__(self):
         scorm_id = self._get_scorm_id()
@@ -126,10 +121,23 @@ class AbstractSCORMLaunchView(AbstractAuthenticatedView):
              request_method='GET',
              permission=ACT_READ,
              name=PREVIEW_SCORM_COURSE_VIEW_NAME)
-class PreviewSCORMCourseVIew(AbstractSCORMLaunchView):
+class PreviewSCORMCourseView(AbstractSCORMLaunchView):
     """
     A view for previewing a course on SCORM Cloud.
     """
+
+    def _get_scorm_id(self):
+        metadata = ISCORMCourseMetadata(self.context, None)
+        scorm_id = getattr(metadata, 'scorm_id', None)
+        if not scorm_id:
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                 'message': _(u"No metadata scorm_id associated with course."),
+                                 'code': u'NoScormIdFoundError'
+                             },
+                             None)
+        return scorm_id
 
     def _build_launch_url(self, scorm_id, redirect_url):
         client = component.getUtility(ISCORMCloudClient)
@@ -143,23 +151,75 @@ class PreviewSCORMCourseVIew(AbstractSCORMLaunchView):
 
 @view_config(route_name='objects.generic.traversal',
              renderer='rest',
+             context=ISCORMContentRef,
+             request_method='GET',
+             permission=ACT_READ,
+             name=PREVIEW_SCORM_COURSE_VIEW_NAME)
+class PreviewSCORMContentView(PreviewSCORMCourseView):
+    """
+    A view for previewing scorm content.
+    """
+
+    def _get_scorm_id(self):
+        return self.context.scorm_id
+
+    def _before_launch(self):
+        course = find_interface(self.context, ICourseInstance)
+        if     not is_admin_or_content_admin_or_site_admin(self.remoteUser) \
+           and not is_course_instructor_or_editor(course, self.remoteUser):
+            raise hexc.HTTPForbidden()
+
+
+@view_config(route_name='objects.generic.traversal',
+             renderer='rest',
              context=ICourseInstance,
              request_method='GET',
              permission=ACT_READ,
              name=LAUNCH_SCORM_COURSE_VIEW_NAME)
-class LaunchSCORMCourseView(AbstractSCORMLaunchView):
+class LaunchSCORMCourseView(PreviewSCORMCourseView):
     """
     A view for launching a course on SCORM Cloud.
     """
 
+    def _before_launch(self):
+        pass
+
     def _build_launch_url(self, scorm_id, redirect_url):
         client = component.getUtility(ISCORMCloudClient)
-        return client.launch(scorm_id, self.context, self.remoteUser, redirect_url or u'message')
+        return client.launch(scorm_id, self.context,
+                             self.remoteUser, redirect_url or u'message')
 
     def _after_launch(self):
-        course = self.context
-        metadata = ISCORMCourseMetadata(course)
-        notify(SCORMPackageLaunchEvent(self.remoteUser, course, metadata, datetime.utcnow()))
+        metadata = ISCORMCourseMetadata(self.context)
+        notify(SCORMPackageLaunchEvent(self.remoteUser, self.context,
+                                       metadata, datetime.utcnow()))
+        # Make sure we commit our job
+        self.request.environ['nti.request_had_transaction_side_effects'] = True
+
+
+@view_config(route_name='objects.generic.traversal',
+             renderer='rest',
+             context=ISCORMContentRef,
+             request_method='GET',
+             permission=ACT_READ,
+             name=LAUNCH_SCORM_COURSE_VIEW_NAME)
+class LaunchSCORMContentView(LaunchSCORMCourseView):
+    """
+    A view for launching a course on SCORM Cloud.
+    """
+
+    def _get_scorm_id(self):
+        return self.context.scorm_id
+
+    def _build_launch_url(self, scorm_id, redirect_url):
+        course = find_interface(self.context, ICourseInstance)
+        client = component.getUtility(ISCORMCloudClient)
+        return client.launch(scorm_id, course,
+                             self.remoteUser, redirect_url or u'message')
+
+    def _after_launch(self):
+        course = find_interface(self.context, ICourseInstance)
+        notify(SCORMPackageLaunchEvent(self.remoteUser, course, self.context, datetime.utcnow()))
         # Make sure we commit our job
         self.request.environ['nti.request_had_transaction_side_effects'] = True
 
@@ -181,7 +241,9 @@ class SCORMProgressView(AbstractAuthenticatedView):
     def __call__(self):
         client = component.getUtility(ISCORMCloudClient)
         user = User.get_user(self.context.Username)
-        return client.get_registration_progress(self.context.CourseInstance, user, self._results_format())
+        return client.get_registration_progress(self.context.CourseInstance,
+                                                user,
+                                                self._results_format())
 
 
 @view_config(route_name='objects.generic.traversal',
@@ -201,7 +263,9 @@ class SCORMRegistrationResultPostBack(AbstractView):
 
         password_manager = component.getUtility(IPostBackPasswordUtility)
         try:
-            password_manager.validate_credentials_for_enrollment(self.context, username, password)
+            password_manager.validate_credentials_for_enrollment(self.context,
+                                                                 username,
+                                                                 password)
         except ValueError:
             raise hexc.HTTPForbidden()
 
@@ -221,25 +285,28 @@ class SCORMRegistrationResultPostBack(AbstractView):
 
         user = User.get_user(self.context.Username)
         course = self.context.CourseInstance
-        registration_id = self._get_registration_id(course, user)
+        unused_enrollment_ds_intid, scorm_id = parse_registration_id(data.regid)
+        registration_id = get_registration_id_for_user_and_course(scorm_id,
+                                                                  user,
+                                                                  course)
         if registration_id != report.registration_id:
             logger.info(u"Postback regid (%s) does not match enrollment regid (%s)",
                         report.registration_id, registration_id)
             return hexc.HTTPBadRequest()
         metadata = ISCORMCourseMetadata(course)
         container = IUserRegistrationReportContainer(metadata)
-        container.add_registration_report(report, user)
+        # FIXME
+        container.add_registration_report(report, user, scorm_id)
+        # FIXME
         notify(UserProgressUpdatedEvent(obj=metadata,
                                         user=user,
                                         context=course))
 
+        # FIXME
         notify(SCORMRegistrationPostbackEvent(user, course, metadata, datetime.utcnow()))
-        logger.info(u"Registration report postback stored: user=%s", user.username)
+        logger.info(u"Registration report postback stored (user=%s) (scorm_id=%s)",
+                    user.username,
+                    scorm_id)
 
         return hexc.HTTPNoContent()
-
-    def _get_registration_id(self, course, user):
-        identifier = component.getMultiAdapter((user, course),
-                                               ISCORMIdentifier)
-        return identifier.get_id()
 
