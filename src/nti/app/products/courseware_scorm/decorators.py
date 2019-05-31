@@ -124,17 +124,20 @@ class _CourseInstanceEnrollmentDecorator(AbstractAuthenticatedRequestAwareDecora
 class _SCORMContentRefDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
     def _do_decorate_external(self, context, external):
-        external['SCORMContent'] = find_object_with_ntiid(context.target)
         course = find_interface(self.context, ICourseInstance, strict=True)
         _links = external.setdefault(LINKS, [])
-        element = LAUNCH_SCORM_COURSE_VIEW_NAME
         if    is_admin_or_content_admin_or_site_admin(self.remoteUser) \
            or is_course_instructor_or_editor(course, self.remoteUser):
-            element = PREVIEW_SCORM_COURSE_VIEW_NAME
-
-        _links.append(
-            Link(context, rel=LAUNCH_REL, elements=(element,))
-        )
+            _links.append(Link(context,
+                               rel=LAUNCH_REL,
+                               elements=(PREVIEW_SCORM_COURSE_VIEW_NAME,)))
+        else:
+            _links.append(Link(context,
+                               rel=LAUNCH_REL,
+                               elements=(LAUNCH_SCORM_COURSE_VIEW_NAME,)))
+            _links.append(Link(context,
+                               rel=PROGRESS_REL,
+                               elements=(PROGRESS_REL,)))
 
 
 @component.adapter(ICourseInstance)

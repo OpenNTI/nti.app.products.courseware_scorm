@@ -79,7 +79,8 @@ class PostBackURLGenerator(object):
     def url_for_registration_postback(self, enrollment, scorm_id, request=None):
         if request is None:
             request = get_current_request()
-        link = Link(enrollment, elements=('@@' + REGISTRATION_RESULT_POSTBACK_VIEW_NAME,))
+        link = Link(enrollment,
+                    elements=('@@' + REGISTRATION_RESULT_POSTBACK_VIEW_NAME,))
         interface.alsoProvides(link, ILinkExternalHrefOnly)
         url = render_link(link)
         return request.relative_url(url)
@@ -360,9 +361,7 @@ class SCORMCloudClient(object):
         for registration in registration_list or ():
             service.deleteRegistration(registration.registration_id)
 
-    def get_registration_progress(self, course, user, results_format=None):
-        get_registration_id_for_user_and_course(scorm_id, user, course)
-        registration_id = self._get_registration_id(course, user)
+    def get_registration_progress(self, registration_id, results_format=None):
         service = self.cloud.get_registration_service()
         try:
             result = service.get_registration_result(registration_id, results_format)

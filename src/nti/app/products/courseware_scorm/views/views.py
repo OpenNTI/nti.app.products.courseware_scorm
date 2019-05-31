@@ -219,7 +219,8 @@ class LaunchSCORMContentView(LaunchSCORMCourseView):
 
     def _after_launch(self):
         course = find_interface(self.context, ICourseInstance)
-        notify(SCORMPackageLaunchEvent(self.remoteUser, course, self.context, datetime.utcnow()))
+        notify(SCORMPackageLaunchEvent(self.remoteUser, course,
+                                       self.context, datetime.utcnow()))
         # Make sure we commit our job
         self.request.environ['nti.request_had_transaction_side_effects'] = True
 
@@ -241,9 +242,43 @@ class SCORMProgressView(AbstractAuthenticatedView):
     def __call__(self):
         client = component.getUtility(ISCORMCloudClient)
         user = User.get_user(self.context.Username)
-        return client.get_registration_progress(self.context.CourseInstance,
-                                                user,
+        course = self.context.CourseInstance
+        metadata = ISCORMCourseMetadata(course, None)
+        if metadata is None:
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                 'message': _(u"No metadata scorm_id associated with course."),
+                                 'code': u'NoScormIdFoundError'
+                             },
+                             None)
+        registration_id = get_registration_id_for_user_and_course(metadata.scorm_id,
+                                                                  user,
+                                                                  course)
+        return client.get_registration_progress(registration_id,
                                                 self._results_format())
+
+
+@view_config(route_name='objects.generic.traversal',
+             renderer='rest',
+             context=ISCORMContentRef,
+             request_method='GET',
+             permission=ACT_READ,
+             name=SCORM_PROGRESS_VIEW_NAME)
+class SCORMContentProgressView(SCORMProgressView):
+    """
+    A view for observing SCORM content registration progress.
+    """
+
+    def __call__(self):
+        client = component.getUtility(ISCORMCloudClient)
+        course = find_interface(self.context, ICourseInstance)
+        registration_id = get_registration_id_for_user_and_course(self.context.scorm_id,
+                                                                  self.remoteUser,
+                                                                  course)
+        return client.get_registration_progress(registration_id,
+                                                self._results_format())
+
 
 
 @view_config(route_name='objects.generic.traversal',
@@ -252,6 +287,12 @@ class SCORMProgressView(AbstractAuthenticatedView):
              request_method='POST',
              name=REGISTRATION_RESULT_POSTBACK_VIEW_NAME)
 class SCORMRegistrationResultPostBack(AbstractView):
+    """
+    The postback view we take scorm cloud to via the :class:`IPostBackURLUtility`.
+
+    We can get the course and user via the context, and the scorm id via parsing
+    the registration id (i.e. <enrollment-ds-intid>_<scorm-id>) in the payload.
+    """
 
     def __call__(self):
         username = self.request.params.get('username', None)
