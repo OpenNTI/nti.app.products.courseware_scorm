@@ -157,11 +157,6 @@ class ISCORMCloudClient(interface.Interface):
         Syncs a course enrollment record with SCORM Cloud.
         """
 
-    def delete_enrollment_record(enrollment_record):
-        """
-        Removes a course enrollment registration from SCORM Cloud.
-        """
-
     def launch(course, user, redirect_url):
         """
         Launches the given registration by redirecting the client's browser to

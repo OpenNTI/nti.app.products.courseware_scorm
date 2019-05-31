@@ -35,6 +35,8 @@ from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 from nti.app.products.courseware_scorm.interfaces import IPostBackPasswordUtility
 from nti.app.products.courseware_scorm.interfaces import ISCORMRegistrationReport
 
+from nti.app.products.courseware_scorm.utils import get_registration_id_for_user_and_course
+
 from nti.app.products.courseware_scorm.views import REGISTRATION_RESULT_POSTBACK_VIEW_NAME
 
 from nti.dataserver.interfaces import ILinkExternalHrefOnly
@@ -322,18 +324,10 @@ class SCORMCloudClient(object):
                 logger.warning(error)
                 raise error
 
-    def delete_enrollment_record(self, enrollment_record):
-        # pylint: disable=too-many-function-args
-        course = enrollment_record.CourseInstance
-        metadata = ISCORMCourseMetadata(course)
-        if not metadata.has_scorm_package():
-            return
-        user = User.get_user(enrollment_record.Principal.id)
-        reg_id = self._get_registration_id(course, user)
-        self._remove_registration(reg_id)
-
     def launch(self, scorm_id, course, user, redirect_url):
         service = self.cloud.get_registration_service()
+        get_registration_id_for_user_and_course(scorm_id, user, course)
+        xxx
         registration_id = self._get_registration_id(course, user)
         if not self.registration_exists(registration_id):
             self.create_registration(registration_id=registration_id,
@@ -346,11 +340,6 @@ class SCORMCloudClient(object):
     def preview(self, scorm_id, redirect_url):
         service = self.cloud.get_course_service()
         return service.get_preview_url(scorm_id, redirect_url)
-
-    def _get_registration_id(self, course, user):
-        identifier = component.getMultiAdapter((user, course),
-                                               ISCORMIdentifier)
-        return identifier.get_id()
 
     def get_registration_list(self, scorm_id):
         """
@@ -371,6 +360,7 @@ class SCORMCloudClient(object):
             service.deleteRegistration(registration.registration_id)
 
     def get_registration_progress(self, course, user, results_format=None):
+        get_registration_id_for_user_and_course(scorm_id, user, course)
         registration_id = self._get_registration_id(course, user)
         service = self.cloud.get_registration_service()
         try:
@@ -387,6 +377,7 @@ class SCORMCloudClient(object):
         return ISCORMRegistrationReport(result)
 
     def enrollment_registration_exists(self, course, user):
+        get_registration_id_for_user_and_course(scorm_id, user, course)
         registration_id = self._get_registration_id(course, user)
         return self.registration_exists(registration_id)
 

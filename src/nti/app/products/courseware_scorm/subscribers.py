@@ -8,8 +8,6 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-from zc.intid.interfaces import IBeforeIdRemovedEvent
-
 from zope import component
 from zope import interface
 
@@ -19,30 +17,8 @@ from nti.app.products.courseware.interfaces import IAllCoursesCollectionAcceptsP
 from nti.app.products.courseware_scorm.courses import SCORM_COURSE_MIME_TYPE
 
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
-from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
-from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
-
-from nti.contenttypes.courses.interfaces import ICourseInstanceRemovedEvent
-from nti.contenttypes.courses.interfaces import ICourseInstanceEnrollmentRecord
 
 logger = __import__('logging').getLogger(__name__)
-
-
-@component.adapter(ICourseInstanceEnrollmentRecord, IBeforeIdRemovedEvent)
-def _enrollment_record_dropped(record, unused_event):
-    course = record.CourseInstance
-    if ISCORMCourseInstance.providedBy(course):
-        client = component.queryUtility(ISCORMCloudClient)
-        if client is not None:
-            client.delete_enrollment_record(record)
-
-
-@component.adapter(ISCORMCourseInstance, ICourseInstanceRemovedEvent)
-def _on_course_instance_removed(course, unused_event):
-    metadata = ISCORMCourseMetadata(course, None)
-    if metadata is not None and metadata.has_scorm_package():
-        client = component.getUtility(ISCORMCloudClient)
-        client.delete_course(metadata.scorm_id)
 
 
 @component.adapter(IAllCoursesCollection)
