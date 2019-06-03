@@ -35,8 +35,11 @@ from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
 
 from nti.app.products.courseware_admin import VIEW_COURSE_ADMIN_LEVELS
 
+from nti.app.products.courseware_scorm.client import SCORMCloudClient
 from nti.app.products.courseware_scorm.client import PostBackURLGenerator
 from nti.app.products.courseware_scorm.client import PostBackPasswordUtility
+
+from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 
 from nti.app.products.courseware_scorm.completion import _SCORMCompletableItemProvider
 
@@ -133,11 +136,19 @@ class TestManagementViews(CoursewareSCORMLayerTest):
 
     default_origin = 'http://janux.ou.edu'
 
+    def setUp(self):
+        # A non-None client for tests
+        self.client = SCORMCloudClient(app_id=u'app_id',
+                                      secret_key=u'secret_key',
+                                      service_url=u'service_url')
+        component.getGlobalSiteManager().registerUtility(self.client, ISCORMCloudClient)
+
     @WithSharedApplicationMockDS(testapp=True, users=True)
     def tearDown(self):
         """
         Our janux.ou.edu site should have no courses in it.
         """
+        component.getGlobalSiteManager().unregisterUtility(self.client)
         with mock_dataserver.mock_db_trans(site_name='janux.ou.edu'):
             library = component.getUtility(IContentPackageLibrary)
             enumeration = IDelimitedHierarchyContentPackageEnumeration(library)
@@ -158,6 +169,7 @@ class TestManagementViews(CoursewareSCORMLayerTest):
     @fudge.patch('nti.app.products.courseware_scorm.courses.SCORMCourseMetadata.has_scorm_package',
                  'nti.app.products.courseware_scorm.client.SCORMCloudClient.enrollment_registration_exists',
                  'nti.app.products.courseware_scorm.tests.test_client.MockSCORMCloudService.get_course_service',
+                 'nti.app.products.courseware_scorm.tests.test_client.MockSCORMCloudService.get_tag_service',
                  'nti.app.products.courseware_scorm.tests.test_client.MockSCORMCloudService.get_registration_service',
                  'nti.app.products.courseware_scorm.tests.test_management_views._do_on_scorm_package_launched',
                  'nti.app.products.courseware_scorm.tests.test_management_views._do_on_scorm_registration_postback')
@@ -165,6 +177,7 @@ class TestManagementViews(CoursewareSCORMLayerTest):
                                       mock_has_scorm,
                                       mock_has_enrollment_reg,
                                       mock_get_course_service,
+                                      mock_get_tag_service,
                                       mock_get_registration_service,
                                       mock_do_on_scorm_package_launched,
                                       mock_do_on_scorm_registration_postback):
@@ -176,6 +189,9 @@ class TestManagementViews(CoursewareSCORMLayerTest):
 
         mock_course_service = fudge.Fake()
         mock_get_course_service.is_callable().returns(mock_course_service)
+
+        mock_tag_service = fudge.Fake()
+        mock_get_tag_service.is_callable().returns(mock_tag_service)
 
         mock_registration_service = fudge.Fake()
         mock_get_registration_service.is_callable().returns(mock_registration_service)
@@ -225,6 +241,7 @@ class TestManagementViews(CoursewareSCORMLayerTest):
         import_href = next((link for link in new_course[LINKS] if link['rel'] == IMPORT_REL), None)[HREF]
         assert_that(import_href, is_not(none()))
         mock_course_service.expects('import_uploaded_course')
+        mock_tag_service.expects('set_scorm_tags')
         self.testapp.post(import_href, params=[('source', Upload('scorm.zip', b'data', 'application/zip'))])
 
         mock_has_scorm.is_callable().returns(True)
@@ -486,9 +503,9 @@ class TestManagementViews(CoursewareSCORMLayerTest):
                                              u'total_time', 0,
                                              u'activity', None)))
 
-        # Make sure registration reports are removed when a regid is removed
+        # We do not remove reports when deleting
         mock_registration_service.expects('deleteRegistration')
         enrollment_manager = ICourseEnrollmentManager(course)
         enrollment_manager.drop(new_user)
         report = container.get_registration_report(new_user)
-        assert_that(report, is_(none()))
+        assert_that(report, is_not(none()))

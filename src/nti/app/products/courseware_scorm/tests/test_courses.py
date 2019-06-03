@@ -30,7 +30,7 @@ class TestCourses(CoursewareSCORMLayerTest):
         assert_that(meta.has_scorm_package(), is_(False))
         meta.scorm_id = u'12345678'
         assert_that(meta.has_scorm_package(), is_(True))
-        
+
         container = IUserRegistrationReportContainer(meta, None)
         assert_that(container, is_not(none()))
 

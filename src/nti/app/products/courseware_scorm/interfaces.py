@@ -20,6 +20,15 @@ from zope.container.interfaces import IContainer
 
 from zope.location.interfaces import IContained
 
+from nti.appserver.workspaces.interfaces import IWorkspace
+from nti.appserver.workspaces.interfaces import IContainerCollection
+
+from nti.contenttypes.presentation.interfaces import INTIIDIdentifiable
+from nti.contenttypes.presentation.interfaces import IAssetTitleDescribed
+from nti.contenttypes.presentation.interfaces import IGroupOverViewable
+from nti.contenttypes.presentation.interfaces import INonExportableAsset
+from nti.contenttypes.presentation.interfaces import ICoursePresentationAsset
+
 from nti.contenttypes.completion.interfaces import IProgress
 from nti.contenttypes.completion.interfaces import ICompletableItem
 
@@ -41,8 +50,22 @@ from nti.schema.field import DecodingValidTextLine as ValidTextLine
 
 class ISCORMCourseInstance(ICourseInstance, IDoNotCreateDefaultOutlineCourseInstance):
     """
-    A concrete instance of a SCORM course.
+    A course, where the outline is only a :class:`IScormContent`.
     """
+
+
+class ISCORMContentRef(IAssetTitleDescribed,
+                       IGroupOverViewable,
+                       INTIIDIdentifiable,
+                       ICoursePresentationAsset,
+                       INonExportableAsset,
+                       ICompletableItem):
+    """
+    A presentation asset ref pointing towards scorm content.
+    """
+
+    scorm_id = ValidTextLine(title=u"The SCORM ID",
+                             required=True)
 
 
 class ISCORMCourseMetadata(IContained, IAttributeAnnotatable, ICompletableItem):
@@ -51,12 +74,13 @@ class ISCORMCourseMetadata(IContained, IAttributeAnnotatable, ICompletableItem):
     """
 
     scorm_id = ValidTextLine(title=u"The SCORM ID",
-                             required=False)
+                             required=True)
 
     def has_scorm_package():
         """
         Whether a SCORM package has been uploaded to the course.
         """
+
 
 class IPostBackURLUtility(interface.Interface):
 
@@ -64,6 +88,7 @@ class IPostBackURLUtility(interface.Interface):
         """
         Returns a url that should be used for registration result postbacks
         """
+
 
 class IPostBackPasswordUtility(interface.Interface):
 
@@ -77,6 +102,19 @@ class IPostBackPasswordUtility(interface.Interface):
         """
         Returns true if the username and password is correct for the enrollment.
         """
+
+
+class ISCORMWorkspace(IWorkspace):
+    """
+    A workspace to hold SCORM information.
+    """
+
+
+class ISCORMCollection(IContainerCollection):
+    """
+    Contains a collection of :class:`IScormInstance` objects.
+    """
+
 
 class ISCORMCloudClient(interface.Interface):
     """
@@ -117,11 +155,6 @@ class ISCORMCloudClient(interface.Interface):
     def sync_enrollment_record(enrollment_record, course):
         """
         Syncs a course enrollment record with SCORM Cloud.
-        """
-
-    def delete_enrollment_record(enrollment_record):
-        """
-        Removes a course enrollment registration from SCORM Cloud.
         """
 
     def launch(course, user, redirect_url):
@@ -169,6 +202,31 @@ class ISCORMCloudClient(interface.Interface):
         Returns the SCORM metadata associated with the specified course.
         """
 
+    def get_scorm_instances():
+        """
+        Returns all available :class:`IScormInstance` content objects.
+        """
+
+    def get_scorm_tags(scorm_id):
+        """
+        Returns an iterable of tags for the given scorm id.
+        """
+
+    def set_scorm_tags(scorm_id, tags):
+        """
+        Set the given iterable of tags on the scorm id.
+        """
+
+    def add_scorm_tag(scorm_id, tag):
+        """
+        Add the given tag.
+        """
+
+    def remove_scorm_tag(scorm_id, tag):
+        """
+        Remove the given tag.
+        """
+
 
 class ISCORMIdentifier(interface.Interface):
     """
@@ -181,9 +239,28 @@ class ISCORMIdentifier(interface.Interface):
         """
 
 
+class ISCORMContentInfo(interface.Interface):
+    """
+    A scorm course content info. This represents the scorm content or
+    course on scorm cloud.
+    """
+
+    scorm_id = ValidTextLine(title=u'The ID of the scorm content.',
+                             required=True)
+
+    title = ValidTextLine(title=u'The scorm content title',
+                          required=True)
+
+    course_version = ValidTextLine(title=u'The course version.')
+
+    registration_count = Number(title=u'The registration count.')
+
+    tags = ListOrTuple(title=u'The scorm content tags.')
+
+
 class IScormInstance(interface.Interface):
     """
-    A registration instance in a SCORM course.
+    A registration instance to a SCORM course.
     """
 
     instance_id = ValidTextLine(title=u'The ID of the instance.',
@@ -561,6 +638,14 @@ class ISCORMRegistrationReport(interface.Interface):
                       default=None)
 
 
+class IRegistrationReportContainer(IContainer):
+    """
+    Contains :class:`IUserRegistrationReportContainer`,
+    """
+
+    contains('IUserRegistrationReportContainer')
+
+
 class IUserRegistrationReportContainer(IContainer):
     """
     Contains :class:`ISCORMRegistrationReport` that have been generated by users in a SCORM SCO.
@@ -568,21 +653,22 @@ class IUserRegistrationReportContainer(IContainer):
 
     contains(ISCORMRegistrationReport)
 
-    def add_registration_report(registration_report, user):
+    def add_registration_report(scorm_id, registration_report):
         """
         Adds a :class:`ISCORMRegistrationReport` to this container for the given :class:`IUser`.
         """
 
-    def get_registration_report(user):
+    def get_registration_report(scorm_id):
         """
         Returns the :class:`ISCORMRegistrationReport` from this container given a :class:`IUser`,
         or None if it does not exist.
         """
 
-    def remove_registration_report(user):
+    def remove_registration_report(scorm_id):
         """
         Removes from this container the :class:`ISCORMRegistrationReport` for the given :class:`IUser`.
         """
+
 
 class ISCORMRegistrationRemovedEvent(interface.Interface):
     """

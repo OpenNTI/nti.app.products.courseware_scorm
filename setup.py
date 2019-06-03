@@ -49,6 +49,7 @@ setup(
     tests_require=TESTS_REQUIRE,
     install_requires=[
         'setuptools',
+        'nti.app.contenttypes.presentation',
         'nti.app.products.courseware',
         'nti.app.products.courseware_admin',
         'nti.contenttypes.courses',

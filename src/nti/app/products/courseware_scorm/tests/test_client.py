@@ -10,57 +10,40 @@ from __future__ import absolute_import
 from hamcrest import none
 from hamcrest import is_not
 from hamcrest import assert_that
+does_not = is_not
 
 from zope import component
 from zope import interface
+
+from nti.app.products.courseware_scorm.client import SCORMCloudClient
 
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 
 from nti.app.products.courseware_scorm.tests import CoursewareSCORMLayerTest
 
-from nti.scorm_cloud.client.config import Configuration
+from nti.scorm_cloud.client import ScormCloudService
 
 from nti.scorm_cloud.interfaces import IScormCloudService
 
 
 @interface.implementer(IScormCloudService)
-class MockSCORMCloudService(object):
+class MockSCORMCloudService(ScormCloudService):
     """
     A mock SCORM Cloud service used for testing.
     """
 
-    def __init__(self, configuration):
-        self.config = configuration
-
-    @classmethod
-    def withconfig(cls, config):
-        return cls(config)
-
-    @classmethod
-    def withargs(cls, appid, secret, serviceurl,
-                 origin='rusticisoftware.pythonlibrary.2.0.0'):
-        return cls(Configuration(appid, secret, serviceurl, origin))
-
-    def get_course_service(self):
-        pass
-
-    def get_debug_service(self):
-        pass
-
-    def get_registration_service(self):
-        pass
-
-    def get_invitation_service(self):
-        pass
-
-    def get_reporting_service(self):
-        pass
-
-    def get_upload_service(self):
-        pass
-
 
 class TestClient(CoursewareSCORMLayerTest):
+
+    def setUp(self):
+        # A non-None client for tests
+        self.client = SCORMCloudClient(app_id=u'app_id',
+                                      secret_key=u'secret_key',
+                                      service_url=u'service_url')
+        component.getGlobalSiteManager().registerUtility(self.client, ISCORMCloudClient)
+
+    def tearDown(self):
+        component.getGlobalSiteManager().unregisterUtility(self.client)
 
     def test_client(self):
         service = component.getUtility(IScormCloudService)

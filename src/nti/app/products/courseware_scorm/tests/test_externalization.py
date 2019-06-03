@@ -7,8 +7,10 @@ from __future__ import absolute_import
 
 # pylint: disable=protected-access,too-many-public-methods
 
+from hamcrest import is_
 from hamcrest import none
 from hamcrest import is_not
+from hamcrest import not_none
 from hamcrest import has_item
 from hamcrest import has_length
 from hamcrest import assert_that
@@ -19,16 +21,25 @@ from datetime import datetime
 from nti.app.products.courseware_scorm.interfaces import ISCORMRuntime
 from nti.app.products.courseware_scorm.interfaces import ISCORMActivity
 from nti.app.products.courseware_scorm.interfaces import ISCORMObjective
+from nti.app.products.courseware_scorm.interfaces import ISCORMContentInfo
 from nti.app.products.courseware_scorm.interfaces import ISCORMInteraction
 from nti.app.products.courseware_scorm.interfaces import IScormRegistration
 from nti.app.products.courseware_scorm.interfaces import ISCORMRegistrationReport
 
+from nti.app.products.courseware_scorm.model import SCORMContentRef
+
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
 from nti.externalization.externalization import toExternalObject
+
 from nti.externalization.interfaces import StandardExternalFields
 
+from nti.externalization.internalization import find_factory_for
+from nti.externalization.internalization import update_from_external_object
+
 from nti.externalization.testing import externalizes
+
+from nti.scorm_cloud.client.course import CourseData
 
 from nti.scorm_cloud.client.registration import Static
 from nti.scorm_cloud.client.registration import Comment
@@ -46,6 +57,52 @@ ID = StandardExternalFields.ID
 
 
 class TestExternal(ApplicationLayerTest):
+
+    def test_scorm_content(self):
+        course_data = CourseData()
+        course_data.title = u'new title'
+        course_data.courseId = u'123456'
+        course_data.numberOfVersions = u'2'
+        course_data.numberOfRegistrations = u'18'
+        content = ISCORMContentInfo(course_data)
+        ext_obj = toExternalObject(content)
+        assert_that(ext_obj, has_entries(u'title', u'new title',
+                                         u'scorm_id', u'123456',
+                                         u'course_version', u'2',
+                                         u'registration_count', 18))
+
+        assert_that(find_factory_for(ext_obj),
+                    not_none())
+
+        # Bad data
+        course_data.numberOfRegistrations = u'aaa'
+        content = ISCORMContentInfo(course_data)
+        ext_obj = toExternalObject(content)
+        assert_that(ext_obj, has_entries(u'title', u'new title',
+                                         u'scorm_id', u'123456',
+                                         u'course_version', u'2',
+                                         u'registration_count', none()))
+
+    def test_scorm_content_ref(self):
+        scorm_id = u'tag:nextthought.com,2011-10:NTI-3663246001124377908_4744212239739874217'
+        ref = SCORMContentRef(scorm_id=scorm_id,
+                              title=u'scorm content title',
+                              description=u'scorm description')
+        ext_obj = toExternalObject(ref)
+        assert_that(ext_obj, has_entries(u'scorm_id', scorm_id,
+                                         u'title', u'scorm content title',
+                                         u'description', u'scorm description'))
+
+        assert_that(find_factory_for(ext_obj),
+                    not_none())
+
+        internal = find_factory_for(ext_obj)()
+        update_from_external_object(internal,
+                                    ext_obj,
+                                    require_updater=True)
+        assert_that(internal.scorm_id, is_(scorm_id))
+        assert_that(internal.title, is_(u'scorm content title'))
+        assert_that(internal.description, is_(u'scorm description'))
 
     def test_scorm_progress(self):
         report = RegistrationReport(format_=u'course',

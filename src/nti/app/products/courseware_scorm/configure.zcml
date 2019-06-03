@@ -47,9 +47,13 @@
 			 for="nti.contenttypes.courses.interfaces.ICourseInstanceEnrollmentRecord"
 			 provides=".interfaces.ISCORMIdentifier" />
 
-	 <adapter factory=".courses.SCORMRegistrationIdentifier"
+	<adapter factory=".courses.SCORMRegistrationIdentifier"
  			 for="nti.dataserver.interfaces.IUser nti.contenttypes.courses.interfaces.ICourseInstance"
  			 provides=".interfaces.ISCORMIdentifier" />
+
+    <adapter factory=".model.ScormContentInfo"
+             for="nti.scorm_cloud.client.course.CourseData"
+             provides=".interfaces.ISCORMContentInfo" />
 
 	<adapter factory=".model.ScormInstance"
  			 for="nti.scorm_cloud.client.registration.Instance"
@@ -110,9 +114,6 @@
  			 for=".interfaces.ISCORMCourseInstance" />
 
 	<!-- Subscribers -->
-	<subscriber handler=".subscribers._enrollment_record_dropped" />
-	<subscriber handler=".subscribers._on_course_instance_removed" />
-
 	<subscriber handler=".completion._on_user_progress_updated" />
 
 	<subscriber factory=".subscribers.SCORMAllCoursesCollectionAcceptsProvider"
@@ -142,11 +143,34 @@
 	</configure>
 
 	<configure zcml:condition="have devmode">
-		<scorm:registerSCORMCloudClient
-			app_id="AQYJPZXZAY"
-			secret_key="G9M1J6uv1hr3ll7wnkPWGFXutMqQXbdhXX8dZnE8"
- 			service_url="https://cloud.scorm.com/EngineWebServices" />
+	    <configure zcml:condition="not-have testmode">
+		  <scorm:registerSCORMCloudClient
+			     app_id="AQYJPZXZAY"
+			     secret_key="G9M1J6uv1hr3ll7wnkPWGFXutMqQXbdhXX8dZnE8"
+ 			     service_url="https://cloud.scorm.com/EngineWebServices" />
+ 		</configure>
 	</configure>
+
+    <!-- Workspaces -->
+    <!-- A subscriber for enumeration -->
+    <subscriber factory=".workspaces.SCORMWorkspace"
+                provides=".interfaces.ISCORMWorkspace" />
+
+    <adapter name="SCORM"
+             for="nti.coremetadata.interfaces.IUser
+                  pyramid.interfaces.IRequest"
+             factory=".workspaces.SCORMPathAdapter"
+             provides="zope.traversing.interfaces.IPathAdapter" />
+
+    <adapter name="SCORMInstances"
+             for="nti.contenttypes.courses.interfaces.ICourseInstance
+                  pyramid.interfaces.IRequest"
+             factory=".workspaces.course_scorm_collection_path_adapter"
+             provides="zope.traversing.interfaces.IPathAdapter" />
+
+    <!-- And an adapter for direct access -->
+    <adapter factory=".workspaces.SCORMWorkspace"
+             provides=".interfaces.ISCORMWorkspace" />
 
 	<!-- Decorators -->
 	<subscriber factory=".decorators._SCORMCourseInstanceDecorator"
@@ -164,6 +188,18 @@
 				for="nti.app.products.courseware.interfaces.ICourseInstanceEnrollment
 				     pyramid.interfaces.IRequest" />
 
+    <subscriber factory=".decorators._SCORMContentRefDecorator"
+                provides="nti.externalization.interfaces.IExternalObjectDecorator"
+                for="nti.app.products.courseware_scorm.interfaces.ISCORMContentRef
+                     pyramid.interfaces.IRequest" />
+
+    <subscriber factory=".decorators._CourseInstanceDecorator"
+                provides="nti.externalization.interfaces.IExternalObjectDecorator"
+                for="nti.contenttypes.courses.interfaces.ICourseInstance
+                     pyramid.interfaces.IRequest" />
+
+    <utility factory=".ntiids._SCORMContentRefResolver" name="SCORMContentRef" />
+
 	<!-- Externalization -->
 	<include package="nti.externalization" file="meta.zcml" />
 	<include package="nti.externalization" />
@@ -171,10 +207,12 @@
 	<ext:registerAutoPackageIO
 					root_interfaces=".interfaces.ISCORMCourseMetadata
 									 .interfaces.IScormInstance
+									 .interfaces.ISCORMContentInfo
 									 .interfaces.IScormRegistration
 									 .interfaces.ISCORMRegistrationReport
 									 .interfaces.ISCORMObjective
 									 .interfaces.ISCORMResponse
+									 .interfaces.ISCORMContentRef
 									 .interfaces.ISCORMInteraction
 									 .interfaces.ISCORMComment
 									 .interfaces.ISCORMLearnerPreference
