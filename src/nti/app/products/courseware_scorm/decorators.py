@@ -124,7 +124,7 @@ class _CourseInstanceEnrollmentDecorator(AbstractAuthenticatedRequestAwareDecora
 class _SCORMContentRefDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
     def _do_decorate_external(self, context, external):
-        course = find_interface(self.context, ICourseInstance, strict=True)
+        course = find_interface(context, ICourseInstance, strict=True)
         _links = external.setdefault(LINKS, [])
         if    is_admin_or_content_admin_or_site_admin(self.remoteUser) \
            or is_course_instructor_or_editor(course, self.remoteUser):
