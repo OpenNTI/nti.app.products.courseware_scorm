@@ -120,18 +120,17 @@ class SCORMRegistrationRemovedEvent(object):
 @interface.implementer(IUserRegistrationReportContainer)
 class UserRegistrationReportContainer(CaseInsensitiveCheckingLastModifiedBTreeContainer):
 
-    def add_registration_report(self, registration_report, user):
-        self.remove_registration_report(user)
-        self[user.username] = registration_report
+    def add_registration_report(self, scorm_id, registration_report):
+        self[scorm_id] = registration_report
 
-    def get_registration_report(self, user):
-        return self.get(user.username)
+    def get_registration_report(self, scorm_id):
+        return self.get(scorm_id)
 
-    def remove_registration_report(self, user):
-        if user is None:
+    def remove_registration_report(self, scorm_id):
+        if scorm_id is None:
             return False
         try:
-            del self[user.username]
+            del self[scorm_id]
             result = True
         except KeyError:
             result = False

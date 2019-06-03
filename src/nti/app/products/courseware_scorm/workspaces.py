@@ -21,6 +21,8 @@ from zope.component.hooks import getSite
 
 from zope.container.contained import Contained
 
+from zope.intid.interfaces import IIntIds
+
 from zope.location.interfaces import IContained
 
 from zope.traversing.interfaces import IPathAdapter
@@ -159,7 +161,8 @@ class CourseScormInstanceCollection(SCORMInstanceCollection):
 
     @Lazy
     def tags(self):
-        return (ICourseCatalogEntry(self.context).ntiid,)
+        intids = component.getUtility(IIntIds)
+        return (str(intids.getId(self.__parent__)),)
 
     def _include_filter(self, scorm_content):
         return set(self.tags) & set(scorm_content.tags or ()) \

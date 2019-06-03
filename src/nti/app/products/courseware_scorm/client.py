@@ -76,7 +76,7 @@ class ScormCourseNoPasswordError(Exception):
 @interface.implementer(IPostBackURLUtility)
 class PostBackURLGenerator(object):
 
-    def url_for_registration_postback(self, enrollment, scorm_id, request=None):
+    def url_for_registration_postback(self, enrollment, request=None):
         if request is None:
             request = get_current_request()
         link = Link(enrollment,
@@ -93,9 +93,8 @@ class DevModePostbackURLGenerator(PostBackURLGenerator):
     SCORM cloud makes a dns request at registration time to validate the provided url
     which obviously doesn't work for non public facing hosts.
     """
-    def url_for_registration_postback(self, enrollment_record, scorm_id, request=None):
+    def url_for_registration_postback(self, enrollment_record, request=None):
         url = super(DevModePostbackURLGenerator, self).url_for_registration_postback(enrollment_record,
-                                                                                     scorm_id,
                                                                                      request=request)
         logger.debug('postback url doesnt work in devmode. %s', url)
         return None
@@ -242,7 +241,7 @@ class SCORMCloudClient(object):
         if metadata.has_scorm_package():
             user = User.get_user(enrollment_record.Principal.id)
             reg_id = self._get_registration_id(course, user)
-            xxx
+            # FIXME
             self.create_registration(reg_id,
                                      user,
                                      course)
@@ -260,7 +259,7 @@ class SCORMCloudClient(object):
                                                ICourseInstanceEnrollment)
 
         url_factory = component.getUtility(IPostBackURLUtility)
-        url = url_factory.url_for_registration_postback(enrollment, scorm_id)
+        url = url_factory.url_for_registration_postback(enrollment)
         user = None
         password = None
         if url:
@@ -377,7 +376,8 @@ class SCORMCloudClient(object):
         return ISCORMRegistrationReport(result)
 
     def enrollment_registration_exists(self, course, user):
-        get_registration_id_for_user_and_course(scorm_id, user, course)
+        # FIXME
+        #get_registration_id_for_user_and_course(scorm_id, user, course)
         registration_id = self._get_registration_id(course, user)
         return self.registration_exists(registration_id)
 
