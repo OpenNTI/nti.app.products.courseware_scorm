@@ -326,7 +326,7 @@ class SCORMRegistrationResultPostBack(AbstractView):
 
         user = User.get_user(self.context.Username)
         course = self.context.CourseInstance
-        unused_enrollment_ds_intid, scorm_id = parse_registration_id(report.regid)
+        unused_enrollment_ds_intid, scorm_id = parse_registration_id(report.registration_id)
         registration_id = get_registration_id_for_user_and_course(scorm_id,
                                                                   user,
                                                                   course)
