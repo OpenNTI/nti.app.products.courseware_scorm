@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 .. $Id$
@@ -35,6 +34,7 @@ from nti.app.products.courseware_scorm.courses import SCORMCourseInstance
 
 from nti.app.products.courseware_scorm.interfaces import ISCORMCollection
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
+from nti.app.products.courseware_scorm.interfaces import ISCORMContentInfo
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 
@@ -276,3 +276,28 @@ class SCORMCollectionPutView(AbstractAuthenticatedView,
         result = LocatedExternalDict()
         result['scorm_id'] = scorm_id
         return result
+
+
+@view_config(route_name='objects.generic.traversal',
+             renderer='rest',
+             context=ISCORMContentInfo,
+             permission=ACT_CONTENT_EDIT,
+             request_method='DELETE')
+class ScormInstanceDeleteView(AbstractAuthenticatedView,
+                              SCORMContentUploadMixin):
+    """
+    A view for deleting a :class:`ISCORMInstance` object from scorm_cloud.
+    """
+
+    def __call__(self):
+        client = self._get_scorm_client()
+        try:
+            client.delete_course(self.scorm_id)
+        except ScormCloudError as exc:
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                 'message': exc.message,
+                             },
+                             None)
+        return hexc.HTTPNoContent()

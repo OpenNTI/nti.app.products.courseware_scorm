@@ -21,10 +21,12 @@ from nti.app.products.courseware_scorm.courses import is_course_admin
 
 from nti.app.products.courseware_scorm.interfaces import ISCORMContentRef
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
+from nti.app.products.courseware_scorm.interfaces import ISCORMContentInfo
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
 
 from nti.app.products.courseware_scorm.views import UPDATE_SCORM_VIEW_NAME
+from nti.app.products.courseware_scorm.views import DELETE_SCORM_CONTENT_REL
 from nti.app.products.courseware_scorm.views import SCORM_PROGRESS_VIEW_NAME
 from nti.app.products.courseware_scorm.views import GET_SCORM_ARCHIVE_VIEW_NAME
 from nti.app.products.courseware_scorm.views import IMPORT_SCORM_COURSE_VIEW_NAME
@@ -156,3 +158,19 @@ class _CourseInstanceDecorator(AbstractAuthenticatedRequestAwareDecorator):
                  rel=SCORM_COLLECTION_NAME,
                  elements=(SCORM_COLLECTION_NAME,))
         )
+
+
+@component.adapter(ISCORMContentInfo)
+@interface.implementer(IExternalObjectDecorator)
+class _SCORMContentInfoDecorator(AbstractAuthenticatedRequestAwareDecorator):
+    """
+    Decorate the scorm content info.
+    """
+
+    def _predicate(self, context, unused_external):
+        return  component.queryUtility(ISCORMCloudClient) is not None \
+            and has_permission(ACT_CONTENT_EDIT, context, self.request)
+
+    def _do_decorate_external(self, context, external):
+        _links = external.setdefault(LINKS, [])
+        _links.append(Link(context, rel=DELETE_SCORM_CONTENT_REL))

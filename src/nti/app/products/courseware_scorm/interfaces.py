@@ -23,10 +23,11 @@ from zope.location.interfaces import IContained
 from nti.appserver.workspaces.interfaces import IWorkspace
 from nti.appserver.workspaces.interfaces import IContainerCollection
 
+from nti.contenttypes.presentation.interfaces import href_schema_field
 from nti.contenttypes.presentation.interfaces import INTIIDIdentifiable
-from nti.contenttypes.presentation.interfaces import IAssetTitleDescribed
 from nti.contenttypes.presentation.interfaces import IGroupOverViewable
 from nti.contenttypes.presentation.interfaces import INonExportableAsset
+from nti.contenttypes.presentation.interfaces import IAssetTitleDescribed
 from nti.contenttypes.presentation.interfaces import ICoursePresentationAsset
 
 from nti.contenttypes.completion.interfaces import IProgress
@@ -66,6 +67,8 @@ class ISCORMContentRef(IAssetTitleDescribed,
 
     scorm_id = ValidTextLine(title=u"The SCORM ID",
                              required=True)
+
+    icon = href_schema_field(title=u"Icon href", required=False)
 
 
 class ISCORMCourseMetadata(IContained, IAttributeAnnotatable, ICompletableItem):
@@ -112,7 +115,7 @@ class ISCORMWorkspace(IWorkspace):
 
 class ISCORMCollection(IContainerCollection):
     """
-    Contains a collection of :class:`IScormInstance` objects.
+    Contains a collection of :class:`ISCORMContentInfo` objects.
     """
 
 
@@ -204,7 +207,7 @@ class ISCORMCloudClient(interface.Interface):
 
     def get_scorm_instances():
         """
-        Returns all available :class:`IScormInstance` content objects.
+        Returns all available :class:`ISCORMContentInfo` content objects.
         """
 
     def get_scorm_tags(scorm_id):
