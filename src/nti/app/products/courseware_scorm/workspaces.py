@@ -36,8 +36,6 @@ from nti.app.products.courseware_scorm.interfaces import ISCORMWorkspace
 from nti.app.products.courseware_scorm.interfaces import ISCORMCollection
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 
-from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
-
 from nti.dataserver.authorization import is_admin_or_content_admin_or_site_admin
 
 from nti.dataserver.interfaces import IUser

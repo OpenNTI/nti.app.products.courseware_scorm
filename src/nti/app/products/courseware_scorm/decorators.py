@@ -50,8 +50,6 @@ from nti.links.externalization import render_link
 
 from nti.links.links import Link
 
-from nti.ntiids.ntiids import find_object_with_ntiid
-
 from nti.traversal.traversal import find_interface
 
 LINKS = StandardExternalFields.LINKS

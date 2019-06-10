@@ -47,13 +47,14 @@ from nti.app.products.courseware_scorm.courses import SCORM_COURSE_MIME_TYPE
 
 from nti.app.products.courseware_scorm.decorators import PROGRESS_REL
 
-from nti.app.products.courseware_scorm.interfaces import ISCORMIdentifier
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 from nti.app.products.courseware_scorm.interfaces import ISCORMPackageLaunchEvent
 from nti.app.products.courseware_scorm.interfaces import ISCORMRegistrationPostbackEvent
 from nti.app.products.courseware_scorm.interfaces import IUserRegistrationReportContainer
 
 from nti.app.products.courseware_scorm.tests import CoursewareSCORMLayerTest
+
+from nti.app.products.courseware_scorm.utils import get_registration_id_for_user_and_course
 
 from nti.app.products.courseware_scorm.views import GET_SCORM_ARCHIVE_VIEW_NAME
 from nti.app.products.courseware_scorm.views import IMPORT_SCORM_COURSE_VIEW_NAME
@@ -251,6 +252,8 @@ class TestManagementViews(CoursewareSCORMLayerTest):
 
         metadata = new_course[u'Metadata']
         assert_that(metadata, is_not(none()))
+        scorm_id = metadata.get('scorm_id')
+        assert_that(scorm_id, not_none())
         assert_that(metadata, has_entry(LINKS, has_item(has_entry('rel', LAUNCH_REL))))
 
         catalog_entry_href = '%s/CourseCatalogEntry' % new_course_href
@@ -306,7 +309,9 @@ class TestManagementViews(CoursewareSCORMLayerTest):
 
         # Test import-replace
         assert_that(self.registration_id, is_not(none()))
-        registration = Registration(appId=u'appId', registrationId=self.registration_id, courseId=u'courseId')
+        registration = Registration(appId=u'appId',
+                                    registrationId=self.registration_id,
+                                    courseId=u'courseId')
         mock_registration_service.provides('getRegistrationList').returns([registration])
         mock_registration_service.expects('deleteRegistration')
         self.testapp.post(import_href, params=[('source', Upload('scorm.zip', b'data', 'application/zip')),
@@ -339,7 +344,9 @@ class TestManagementViews(CoursewareSCORMLayerTest):
                   'password': self.h_password,
                   'data': postback_data1}
         mock_do_on_scorm_registration_postback.expects_call()
-        self.testapp.post(self.postback_href, params=params, content_type='application/x-www-form-urlencoded')
+        self.testapp.post(self.postback_href,
+                          params=params,
+                          content_type='application/x-www-form-urlencoded')
 
         self._test_completion_providers(new_username1, mock_has_scorm)
 
@@ -381,13 +388,8 @@ class TestManagementViews(CoursewareSCORMLayerTest):
         self.testapp.delete(new_admin_href)
         self.course_ntiid = None
 
-    def _get_registration_id(self, course, user):
-        identifier = component.getMultiAdapter((user, course),
-                                               ISCORMIdentifier)
-        return identifier.get_id()
-
     @WithMockDSTrans(site_name='janux.ou.edu')
-    def _test_enrollment_links(self, username):
+    def _test_enrollment_links(self, username, scorm_id):
         new_user = User.get_user(username)
         entry = find_object_with_ntiid(self.course_ntiid)
         course = ICourseInstance(entry)
@@ -414,7 +416,7 @@ class TestManagementViews(CoursewareSCORMLayerTest):
         self.completed_items_href = render_link(completed_items_link)[HREF]
 
         self.h_username, self.h_password = PostBackPasswordUtility().credentials_for_enrollment(enrollment)
-        self.registration_id = self._get_registration_id(course, new_user)
+        self.registration_id = get_registration_id_for_user_and_course(scorm_id, new_user, course)
 
     @WithMockDSTrans(site_name='janux.ou.edu')
     def _test_completion_providers(self, username, mock_has_scorm):

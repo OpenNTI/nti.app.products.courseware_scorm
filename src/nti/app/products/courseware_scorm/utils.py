@@ -22,7 +22,7 @@ def get_registration_id_for_user_and_course(scorm_id, user, course):
     """
     identifier = component.getMultiAdapter((user, course),
                                             ISCORMIdentifier)
-    return '%s_%s' % (identifier, scorm_id)
+    return '%s_%s' % (identifier.get_id(), scorm_id)
 
 
 def parse_registration_id(registration_id):
