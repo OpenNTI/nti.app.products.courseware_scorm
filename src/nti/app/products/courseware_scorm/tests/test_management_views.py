@@ -293,7 +293,7 @@ class TestManagementViews(CoursewareSCORMLayerTest):
         self.h_username, self.h_password = None, None
 
         # Check for SCORM progress Link on enrollment records
-        self._test_enrollment_links(new_username1)
+        self._test_enrollment_links(new_username1, scorm_id)
 
         # Test launch
         new_course = self.testapp.get(new_course_href, extra_environ=new_user_env).json_body

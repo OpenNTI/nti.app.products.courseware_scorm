@@ -337,7 +337,7 @@ class SCORMRegistrationResultPostBack(AbstractView):
         metadata = ISCORMCourseMetadata(course)
         container = IUserRegistrationReportContainer(metadata)
         # FIXME
-        container.add_registration_report(report, user, scorm_id)
+        container.add_registration_report(scorm_id, report)
         # FIXME
         notify(UserProgressUpdatedEvent(obj=metadata,
                                         user=user,
