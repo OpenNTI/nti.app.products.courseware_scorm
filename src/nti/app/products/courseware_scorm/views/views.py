@@ -26,6 +26,8 @@ from zope import component
 
 from zope.event import notify
 
+from zope.intid.interfaces import IIntIds
+
 from nti.app.base.abstract_views import AbstractView
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
@@ -53,10 +55,16 @@ from nti.app.products.courseware_scorm.views import LAUNCH_SCORM_COURSE_VIEW_NAM
 from nti.app.products.courseware_scorm.views import PREVIEW_SCORM_COURSE_VIEW_NAME
 from nti.app.products.courseware_scorm.views import REGISTRATION_RESULT_POSTBACK_VIEW_NAME
 
+from nti.contentlibrary.indexed_data import get_library_catalog
+
 from nti.contenttypes.completion.interfaces import UserProgressUpdatedEvent
 
-from nti.contenttypes.courses.interfaces import ICourseInstance
+from nti.contenttypes.courses.common import get_course_packages
 
+from nti.contenttypes.courses.interfaces import ICourseInstance
+from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
+
+from nti.contenttypes.courses.utils import get_parent_course
 from nti.contenttypes.courses.utils import is_course_instructor_or_editor
 
 from nti.dataserver.authorization import ACT_READ
@@ -65,6 +73,8 @@ from nti.dataserver.authorization import is_admin_or_content_admin_or_site_admin
 from nti.dataserver.users.users import User
 
 from nti.scorm_cloud.client.registration import RegistrationReport
+
+from nti.site.site import get_component_hierarchy_names
 
 from nti.traversal.traversal import find_interface
 
@@ -296,13 +306,48 @@ class SCORMRegistrationResultPostBack(AbstractView):
     the registration id (i.e. <enrollment-ds-intid>_<scorm-id>) in the payload.
     """
 
+    def course_containers(self, course):
+        result = set()
+        courses = {course, get_parent_course(course)}
+        courses.discard(None)
+        for _course in courses:
+            entry = ICourseCatalogEntry(_course)
+            for package in get_course_packages(_course):
+                result.update(self.pkg_containers(package))
+            result.add(entry.ntiid)
+        return result
+
+    def get_scorm_refs(self, course, scorm_id):
+        """
+        Return all scorm content refs in lessons in our course, returning
+        the collection that matches the given scorm_id.
+        """
+        catalog = get_library_catalog()
+        intids = component.getUtility(IIntIds)
+        container_ntiids = self.course_containers(course)
+        result = []
+        for item in catalog.search_objects(intids=intids,
+                                           container_all_of=False,
+                                           container_ntiids=container_ntiids,
+                                           sites=get_component_hierarchy_names(),
+                                           provided=(ISCORMContentRef,)):
+            if item.scorm_id == scorm_id:
+                result.append(item)
+        return result
+
     def _post_process(self, scorm_id, user, course):
+        """
+        Send events for the completable items as having progress updated. This
+        will include scorm metadata or scorm content refs. If many refs point
+        the same scorm_id, each will have progress/completion based on the
+        registration report in this view's payload.
+        """
         if ISCORMCourseInstance.providedBy(course):
             scorm_meta = ISCORMCourseMetadata(course)
             scorm_content = (scorm_meta,)
         else:
-            # FIXME
-            scorm_content = (scorm_meta,)
+            # Ok, get all valid scorm content refs for our scorm_id
+            scorm_content = self.get_scorm_refs(course, scorm_id)
 
         for scorm_content in scorm_content:
             notify(UserProgressUpdatedEvent(obj=scorm_content,
