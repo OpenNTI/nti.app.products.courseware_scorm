@@ -306,6 +306,15 @@ class SCORMRegistrationResultPostBack(AbstractView):
     the registration id (i.e. <enrollment-ds-intid>_<scorm-id>) in the payload.
     """
 
+    def pkg_containers(self, package):
+        result = []
+        def recur(unit):
+            for child in unit.children or ():
+                recur(child)
+            result.append(unit.ntiid)
+        recur(package)
+        return result
+
     def course_containers(self, course):
         result = set()
         courses = {course, get_parent_course(course)}

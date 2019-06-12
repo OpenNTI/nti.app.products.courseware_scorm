@@ -354,8 +354,7 @@ class TestManagementViews(CoursewareSCORMLayerTest):
         self._get_completed_items_href(new_username2)
 
         # Post to SyncRegistrationReport href
-        # FIXME
-        #self.testapp.post(self.sync_report_href)
+        self.testapp.post(self.sync_report_href)
 
         # Test CompletedItems
         completed_items = self.testapp.get(self.completed_items_href).json_body['Items']
