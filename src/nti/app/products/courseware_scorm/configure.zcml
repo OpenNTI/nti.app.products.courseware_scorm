@@ -117,9 +117,6 @@
 	<!-- Subscribers -->
 	<subscriber handler=".completion._on_user_progress_updated" />
 
-	<subscriber factory=".subscribers.SCORMAllCoursesCollectionAcceptsProvider"
-				provides="nti.app.products.courseware.interfaces.IAllCoursesCollectionAcceptsProvider" />
-
 	<subscriber factory=".completion._SCORMCompletableItemProvider"
 				provides="nti.contenttypes.completion.interfaces.IRequiredCompletableItemProvider"
 				for=".interfaces.ISCORMCourseInstance" />

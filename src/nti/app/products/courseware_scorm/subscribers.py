@@ -21,6 +21,7 @@ from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 logger = __import__('logging').getLogger(__name__)
 
 
+# Disabled: jz - 6.2019
 @component.adapter(IAllCoursesCollection)
 @interface.implementer(IAllCoursesCollectionAcceptsProvider)
 class SCORMAllCoursesCollectionAcceptsProvider(object):
