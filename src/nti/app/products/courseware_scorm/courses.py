@@ -29,6 +29,7 @@ from nti.app.products.courseware_scorm.interfaces import ISCORMIdentifier
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
+from nti.app.products.courseware_scorm.interfaces import IRegistrationReportContainer
 from nti.app.products.courseware_scorm.interfaces import ISCORMRegistrationRemovedEvent
 from nti.app.products.courseware_scorm.interfaces import IUserRegistrationReportContainer
 
@@ -48,6 +49,7 @@ from nti.contenttypes.courses.exporter import BaseSectionExporter
 
 from nti.contenttypes.courses.importer import BaseSectionImporter
 
+from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseSectionExporter
 from nti.contenttypes.courses.interfaces import ICourseSectionImporter
 from nti.contenttypes.courses.interfaces import ImportCourseTypeUnsupportedError
@@ -65,7 +67,7 @@ SCORM_CONTENT_CONTAINER_KEY = 'nti.app.products.courseware_scorm.courses.content
 
 SCORM_COURSE_MIME_TYPE = 'application/vnd.nextthought.courses.scormcourseinstance'
 
-USER_REGISTRATION_REPORT_CONTAINER_KEY = 'nti.app.products.courseware_scorm.courses.registration-report-container'
+REGISTRATION_REPORT_CONTAINER_KEY = 'nti.app.products.courseware_scorm.courses.registration-report-container'
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -116,7 +118,22 @@ class SCORMRegistrationRemovedEvent(object):
         self.user = user
 
 
-@component.adapter(ISCORMCourseMetadata)
+@component.adapter(ICourseInstance)
+@interface.implementer(IRegistrationReportContainer)
+class RegistrationReportContainer(CaseInsensitiveCheckingLastModifiedBTreeContainer):
+
+    def clear(self):
+        if len(self) == 0:
+            return
+        for key, value in list(self.items()):
+            value.clear()
+            del self[key]
+
+
+RegistrationReportContainerFactory = an_factory(RegistrationReportContainer,
+                                                REGISTRATION_REPORT_CONTAINER_KEY)
+
+
 @interface.implementer(IUserRegistrationReportContainer)
 class UserRegistrationReportContainer(CaseInsensitiveCheckingLastModifiedBTreeContainer):
 
@@ -135,9 +152,6 @@ class UserRegistrationReportContainer(CaseInsensitiveCheckingLastModifiedBTreeCo
         except KeyError:
             result = False
         return result
-
-UserRegistrationReportContainerFactory = an_factory(UserRegistrationReportContainer,
-                                                    USER_REGISTRATION_REPORT_CONTAINER_KEY)
 
 
 @component.adapter(ISCORMRegistrationRemovedEvent)

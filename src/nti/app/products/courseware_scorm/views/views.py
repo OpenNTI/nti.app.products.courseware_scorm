@@ -33,14 +33,17 @@ from nti.app.externalization.error import raise_json_error
 
 from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
 
+from nti.app.products.courseware_scorm.courses import UserRegistrationReportContainer
+
 from nti.app.products.courseware_scorm.interfaces import ISCORMContentRef
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
+from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 from nti.app.products.courseware_scorm.interfaces import SCORMPackageLaunchEvent
 from nti.app.products.courseware_scorm.interfaces import IPostBackPasswordUtility
 from nti.app.products.courseware_scorm.interfaces import ISCORMRegistrationReport
+from nti.app.products.courseware_scorm.interfaces import IRegistrationReportContainer
 from nti.app.products.courseware_scorm.interfaces import SCORMRegistrationPostbackEvent
-from nti.app.products.courseware_scorm.interfaces import IUserRegistrationReportContainer
 
 from nti.app.products.courseware_scorm.utils import parse_registration_id
 from nti.app.products.courseware_scorm.utils import get_registration_id_for_user_and_course
@@ -66,7 +69,6 @@ from nti.scorm_cloud.client.registration import RegistrationReport
 from nti.traversal.traversal import find_interface
 
 logger = __import__('logging').getLogger(__name__)
-
 
 
 class AbstractSCORMLaunchView(AbstractAuthenticatedView):
@@ -294,6 +296,20 @@ class SCORMRegistrationResultPostBack(AbstractView):
     the registration id (i.e. <enrollment-ds-intid>_<scorm-id>) in the payload.
     """
 
+    def _post_process(self, scorm_id, user, course):
+        if ISCORMCourseInstance.providedBy(course):
+            scorm_meta = ISCORMCourseMetadata(course)
+            scorm_content = (scorm_meta,)
+        else:
+            # FIXME
+            scorm_content = (scorm_meta,)
+
+        for scorm_content in scorm_content:
+            notify(UserProgressUpdatedEvent(obj=scorm_content,
+                                            user=user,
+                                            context=course))
+            notify(SCORMRegistrationPostbackEvent(user, course, scorm_content, datetime.utcnow()))
+
     def __call__(self):
         username = self.request.params.get('username', None)
         password = self.request.params.get('password', None)
@@ -334,20 +350,16 @@ class SCORMRegistrationResultPostBack(AbstractView):
             logger.info(u"Postback regid (%s) does not match enrollment regid (%s)",
                         report.registration_id, registration_id)
             return hexc.HTTPBadRequest()
-        metadata = ISCORMCourseMetadata(course)
-        container = IUserRegistrationReportContainer(metadata)
-        # FIXME
-        container.add_registration_report(scorm_id, report)
-        # FIXME
-        notify(UserProgressUpdatedEvent(obj=metadata,
-                                        user=user,
-                                        context=course))
+        container = IRegistrationReportContainer(course)
+        user_container = container.get(user.username)
+        if not user_container:
+            user_container = UserRegistrationReportContainer()
+            container[user.username] = user_container
 
-        # FIXME
-        notify(SCORMRegistrationPostbackEvent(user, course, metadata, datetime.utcnow()))
+        user_container.add_registration_report(scorm_id, report)
+        self._post_process(scorm_id, user, course)
         logger.info(u"Registration report postback stored (user=%s) (scorm_id=%s)",
                     user.username,
                     scorm_id)
-
         return hexc.HTTPNoContent()
 

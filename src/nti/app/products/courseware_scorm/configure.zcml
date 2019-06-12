@@ -33,7 +33,7 @@
 
 	<adapter factory=".courses.SCORMCourseInstanceMetadataFactory" />
 
-	<adapter factory=".courses.UserRegistrationReportContainerFactory" />
+	<adapter factory=".courses.RegistrationReportContainerFactory" />
 
 	<adapter factory=".courses.SCORMIdentifier"
 			 for="nti.contenttypes.courses.interfaces.ICourseInstance"
@@ -100,14 +100,15 @@
  			 provides=".interfaces.ISCORMActivity" />
 
  	<adapter factory=".completion.SCORMCompletionPolicy"
- 			 for=".interfaces.ISCORMCourseMetadata .interfaces.ISCORMCourseInstance"
+ 			 for=".interfaces.IScormContent
+ 			      nti.contenttypes.courses.interfaces.ICourseInstance"
  			 provides="nti.contenttypes.completion.interfaces.ICompletableItemCompletionPolicy" />
 
  	<adapter factory=".completion._scorm_progress"
  			 provides=".interfaces.ISCORMProgress"
  			 for="nti.dataserver.interfaces.IUser
- 			 	  .interfaces.ISCORMCourseMetadata
- 			 	  .interfaces.ISCORMCourseInstance" />
+ 			 	  .interfaces.IScormContent
+ 			 	  nti.contenttypes.courses.interfaces.ICourseInstance" />
 
  	<adapter factory=".courses.SCORMCourseInstanceReportFilter"
  			 provides="nti.contenttypes.reports.interfaces.IReportFilter"
