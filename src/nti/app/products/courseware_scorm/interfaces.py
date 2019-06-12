@@ -653,18 +653,21 @@ class IUserRegistrationReportContainer(IContainer):
 
     def add_registration_report(scorm_id, registration_report):
         """
-        Adds a :class:`ISCORMRegistrationReport` to this container for the given :class:`IUser`.
+        Adds a :class:`ISCORMRegistrationReport` to this container for the
+        given :class:`IUser`. Raises a KeyError if a report already exists
+        for this key.
         """
 
     def get_registration_report(scorm_id):
         """
-        Returns the :class:`ISCORMRegistrationReport` from this container given a :class:`IUser`,
-        or None if it does not exist.
+        Returns the :class:`ISCORMRegistrationReport` from this container
+        given a :class:`IUser`, or None if it does not exist.
         """
 
     def remove_registration_report(scorm_id):
         """
-        Removes from this container the :class:`ISCORMRegistrationReport` for the given :class:`IUser`.
+        Removes from this container the :class:`ISCORMRegistrationReport`
+        for the given :class:`IUser`.
         """
 
 
