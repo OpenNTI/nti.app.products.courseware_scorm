@@ -41,8 +41,6 @@ from nti.app.products.courseware_scorm.client import PostBackPasswordUtility
 
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 
-from nti.app.products.courseware_scorm.completion import _SCORMCompletableItemProvider
-
 from nti.app.products.courseware_scorm.courses import SCORM_COURSE_MIME_TYPE
 
 from nti.app.products.courseware_scorm.decorators import PROGRESS_REL
@@ -435,18 +433,6 @@ class TestManagementViews(CoursewareSCORMLayerTest):
                                              u'success', True,
                                              u'score', 100,
                                              u'total_time', 326)))
-
-        # Completable item providers
-        providers = component.subscribers((course,),
-                                          IRequiredCompletableItemProvider)
-        assert_that(len(providers), is_not(0))
-        assert_that(providers, has_item(instance_of(_SCORMCompletableItemProvider)))
-        for provider in providers:
-            if type(provider) is _SCORMCompletableItemProvider:
-                mock_has_scorm.is_callable().returns(False)
-                assert_that(provider.iter_items(new_user), does_not(has_item(metadata)))
-                mock_has_scorm.is_callable().returns(True)
-                assert_that(provider.iter_items(new_user), has_item(metadata))
 
         # Test progress
         progress = component.queryMultiAdapter((new_user, metadata, course),
