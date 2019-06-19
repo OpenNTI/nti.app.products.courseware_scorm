@@ -308,13 +308,13 @@ class SCORMRegistrationResultPostBack(AbstractView):
         """
         if ISCORMCourseInstance.providedBy(course):
             scorm_meta = ISCORMCourseMetadata(course)
-            scorm_content = (scorm_meta,)
+            scorm_content_refs = (scorm_meta,)
         else:
             # Ok, get all valid scorm content refs for our scorm_id
-            scorm_content = get_scorm_refs(course, scorm_id)
+            scorm_content_refs = get_scorm_refs(course, scorm_id)
 
         has_sucessfully_completed = False
-        for scorm_content in scorm_content:
+        for scorm_content in scorm_content_refs:
             if not has_sucessfully_completed:
                 # Only need one indication that a previous report has marked
                 # the user as successfully completing this scorm_id.

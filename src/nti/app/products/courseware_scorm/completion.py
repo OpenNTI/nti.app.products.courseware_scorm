@@ -15,12 +15,9 @@ from zope import interface
 
 from nti.app.products.courseware_scorm.interfaces import IScormContent
 from nti.app.products.courseware_scorm.interfaces import ISCORMProgress
-from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
-from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 from nti.app.products.courseware_scorm.interfaces import IRegistrationReportContainer
 
 from nti.contenttypes.completion.interfaces import ICompletableItemCompletionPolicy
-from nti.contenttypes.completion.interfaces import IRequiredCompletableItemProvider
 
 from nti.contenttypes.completion.completion import CompletedItem
 
@@ -79,21 +76,6 @@ def _scorm_progress(user, scorm_content, course):
                                  scorm_content,
                                  course,
                                  report)
-
-
-@component.adapter(ISCORMCourseInstance)
-@interface.implementer(IRequiredCompletableItemProvider)
-class _SCORMCompletableItemProvider(object):
-
-    def __init__(self, course):
-        self.course = course
-
-    def iter_items(self, unused_user):
-        items = []
-        metadata = ISCORMCourseMetadata(self.course)
-        if metadata.has_scorm_package():
-            items.append(metadata)
-        return items
 
 
 @NoPickle

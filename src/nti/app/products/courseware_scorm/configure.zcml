@@ -117,10 +117,6 @@
 	<!-- Subscribers -->
 	<subscriber handler=".completion._on_user_progress_updated" />
 
-	<subscriber factory=".completion._SCORMCompletableItemProvider"
-				provides="nti.contenttypes.completion.interfaces.IRequiredCompletableItemProvider"
-				for=".interfaces.ISCORMCourseInstance" />
-
 	<subscriber handler=".courses._on_scorm_registration_removed" />
 
 	<configure zcml:condition="have testmode">
