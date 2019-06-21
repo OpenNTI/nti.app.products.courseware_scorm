@@ -16,7 +16,11 @@ from zope import interface
 from zope.cachedescriptors.property import Lazy
 from zope.cachedescriptors.property import readproperty
 
+from zope.component.hooks import getSite
+
 from zope.container.contained import Contained
+
+from zope.intid.interfaces import IIntIds
 
 from nti.app.products.courseware_scorm.interfaces import ISCORMStatic
 from nti.app.products.courseware_scorm.interfaces import ISCORMComment
@@ -32,6 +36,8 @@ from nti.app.products.courseware_scorm.interfaces import IScormRegistration
 from nti.app.products.courseware_scorm.interfaces import ISCORMLearnerPreference
 from nti.app.products.courseware_scorm.interfaces import ISCORMRegistrationReport
 from nti.app.products.courseware_scorm.interfaces import ISCORMContentInfoContainer
+
+from nti.app.products.courseware_scorm.workspaces import SCORMInstanceCollection
 
 from nti.containers.containers import CaseInsensitiveCheckingLastModifiedBTreeContainer
 
@@ -181,7 +187,8 @@ def _course_data_to_scorm_content_info(course_data):
 @component.adapter(ICourseInstance)
 @interface.implementer(ISCORMContentInfoContainer)
 class SCORMContentInfoContainer(CaseInsensitiveCheckingLastModifiedBTreeContainer,
-                                SchemaConfigured):
+                                SchemaConfigured,
+                                SCORMInstanceCollection):
 
     __external_can_create__ = False
 
@@ -195,12 +202,28 @@ class SCORMContentInfoContainer(CaseInsensitiveCheckingLastModifiedBTreeContaine
         CaseInsensitiveCheckingLastModifiedBTreeContainer.__init__(self)
         SchemaConfigured.__init__(self, *args, **kwargs)
 
+    @Lazy
+    def tags(self):
+        intids = component.getUtility(IIntIds)
+        return (str(intids.getId(self.__parent__)),
+                getSite().__name__)
+
+    def _include_filter(self, scorm_content):
+        return True
+
+    @Lazy
+    def scorm_instances(self):
+        """
+        Return available scorm instances.
+        """
+        return tuple(self.values())
+
     def store_content(self, content):
-        self[content.ntiid] = content
+        self[content.scorm_id] = content
         return content
 
     def remove_content(self, content):
-        key = getattr(content, 'ntiid', content)
+        key = getattr(content, 'scorm_id', content)
         try:
             del self[key]
             result = True

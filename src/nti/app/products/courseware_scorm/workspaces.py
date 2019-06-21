@@ -21,8 +21,6 @@ from zope.component.hooks import getSite
 
 from zope.container.contained import Contained
 
-from zope.intid.interfaces import IIntIds
-
 from zope.location.interfaces import IContained
 
 from zope.traversing.interfaces import IPathAdapter
@@ -35,6 +33,7 @@ from nti.app.products.courseware_scorm import SCORM_COLLECTION_NAME
 from nti.app.products.courseware_scorm.interfaces import ISCORMWorkspace
 from nti.app.products.courseware_scorm.interfaces import ISCORMCollection
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
+from nti.app.products.courseware_scorm.interfaces import ISCORMContentInfoContainer
 
 from nti.dataserver.authorization import is_admin_or_content_admin_or_site_admin
 
@@ -155,17 +154,5 @@ def SCORMPathAdapter(context, unused_request):
     return workspace
 
 
-class CourseScormInstanceCollection(SCORMInstanceCollection):
-
-    @Lazy
-    def tags(self):
-        intids = component.getUtility(IIntIds)
-        return (str(intids.getId(self.__parent__)),)
-
-    def _include_filter(self, scorm_content):
-        return set(self.tags) & set(scorm_content.tags or ()) \
-            or super(CourseScormInstanceCollection, self)._include_filter(scorm_content)
-
-
 def course_scorm_collection_path_adapter(course, unused_request):
-    return CourseScormInstanceCollection(course)
+    return ISCORMContentInfoContainer(course, None)

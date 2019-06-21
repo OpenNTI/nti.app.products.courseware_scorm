@@ -258,7 +258,7 @@ class ISCORMContentInfo(IContained, ICreated, ILastModified):
                              required=True)
 
     title = ValidTextLine(title=u'The scorm content title',
-                          required=True)
+                          required=False)
 
     course_version = ValidTextLine(title=u'The course version.',
                                    required=False)
@@ -270,7 +270,9 @@ class ISCORMContentInfo(IContained, ICreated, ILastModified):
                        required=False)
 
 
-class ISCORMContentInfoContainer(IShouldHaveTraversablePath, ILastModified, IContainer):
+class ISCORMContentInfoContainer(IShouldHaveTraversablePath,
+                                 ILastModified,
+                                 ISCORMCollection):
     """
     A storage container for :class:`ISCORMContentInfo`.
     """

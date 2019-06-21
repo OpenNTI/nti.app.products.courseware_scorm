@@ -14,7 +14,6 @@ from pyramid import httpexceptions as hexc
 from pyramid.view import view_config
 
 from zope import component
-from zope import interface
 
 from zope.cachedescriptors.property import Lazy
 
@@ -35,17 +34,11 @@ from nti.app.products.courseware_scorm.courses import SCORMCourseInstance
 from nti.app.products.courseware_scorm.interfaces import ISCORMCollection
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 from nti.app.products.courseware_scorm.interfaces import ISCORMContentInfo
-from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
-from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 
-from nti.app.products.courseware_scorm.views import UPDATE_SCORM_VIEW_NAME
 from nti.app.products.courseware_scorm.views import CREATE_SCORM_COURSE_VIEW_NAME
-from nti.app.products.courseware_scorm.views import IMPORT_SCORM_COURSE_VIEW_NAME
 
 from nti.common.string import is_true
 
-from nti.contenttypes.courses.interfaces import ICourseInstance
-from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 from nti.contenttypes.courses.interfaces import ICourseAdministrativeLevel
 
 from nti.dataserver.authorization import ACT_READ
@@ -54,11 +47,10 @@ from nti.dataserver.authorization import ACT_CONTENT_EDIT
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
 
-from nti.externalization.proxy import removeAllProxies
-
 from nti.scorm_cloud.client.mixins import get_source
 
 from nti.scorm_cloud.client.request import ScormCloudError
+from nti.app.products.courseware_scorm.model import ScormContentInfo
 
 ITEMS = StandardExternalFields.ITEMS
 TOTAL = StandardExternalFields.TOTAL
@@ -137,7 +129,7 @@ class SCORMContentUploadMixin(object):
         """
         Upload the content to scorm cloud, optionally tagging it as requested.
 
-        Returns the newly created scorm content scorm_id.
+        Returns the newly created :class:`IScormContentInfo`.
         """
         client = self._get_scorm_client()
         try:
@@ -151,7 +143,7 @@ class SCORMContentUploadMixin(object):
                                  'message': exc.message,
                              },
                              None)
-        return scorm_id
+        return ScormContentInfo(scorm_id=scorm_id)
 
     def _handle_multipart(self, sources):
         """
@@ -212,10 +204,8 @@ class SCORMCollectionPutView(AbstractAuthenticatedView,
 
     def __call__(self):
         source = self._get_scorm_source()
-        scorm_id = self.upload_content(source, tags=self.context.tags)
-        result = LocatedExternalDict()
-        result['scorm_id'] = scorm_id
-        return result
+        scorm_content_info = self.upload_content(source, tags=self.context.tags)
+        return scorm_content_info
 
 
 @view_config(route_name='objects.generic.traversal',
@@ -240,4 +230,5 @@ class ScormInstanceDeleteView(AbstractAuthenticatedView,
                                  'message': exc.message,
                              },
                              None)
+        self.__parent__.remove_content(self.scorm_id)
         return hexc.HTTPNoContent()
