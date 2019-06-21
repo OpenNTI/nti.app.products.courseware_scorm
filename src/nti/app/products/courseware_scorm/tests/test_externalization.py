@@ -15,6 +15,7 @@ from hamcrest import has_item
 from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import has_entries
+from hamcrest import contains_inanyorder
 
 from datetime import datetime
 
@@ -27,6 +28,7 @@ from nti.app.products.courseware_scorm.interfaces import IScormRegistration
 from nti.app.products.courseware_scorm.interfaces import ISCORMRegistrationReport
 
 from nti.app.products.courseware_scorm.model import SCORMContentRef
+from nti.app.products.courseware_scorm.model import ScormContentInfo
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
@@ -83,13 +85,39 @@ class TestExternal(ApplicationLayerTest):
                                          u'course_version', u'2',
                                          u'registration_count', none()))
 
+    def test_scorm_content_info(self):
+        content = ScormContentInfo(scorm_id=u'123456',
+                                   title=u'scorm title',
+                                   course_version=u'v1',
+                                   registration_count=10,
+                                   tags=[u'tag1', u'tag2'])
+
+        ext_obj = toExternalObject(content)
+        assert_that(ext_obj, has_entries(u'scorm_id', u'123456',
+                                         u'title', u'scorm title',
+                                         u'course_version', u'v1',
+                                         u'registration_count', 10))
+
+        assert_that(find_factory_for(ext_obj),
+                    not_none())
+
+        internal = find_factory_for(ext_obj)()
+        update_from_external_object(internal,
+                                    ext_obj,
+                                    require_updater=True)
+        assert_that(internal.scorm_id, is_(u'123456'))
+        assert_that(internal.title, is_(u'scorm title'))
+        assert_that(internal.course_version, is_(u'v1'))
+        assert_that(internal.registration_count, is_(10))
+        assert_that(internal.tags, contains_inanyorder(u'tag1', u'tag2'))
+
     def test_scorm_content_ref(self):
-        scorm_id = u'tag:nextthought.com,2011-10:NTI-3663246001124377908_4744212239739874217'
-        ref = SCORMContentRef(scorm_id=scorm_id,
+        target = u'tag:nextthought.com,2011-10:NTI-3663246001124377908_4744212239739874217'
+        ref = SCORMContentRef(target=target,
                               title=u'scorm content title',
                               description=u'scorm description')
         ext_obj = toExternalObject(ref)
-        assert_that(ext_obj, has_entries(u'scorm_id', scorm_id,
+        assert_that(ext_obj, has_entries(u'target', target,
                                          u'title', u'scorm content title',
                                          u'description', u'scorm description'))
 
@@ -100,7 +128,7 @@ class TestExternal(ApplicationLayerTest):
         update_from_external_object(internal,
                                     ext_obj,
                                     require_updater=True)
-        assert_that(internal.scorm_id, is_(scorm_id))
+        assert_that(internal.target, is_(target))
         assert_that(internal.title, is_(u'scorm content title'))
         assert_that(internal.description, is_(u'scorm description'))
 

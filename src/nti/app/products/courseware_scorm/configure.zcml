@@ -31,6 +31,9 @@
 		   provides=".interfaces.IPostBackURLUtility" />
 	</configure>
 
+    <adapter factory=".adapters._scormref_to_scormcontent" />
+
+    <adapter factory=".courses.SCORMContentContainerFactory" />
 	<adapter factory=".courses.SCORMCourseInstanceMetadataFactory" />
 
 	<adapter factory=".courses.RegistrationReportContainerFactory" />
@@ -51,7 +54,7 @@
  			 for="nti.dataserver.interfaces.IUser nti.contenttypes.courses.interfaces.ICourseInstance"
  			 provides=".interfaces.ISCORMIdentifier" />
 
-    <adapter factory=".model.ScormContentInfo"
+    <adapter factory=".model._course_data_to_scorm_content_info"
              for="nti.scorm_cloud.client.course.CourseData"
              provides=".interfaces.ISCORMContentInfo" />
 
@@ -207,6 +210,7 @@
 					root_interfaces=".interfaces.ISCORMCourseMetadata
 									 .interfaces.IScormInstance
 									 .interfaces.ISCORMContentInfo
+									 .interfaces.ISCORMContentInfoContainer
 									 .interfaces.IScormRegistration
 									 .interfaces.ISCORMRegistrationReport
 									 .interfaces.ISCORMObjective

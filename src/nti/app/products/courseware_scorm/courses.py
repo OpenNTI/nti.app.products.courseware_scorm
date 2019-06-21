@@ -33,6 +33,8 @@ from nti.app.products.courseware_scorm.interfaces import IRegistrationReportCont
 from nti.app.products.courseware_scorm.interfaces import ISCORMRegistrationRemovedEvent
 from nti.app.products.courseware_scorm.interfaces import IUserRegistrationReportContainer
 
+from nti.app.products.courseware_scorm.model import SCORMContentInfoContainer
+
 from nti.cabinet.filer import transfer_to_native_file
 
 from nti.containers.containers import CaseInsensitiveCheckingLastModifiedBTreeContainer
@@ -107,6 +109,9 @@ class SCORMCourseMetadata(Persistent, Contained):
 
 SCORMCourseInstanceMetadataFactory = an_factory(SCORMCourseMetadata,
                                                 SCORM_COURSE_METADATA_KEY)
+
+SCORMContentContainerFactory = an_factory(SCORMContentInfoContainer,
+                                          SCORM_CONTENT_CONTAINER_KEY)
 
 
 @interface.implementer(ISCORMRegistrationRemovedEvent)

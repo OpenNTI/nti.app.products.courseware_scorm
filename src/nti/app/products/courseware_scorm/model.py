@@ -13,7 +13,10 @@ from datetime import datetime
 from zope import component
 from zope import interface
 
+from zope.cachedescriptors.property import Lazy
 from zope.cachedescriptors.property import readproperty
+
+from zope.container.contained import Contained
 
 from nti.app.products.courseware_scorm.interfaces import ISCORMStatic
 from nti.app.products.courseware_scorm.interfaces import ISCORMComment
@@ -28,14 +31,27 @@ from nti.app.products.courseware_scorm.interfaces import ISCORMInteraction
 from nti.app.products.courseware_scorm.interfaces import IScormRegistration
 from nti.app.products.courseware_scorm.interfaces import ISCORMLearnerPreference
 from nti.app.products.courseware_scorm.interfaces import ISCORMRegistrationReport
+from nti.app.products.courseware_scorm.interfaces import ISCORMContentInfoContainer
+
+from nti.containers.containers import CaseInsensitiveCheckingLastModifiedBTreeContainer
+
+from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.contenttypes.presentation.mixins import PersistentPresentationAsset
+
+from nti.dublincore.time_mixins import PersistentCreatedAndModifiedTimeObject
+
+from nti.ntiids.oids import to_external_ntiid_oid
 
 from nti.property.property import alias
 
 from nti.schema.eqhash import EqHash
 
 from nti.schema.fieldproperty import createDirectFieldProperties
+
+from nti.schema.schema import SchemaConfigured
+
+from nti.scorm_cloud.client.course import CourseData
 
 from nti.scorm_cloud.client.registration import Static
 from nti.scorm_cloud.client.registration import Comment
@@ -48,7 +64,6 @@ from nti.scorm_cloud.client.registration import Interaction
 from nti.scorm_cloud.client.registration import Registration
 from nti.scorm_cloud.client.registration import LearnerPreference
 from nti.scorm_cloud.client.registration import RegistrationReport
-from nti.scorm_cloud.client.course import CourseData
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -129,22 +144,73 @@ class SCORMContentRef(PersistentPresentationAsset):
         return self.ntiid
 
 
+@interface.implementer(ISCORMContentInfo)
+class ScormContentInfo(PersistentCreatedAndModifiedTimeObject,
+                       Contained,
+                       SchemaConfigured):
+
+    createDirectFieldProperties(ISCORMContentInfo)
+
+    __parent__ = None
+    __name__ = None
+
+    creator = None
+    NTIID = alias('ntiid')
+
+    mimeType = mime_type = "application/vnd.nextthought.scorm.scormcontentinfo"
+
+    @Lazy
+    def ntiid(self):
+        return to_external_ntiid_oid(self)
+
+
 @component.adapter(CourseData)
 @interface.implementer(ISCORMContentInfo)
-class ScormContentInfo(object):
+def _course_data_to_scorm_content_info(course_data):
+    try:
+        reg_count = int(course_data.numberOfRegistrations)
+    except (TypeError, ValueError):
+        reg_count = None
+    return ScormContentInfo(scorm_id=course_data.courseId,
+                            course_version=course_data.numberOfVersions,
+                            title=course_data.title,
+                            tags=course_data.tags or (),
+                            registration_count=reg_count)
 
-    def __init__(self, course_data):
-        """
-        Initializes `self` using the data from an `CourseData` object.
-        """
-        self.scorm_id = course_data.courseId
-        self.course_version = course_data.numberOfVersions
-        self.title = course_data.title
-        self.tags = course_data.tags or ()
+
+@component.adapter(ICourseInstance)
+@interface.implementer(ISCORMContentInfoContainer)
+class SCORMContentInfoContainer(CaseInsensitiveCheckingLastModifiedBTreeContainer,
+                                SchemaConfigured):
+
+    __external_can_create__ = False
+
+    mimeType = mime_type = "application/vnd.nextthought.scorm.scorm_content_info_container"
+
+    createDirectFieldProperties(ISCORMContentInfoContainer)
+
+    creator = None
+
+    def __init__(self, *args, **kwargs):
+        CaseInsensitiveCheckingLastModifiedBTreeContainer.__init__(self)
+        SchemaConfigured.__init__(self, *args, **kwargs)
+
+    def store_content(self, content):
+        self[content.ntiid] = content
+        return content
+
+    def remove_content(self, content):
+        key = getattr(content, 'ntiid', content)
         try:
-            self.registration_count = int(course_data.numberOfRegistrations)
-        except (TypeError, ValueError):
-            self.registration_count = None
+            del self[key]
+            result = True
+        except KeyError:
+            result = False
+        return result
+
+    @Lazy
+    def ntiid(self):
+        return to_external_ntiid_oid(self)
 
 
 @component.adapter(Instance)
