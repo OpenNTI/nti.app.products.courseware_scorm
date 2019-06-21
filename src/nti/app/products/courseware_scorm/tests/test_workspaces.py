@@ -21,8 +21,9 @@ from zope import component
 
 from nti.app.products.courseware_scorm.client import SCORMCloudClient
 
-from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 from nti.app.products.courseware_scorm.interfaces import ISCORMWorkspace
+from nti.app.products.courseware_scorm.interfaces import ISCORMContentInfo
+from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 
 from nti.app.products.courseware_scorm.model import ScormContentInfo
 
@@ -66,7 +67,7 @@ class TestConfiguredWorkspace(CoursewareSCORMLayerTest):
         course_data.courseId = u'123456'
         course_data.numberOfVersions = u'2'
         course_data.numberOfRegistrations = u'18'
-        content_info = ScormContentInfo(course_data)
+        content_info = ISCORMContentInfo(course_data)
         mock_content.is_callable().returns((content_info,))
 
         service_url = '/dataserver2/service/'
