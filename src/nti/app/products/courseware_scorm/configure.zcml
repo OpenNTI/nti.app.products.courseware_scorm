@@ -103,14 +103,14 @@
  			 provides=".interfaces.ISCORMActivity" />
 
  	<adapter factory=".completion.SCORMCompletionPolicy"
- 			 for=".interfaces.IScormContent
+ 			 for=".interfaces.ISCORMContentInfo
  			      nti.contenttypes.courses.interfaces.ICourseInstance"
  			 provides="nti.contenttypes.completion.interfaces.ICompletableItemCompletionPolicy" />
 
  	<adapter factory=".completion._scorm_progress"
  			 provides=".interfaces.ISCORMProgress"
  			 for="nti.dataserver.interfaces.IUser
- 			 	  .interfaces.IScormContent
+ 			 	  .interfaces.ISCORMContentInfo
  			 	  nti.contenttypes.courses.interfaces.ICourseInstance" />
 
  	<adapter factory=".courses.SCORMCourseInstanceReportFilter"
@@ -119,7 +119,6 @@
 
 	<!-- Subscribers -->
 	<subscriber handler=".completion._on_user_progress_updated" />
-
 	<subscriber handler=".courses._on_scorm_registration_removed" />
 
 	<configure zcml:condition="have testmode">

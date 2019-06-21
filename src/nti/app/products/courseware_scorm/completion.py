@@ -13,8 +13,8 @@ from datetime import datetime
 from zope import component
 from zope import interface
 
-from nti.app.products.courseware_scorm.interfaces import IScormContent
 from nti.app.products.courseware_scorm.interfaces import ISCORMProgress
+from nti.app.products.courseware_scorm.interfaces import ISCORMContentInfo
 from nti.app.products.courseware_scorm.interfaces import IRegistrationReportContainer
 
 from nti.contenttypes.completion.interfaces import ICompletableItemCompletionPolicy
@@ -65,7 +65,7 @@ class SCORMProgress(Progress):
         return 1
 
 
-@component.adapter(IUser, IScormContent, ICourseInstance)
+@component.adapter(IUser, ISCORMContentInfo, ICourseInstance)
 def _scorm_progress(user, scorm_content, course):
     report_container = IRegistrationReportContainer(course)
     user_container = report_container.get(user.username)
@@ -79,7 +79,7 @@ def _scorm_progress(user, scorm_content, course):
 
 
 @NoPickle
-@component.adapter(IScormContent, ICourseInstance)
+@component.adapter(ISCORMContentInfo, ICourseInstance)
 @interface.implementer(ICompletableItemCompletionPolicy)
 class SCORMCompletionPolicy(AbstractCompletableItemCompletionPolicy):
 
@@ -113,7 +113,7 @@ class SCORMCompletionPolicy(AbstractCompletableItemCompletionPolicy):
         return result
 
 
-@component.adapter(IScormContent, IUserProgressUpdatedEvent)
+@component.adapter(ISCORMContentInfo, IUserProgressUpdatedEvent)
 def _on_user_progress_updated(scorm_content, event):
     user = event.user
     course = event.context
