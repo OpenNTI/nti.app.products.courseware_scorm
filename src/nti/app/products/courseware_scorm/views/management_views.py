@@ -205,6 +205,7 @@ class SCORMCollectionPutView(AbstractAuthenticatedView,
     def __call__(self):
         source = self._get_scorm_source()
         scorm_content_info = self.upload_content(source, tags=self.context.tags)
+        self.context.store_content(scorm_content_info)
         return scorm_content_info
 
 

@@ -70,6 +70,7 @@ from nti.scorm_cloud.client.registration import Interaction
 from nti.scorm_cloud.client.registration import Registration
 from nti.scorm_cloud.client.registration import LearnerPreference
 from nti.scorm_cloud.client.registration import RegistrationReport
+from nti.app.products.courseware_scorm import SCORM_COLLECTION_NAME
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -211,7 +212,7 @@ class SCORMContentInfoContainer(CaseInsensitiveCheckingLastModifiedBTreeContaine
     def _include_filter(self, unused_scorm_content):
         return True
 
-    @Lazy
+    @property
     def scorm_instances(self):
         """
         Return available scorm instances.
