@@ -170,20 +170,15 @@
              provides=".interfaces.ISCORMWorkspace" />
 
 	<!-- Decorators -->
-	<subscriber factory=".decorators._SCORMCourseInstanceDecorator"
-				provides="nti.externalization.interfaces.IExternalObjectDecorator"
-				for=".interfaces.ISCORMCourseInstance
-				     pyramid.interfaces.IRequest" />
+	<subscriber factory=".decorators._SCORMContentInfoLaunchDecorator"
+                provides="nti.externalization.interfaces.IExternalObjectDecorator"
+                for="nti.app.products.courseware_scorm.interfaces.ISCORMContentInfo
+                     pyramid.interfaces.IRequest" />
 
-	<subscriber factory=".decorators._SCORMCourseInstanceMetadataDecorator"
-				provides="nti.externalization.interfaces.IExternalObjectDecorator"
-				for=".interfaces.ISCORMCourseMetadata
-				     pyramid.interfaces.IRequest" />
-
-	<subscriber factory=".decorators._CourseInstanceEnrollmentDecorator"
-				provides="nti.externalization.interfaces.IExternalObjectDecorator"
-				for="nti.app.products.courseware.interfaces.ICourseInstanceEnrollment
-				     pyramid.interfaces.IRequest" />
+    <subscriber factory=".decorators._SCORMContentInfoDecorator"
+                provides="nti.externalization.interfaces.IExternalObjectDecorator"
+                for="nti.app.products.courseware_scorm.interfaces.ISCORMContentInfo
+                     pyramid.interfaces.IRequest" />
 
     <subscriber factory=".decorators._SCORMContentRefDecorator"
                 provides="nti.externalization.interfaces.IExternalObjectDecorator"
@@ -193,11 +188,6 @@
     <subscriber factory=".decorators._CourseInstanceDecorator"
                 provides="nti.externalization.interfaces.IExternalObjectDecorator"
                 for="nti.contenttypes.courses.interfaces.ICourseInstance
-                     pyramid.interfaces.IRequest" />
-
-    <subscriber factory=".decorators._SCORMContentInfoDecorator"
-                provides="nti.externalization.interfaces.IExternalObjectDecorator"
-                for="nti.app.products.courseware_scorm.interfaces.ISCORMContentInfo
                      pyramid.interfaces.IRequest" />
 
     <utility factory=".ntiids._SCORMContentRefResolver" name="SCORMContentRef" />

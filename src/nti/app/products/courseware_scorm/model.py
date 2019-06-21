@@ -208,7 +208,7 @@ class SCORMContentInfoContainer(CaseInsensitiveCheckingLastModifiedBTreeContaine
         return (str(intids.getId(self.__parent__)),
                 getSite().__name__)
 
-    def _include_filter(self, scorm_content):
+    def _include_filter(self, unused_scorm_content):
         return True
 
     @Lazy
