@@ -181,66 +181,6 @@ class SCORMContentUploadMixin(object):
 
 @view_config(route_name='objects.generic.traversal',
              renderer='rest',
-             context=ICourseInstance,
-             request_method='POST',
-             name=IMPORT_SCORM_COURSE_VIEW_NAME)
-class ImportSCORMCourseView(AbstractAdminScormCourseView,
-                            SCORMContentUploadMixin):
-    """
-    A view for importing uploaded SCORM courses to SCORM Cloud.
-    """
-
-    def _do_call(self):
-        source = self._get_scorm_source()
-        entry_ntiid = ICourseCatalogEntry(self.context).ntiid
-        scorm_id = self.upload_content(source, tags=(entry_ntiid,))
-        metadata = ISCORMCourseMetadata(self.context)
-        if metadata.has_scorm_package() and self.unregister_users:
-            # Unregister users. We'll rely on launching to re-register users as
-            # needed.
-            client = self._get_scorm_client()
-            try:
-                client.unregister_users_for_scorm_content(source)
-            except ScormCloudError as exc:
-                raise_json_error(self.request,
-                                 hexc.HTTPUnprocessableEntity,
-                                 {
-                                     'message': exc.message,
-                                 },
-                                 None)
-        course = removeAllProxies(self.context)
-        interface.alsoProvides(course, ISCORMCourseInstance)
-        metadata.scorm_id = scorm_id
-        return self.context
-
-
-@view_config(route_name='objects.generic.traversal',
-             renderer='rest',
-             context=ICourseInstance,
-             request_method='POST',
-             name=UPDATE_SCORM_VIEW_NAME)
-class UpdateSCORMView(AbstractAdminScormCourseView,
-                      SCORMContentUploadMixin):
-
-    def _do_call(self):
-        source = self._get_scorm_source()
-        client = self._get_scorm_client()
-        metadata = ISCORMCourseMetadata(self.context)
-        try:
-            client.update_assets(metadata.scorm_id, source, self.request)
-        except ScormCloudError as exc:
-            raise_json_error(self.request,
-                             hexc.HTTPUnprocessableEntity,
-                             {
-                                 'message': exc.message,
-                             },
-                             None)
-
-        return self.context
-
-
-@view_config(route_name='objects.generic.traversal',
-             renderer='rest',
              context=ISCORMCollection,
              permission=ACT_READ,
              request_method='GET')
