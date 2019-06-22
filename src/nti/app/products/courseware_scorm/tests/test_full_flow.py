@@ -12,15 +12,12 @@ import fudge
 from hamcrest import is_
 from hamcrest import none
 from hamcrest import is_not
-from hamcrest import equal_to
 from hamcrest import has_item
 from hamcrest import not_none
 from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import has_entries
-from hamcrest import instance_of
-from hamcrest import has_properties
 does_not = is_not
 
 import shutil
@@ -28,8 +25,6 @@ import shutil
 from webtest import Upload
 
 from zope import component
-
-from nti.app.contenttypes.completion.views import completed_items_link as make_completed_items_link
 
 from nti.app.products.courseware.interfaces import ICourseInstanceEnrollment
 
@@ -43,56 +38,27 @@ from nti.app.products.courseware_scorm.client import PostBackPasswordUtility
 
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 
-from nti.app.products.courseware_scorm.courses import SCORM_COURSE_MIME_TYPE
-
-from nti.app.products.courseware_scorm.decorators import PROGRESS_REL
-
-from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
-from nti.app.products.courseware_scorm.interfaces import ISCORMPackageLaunchEvent
-from nti.app.products.courseware_scorm.interfaces import IRegistrationReportContainer
-from nti.app.products.courseware_scorm.interfaces import ISCORMRegistrationPostbackEvent
-from nti.app.products.courseware_scorm.interfaces import IUserRegistrationReportContainer
-
-from nti.app.products.courseware_scorm.tests import CoursewareSCORMLayerTest
+from nti.app.products.courseware_scorm.model import SCORMContentRef
+from nti.app.products.courseware_scorm.model import ScormContentInfo
 
 from nti.app.products.courseware_scorm.utils import get_registration_id_for_user_and_course
 
-from nti.app.products.courseware_scorm.views import GET_SCORM_ARCHIVE_VIEW_NAME
-from nti.app.products.courseware_scorm.views import IMPORT_SCORM_COURSE_VIEW_NAME
 from nti.app.products.courseware_scorm.views import LAUNCH_SCORM_COURSE_VIEW_NAME
-from nti.app.products.courseware_scorm.views import SYNC_REGISTRATION_REPORT_VIEW_NAME
+
+from nti.app.products.courseware_scorm.tests import CoursewareSCORMLayerTest
 
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contentlibrary.interfaces import IDelimitedHierarchyContentPackageEnumeration
 
-from nti.contenttypes.completion.interfaces import IProgress
-from nti.contenttypes.completion.interfaces import ICompletableItemCompletionPolicy
-from nti.contenttypes.completion.interfaces import IPrincipalCompletedItemContainer
-from nti.contenttypes.completion.interfaces import IRequiredCompletableItemProvider
-
-from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseEnrollmentManager
-
-from nti.dataserver.users.users import User
 
 from nti.dataserver.tests import mock_dataserver
 
-from nti.externalization.externalization import toExternalObject
-
 from nti.externalization.interfaces import StandardExternalFields
 
-from nti.externalization.testing import externalizes
-
-from nti.links.externalization import render_link
-
-from nti.links.links import Link
-
 from nti.ntiids.ntiids import find_object_with_ntiid
-
-from nti.scorm_cloud.client.registration import Registration
-from nti.scorm_cloud.client.registration import RegistrationReport
 
 HREF = StandardExternalFields.HREF
 ITEMS = StandardExternalFields.ITEMS
@@ -100,28 +66,10 @@ CLASS = StandardExternalFields.CLASS
 LINKS = StandardExternalFields.LINKS
 MIMETYPE = StandardExternalFields.MIMETYPE
 
-ARCHIVE_REL = GET_SCORM_ARCHIVE_VIEW_NAME
-IMPORT_REL = IMPORT_SCORM_COURSE_VIEW_NAME
 LAUNCH_REL = LAUNCH_SCORM_COURSE_VIEW_NAME
 
 logger = __import__('logging').getLogger(__name__)
 
-
-from nti.app.products.courseware_scorm.tests import CoursewareSCORMLayerTest
-
-from nti.app.products.courseware_scorm.model import ScormContentInfo,\
-    SCORMContentRef
-
-from nti.app.testing.decorators import WithSharedApplicationMockDS
-
-from nti.contenttypes.completion.interfaces import ICompletableItemCompletionPolicy
-
-from nti.contenttypes.courses.courses import ContentCourseInstance
-
-from nti.externalization.externalization import to_external_object
-from nti.app.products.courseware_scorm.interfaces import ISCORMContentInfoContainer
-from nti.app.products.courseware_scorm.interfaces import IRegistrationReportContainer
-from nti.scorm_cloud.client.registration import RegistrationReport
 
 class TestFullFlow(CoursewareSCORMLayerTest):
 
@@ -185,9 +133,35 @@ class TestFullFlow(CoursewareSCORMLayerTest):
         new_course = new_course.json_body
         return new_course
 
+    def _create_scorm_content_ref(self, scorm_content_ntiid, outline):
+        """
+        Create a ScormContentRef given the scorm content ntiid, returning
+        the newly created ScormContentRef.
+        """
+        outline_contents_href = self.require_link_href_with_rel(outline, 'contents')
+        outline_res = self.testapp.get(outline_contents_href).json_body
+        lesson_node = outline_res[0]['contents'][0]
+        lesson_content_href = self.require_link_href_with_rel(lesson_node,
+                                                              "overview-content")
+        lesson_ext = self.testapp.get(lesson_content_href).json_body
+        group_ext = lesson_ext['Items'][0]
+        group_put_href = self.require_link_href_with_rel(group_ext,
+                                                         "ordered-contents")
+        scorm_ref_data = {"MimeType": SCORMContentRef.mime_type,
+                          "title": u'scorm content title',
+                          "description": u'scorm description',
+                          "target": scorm_content_ntiid}
+        scorm_ref_ext = self.testapp.post_json(group_put_href, scorm_ref_data)
+        return scorm_ref_ext.json_body
+
     @WithSharedApplicationMockDS(testapp=True, users=True)
     @fudge.patch('nti.app.products.courseware_scorm.views.management_views.SCORMContentUploadMixin.upload_content')
     def test_full_flow(self, mock_upload_content):
+        """
+        Create scorm content, including a ref in a lesson. Validate
+        editor and enrolled user interaction (including completion)
+        with the content.
+        """
         new_course = self._create_course()
         new_course_href = new_course['href']
         outline = new_course['Outline']
@@ -219,21 +193,7 @@ class TestFullFlow(CoursewareSCORMLayerTest):
                                         LAUNCH_SCORM_COURSE_VIEW_NAME)
 
         # Create lesson content ref
-        outline_contents_href = self.require_link_href_with_rel(outline, 'contents')
-        outline_res = self.testapp.get(outline_contents_href).json_body
-        lesson_node = outline_res[0]['contents'][0]
-        lesson_content_href = self.require_link_href_with_rel(lesson_node,
-                                                              "overview-content")
-        lesson_ext = self.testapp.get(lesson_content_href).json_body
-        group_ext = lesson_ext['Items'][0]
-        group_put_href = self.require_link_href_with_rel(group_ext,
-                                                         "ordered-contents")
-        scorm_ref_data = {"MimeType": SCORMContentRef.mime_type,
-                          "title": u'scorm content title',
-                          "description": u'scorm description',
-                          "target": scorm_content_ntiid}
-        scorm_ref_ext = self.testapp.post_json(group_put_href, scorm_ref_data)
-        scorm_ref_ext = scorm_ref_ext.json_body
+        scorm_ref_ext = self._create_scorm_content_ref(scorm_content_ntiid, outline)
         assert_that(scorm_ref_ext, has_entries(u'CompletedDate', none(),
                                                u'CompletedItem', none(),
                                                u'CompletionPolicy', none()))
@@ -248,41 +208,107 @@ class TestFullFlow(CoursewareSCORMLayerTest):
                                                u'CreatedTime', not_none(),
                                                u'Creator', u'sjohnson@nextthought.com',
                                                u'Last Modified', not_none()))
+        scorm_ref_href = scorm_ref_ext['href']
         self.require_link_href_with_rel(scorm_ref_ext, 'edit')
         scorm_ref_content = scorm_ref_ext.get('ScormContentInfo')
         assert_that(scorm_ref_content, not_none())
         assert_that(scorm_ref_content, has_entry('NTIID', scorm_content_ntiid))
 
-        postback_data_template = '''<?xml version="1.0" encoding="utf-8" ?>
-        <rsp stat="ok">
-        <registrationreport format="course" regid="%s" instanceid="0">
-            <complete>complete</complete>
-            <success>passed</success>
-            <totaltime>326</totaltime>
-            <score>100</score>
-        </registrationreport>
-        </rsp>'''
+        # Create enrolled user, reg_id and postback url
+        new_username1 = u'CapnCook'
+        with mock_dataserver.mock_db_trans():
+            new_user = self._create_user(new_username1)
+            course = find_object_with_ntiid(new_course['NTIID'])
+            enrollment_manager = ICourseEnrollmentManager(course)
+            enrollment_record = enrollment_manager.enroll(new_user)
+            enrollment = ICourseInstanceEnrollment(enrollment_record)
+            reg_id = get_registration_id_for_user_and_course('new-scorm-id', new_user, course)
+            postback_util = PostBackPasswordUtility()
+            username_hash, pw_hash = postback_util.credentials_for_enrollment(enrollment)
+            postback_url_generator = PostBackURLGenerator()
+            mock_request = fudge.Fake().provides('relative_url').calls(lambda url: url)
+            postback_href = postback_url_generator.url_for_registration_postback(enrollment, mock_request)
 
-#         assert_that(self.registration_id, is_not(none()))
-#         postback_data1 = postback_data_template % self.registration_id
-#         params = {'username': self.h_username,
-#                   'password': self.h_password,
-#                   'data': postback_data1}
-#         mock_do_on_scorm_registration_postback.expects_call()
-#         self.testapp.post(self.postback_href,
-#                           params=params,
-#                           content_type='application/x-www-form-urlencoded')
-#
-#         report = RegistrationReport(format_=u'course',
-#                                     regid=u'regid',
-#                                     instanceid=u'instanceid',
-#                                     complete=u'incomplete',
-#                                     success=u'failure',
-#                                     totaltime=3,
-#                                     score=u'unknown')
-#         container = IRegistrationReportContainer(course, None)
-#         user_container = container.get(user.username)
-#         if not user_container:
-#             user_container = UserRegistrationReportContainer()
-#             container[user.username] = user_container
-#         notify(UserP)
+        assert_that(reg_id, not_none())
+        assert_that(postback_href, not_none())
+        new_user_env = self._make_extra_environ(new_username1)
+
+        # Validate enrolled user rels
+        user_course_ext = self.testapp.get(new_course_href, extra_environ=new_user_env)
+        user_course_ext = user_course_ext.json_body
+        self.forbid_link_with_rel(user_course_ext, SCORM_COLLECTION_NAME)
+
+        user_scorm_ref_ext = self.testapp.get(scorm_ref_href, extra_environ=new_user_env)
+        user_scorm_ref_ext = user_scorm_ref_ext.json_body
+        self.forbid_link_with_rel(user_scorm_ref_ext, 'edit')
+
+        user_scorm_content_ext = user_scorm_ref_ext.get('ScormContentInfo')
+        assert_that(user_scorm_content_ext, not_none())
+        assert_that(user_scorm_content_ext, has_entry('NTIID', scorm_content_ntiid))
+        self.require_link_href_with_rel(user_scorm_content_ext,
+                                        LAUNCH_SCORM_COURSE_VIEW_NAME)
+        self.forbid_link_with_rel(user_scorm_content_ext, 'delete')
+
+        # Validate postback
+        def _get_postback(reg_id, complete=True, success=True):
+            is_success = 'passed' if success else 'failed'
+            is_complete = 'complete' if complete else 'incomplete'
+            postback_data_template = '''<?xml version="1.0" encoding="utf-8" ?>
+                <rsp stat="ok">
+                <registrationreport format="course" regid="%s" instanceid="0">
+                    <complete>%s</complete>
+                    <success>%s</success>
+                    <totaltime>326</totaltime>
+                    <score>100</score>
+                </registrationreport>
+                </rsp>'''
+            return postback_data_template % (reg_id, is_complete, is_success)
+
+        postback_data = _get_postback(reg_id)
+        # Test bad data/input
+        params = {'username': username_hash + 'bleh',
+                  'password': pw_hash,
+                  'data': postback_data}
+        self.testapp.post(postback_href,
+                          params=params,
+                          content_type='application/x-www-form-urlencoded',
+                          status=403)
+
+        params = {'username': username_hash,
+                  'password': pw_hash + 'xxx',
+                  'data': postback_data}
+        self.testapp.post(postback_href,
+                          params=params,
+                          content_type='application/x-www-form-urlencoded',
+                          status=403)
+
+        bad_regid = '%s%s' % (reg_id, '1111')
+        bad_postback_data = _get_postback(bad_regid)
+        params = {'username': username_hash,
+                  'password': pw_hash,
+                  'data': bad_postback_data}
+        self.testapp.post(postback_href,
+                          params=params,
+                          content_type='application/x-www-form-urlencoded',
+                          status=400)
+
+        # Incomplete postback
+        incomplete_postback_data = _get_postback(reg_id, complete=False)
+        params = {'username': username_hash,
+                  'password': pw_hash,
+                  'data': incomplete_postback_data}
+        self.testapp.post(postback_href,
+                          params=params,
+                          content_type='application/x-www-form-urlencoded')
+        user_scorm_ref_ext = self.testapp.get(scorm_ref_href, extra_environ=new_user_env)
+        user_scorm_ref_ext = user_scorm_ref_ext.json_body
+        user_scorm_content_ext = user_scorm_ref_ext.get('ScormContentInfo')
+        assert_that(user_scorm_content_ext, not_none())
+
+        failed_postback_data = _get_postback(reg_id, complete=True, success=False)
+        params = {'username': username_hash,
+                  'password': pw_hash,
+                  'data': failed_postback_data}
+        self.testapp.post(postback_href,
+                          params=params,
+                          content_type='application/x-www-form-urlencoded')

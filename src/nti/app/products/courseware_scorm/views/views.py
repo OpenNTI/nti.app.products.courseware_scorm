@@ -254,9 +254,9 @@ class SCORMRegistrationResultPostBack(AbstractView):
         """
         content_container = ISCORMContentInfoContainer(course)
         if scorm_id not in content_container:
-            logger.info(u"Scorm content info not found (%s) (%s) (%s)",
+            logger.warn(u"Scorm content info not found (%s) (%s) (%s)",
                         scorm_id, user.username, ICourseCatalogEntry(course).ntiid)
-            raise hexc.HTTPNotFound()
+            raise hexc.HTTPBadRequest()
         scorm_content = content_container[scorm_id]
         completed_item = get_completed_item(user, course, scorm_content)
         # We still broadcast the events in any case.
@@ -281,6 +281,8 @@ class SCORMRegistrationResultPostBack(AbstractView):
         data = self.request.params.get('data', None)
 
         if not username or not password or not data:
+            logger.warn(u"Scorm invalid data (%s) (%s) (%s)",
+                        username, password, data)
             raise hexc.HTTPBadRequest()
 
         password_manager = component.getUtility(IPostBackPasswordUtility)
