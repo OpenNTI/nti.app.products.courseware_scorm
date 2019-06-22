@@ -17,7 +17,6 @@ from nti.app.products.courseware_scorm.interfaces import ISCORMContentRef
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 from nti.app.products.courseware_scorm.interfaces import ISCORMContentInfo
 
-from nti.app.products.courseware_scorm.views import DELETE_SCORM_CONTENT_REL
 from nti.app.products.courseware_scorm.views import SCORM_PROGRESS_VIEW_NAME
 from nti.app.products.courseware_scorm.views import LAUNCH_SCORM_COURSE_VIEW_NAME
 from nti.app.products.courseware_scorm.views import PREVIEW_SCORM_COURSE_VIEW_NAME
@@ -89,7 +88,7 @@ class _SCORMContentInfoDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
     def _do_decorate_external(self, context, external):
         _links = external.setdefault(LINKS, [])
-        _links.append(Link(context, rel=DELETE_SCORM_CONTENT_REL))
+        _links.append(Link(context, rel='delete'))
 
 
 @component.adapter(ICourseInstance)

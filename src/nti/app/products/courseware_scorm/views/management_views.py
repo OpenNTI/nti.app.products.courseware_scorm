@@ -35,6 +35,8 @@ from nti.app.products.courseware_scorm.interfaces import ISCORMCollection
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 from nti.app.products.courseware_scorm.interfaces import ISCORMContentInfo
 
+from nti.app.products.courseware_scorm.model import ScormContentInfo
+
 from nti.app.products.courseware_scorm.views import CREATE_SCORM_COURSE_VIEW_NAME
 
 from nti.common.string import is_true
@@ -50,7 +52,6 @@ from nti.externalization.interfaces import StandardExternalFields
 from nti.scorm_cloud.client.mixins import get_source
 
 from nti.scorm_cloud.client.request import ScormCloudError
-from nti.app.products.courseware_scorm.model import ScormContentInfo
 
 ITEMS = StandardExternalFields.ITEMS
 TOTAL = StandardExternalFields.TOTAL
@@ -202,9 +203,10 @@ class SCORMCollectionPutView(AbstractAuthenticatedView,
     :class:`ISCORMCollection`.
     """
 
-    def __call__(self):
+    def _do_call(self):
         source = self._get_scorm_source()
         scorm_content_info = self.upload_content(source, tags=self.context.tags)
+        scorm_content_info.creator = self.remoteUser.username
         self.context.store_content(scorm_content_info)
         return scorm_content_info
 

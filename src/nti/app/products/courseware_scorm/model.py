@@ -45,11 +45,14 @@ from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.contenttypes.presentation.mixins import PersistentPresentationAsset
 
+from nti.dataserver.authorization_acl import acl_from_aces
+
 from nti.dublincore.time_mixins import PersistentCreatedAndModifiedTimeObject
 
 from nti.ntiids.oids import to_external_ntiid_oid
 
 from nti.property.property import alias
+from nti.property.property import LazyOnClass
 
 from nti.schema.eqhash import EqHash
 
@@ -70,7 +73,6 @@ from nti.scorm_cloud.client.registration import Interaction
 from nti.scorm_cloud.client.registration import Registration
 from nti.scorm_cloud.client.registration import LearnerPreference
 from nti.scorm_cloud.client.registration import RegistrationReport
-from nti.app.products.courseware_scorm import SCORM_COLLECTION_NAME
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -134,7 +136,7 @@ def _response(value):
     return ISCORMResponse(response)
 
 
-@EqHash('scorm_id')
+@EqHash('target')
 @interface.implementer(ISCORMContentRef)
 class SCORMContentRef(PersistentPresentationAsset):
 
@@ -169,6 +171,11 @@ class ScormContentInfo(PersistentCreatedAndModifiedTimeObject,
     @Lazy
     def ntiid(self):
         return to_external_ntiid_oid(self)
+
+    @LazyOnClass
+    def __acl__(self):
+        # If we don't have this, it would derive one from ICreated, rather than its parent.
+        return acl_from_aces([])
 
 
 @component.adapter(CourseData)

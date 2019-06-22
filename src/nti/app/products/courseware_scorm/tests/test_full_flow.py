@@ -209,11 +209,12 @@ class TestFullFlow(CoursewareSCORMLayerTest):
         scorm_content_ext = res['Items'][0]
         assert_that(scorm_content_ext,
                     has_entries('scorm_id', 'new-scorm-id',
+                                'Creator', u'sjohnson@nextthought.com',
                                 'CreatedTime', not_none()))
         scorm_content_ntiid = scorm_content_ext.get('NTIID')
         assert_that(scorm_content_ntiid, not_none())
-        # FIXME: Delete rel
         # FIXME: student, launch with no delete rel and progress rel
+        self.require_link_href_with_rel(scorm_content_ext, 'delete')
         self.require_link_href_with_rel(scorm_content_ext,
                                         LAUNCH_SCORM_COURSE_VIEW_NAME)
 
@@ -232,9 +233,25 @@ class TestFullFlow(CoursewareSCORMLayerTest):
                           "description": u'scorm description',
                           "target": scorm_content_ntiid}
         scorm_ref_ext = self.testapp.post_json(group_put_href, scorm_ref_data)
-        from IPython.terminal.debugger import set_trace;set_trace()
+        scorm_ref_ext = scorm_ref_ext.json_body
+        assert_that(scorm_ref_ext, has_entries(u'CompletedDate', none(),
+                                               u'CompletedItem', none(),
+                                               u'CompletionPolicy', none()))
 
-
+        assert_that(scorm_ref_ext, has_entries(u'description', u'scorm description',
+                                               u'href', not_none(),
+                                               u'icon', none(),
+                                               u'ntiid', not_none(),
+                                               u'target', scorm_content_ntiid,
+                                               u'title', u'scorm content title',
+                                               u'MimeType', u'application/vnd.nextthought.scormcontentref',
+                                               u'CreatedTime', not_none(),
+                                               u'Creator', u'sjohnson@nextthought.com',
+                                               u'Last Modified', not_none()))
+        self.require_link_href_with_rel(scorm_ref_ext, 'edit')
+        scorm_ref_content = scorm_ref_ext.get('ScormContentInfo')
+        assert_that(scorm_ref_content, not_none())
+        assert_that(scorm_ref_content, has_entry('NTIID', scorm_content_ntiid))
 
         postback_data_template = '''<?xml version="1.0" encoding="utf-8" ?>
         <rsp stat="ok">
