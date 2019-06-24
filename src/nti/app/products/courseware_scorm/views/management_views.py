@@ -35,8 +35,6 @@ from nti.app.products.courseware_scorm.interfaces import ISCORMCollection
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 from nti.app.products.courseware_scorm.interfaces import ISCORMContentInfo
 
-from nti.app.products.courseware_scorm.model import ScormContentInfo
-
 from nti.app.products.courseware_scorm.views import CREATE_SCORM_COURSE_VIEW_NAME
 
 from nti.common.string import is_true
@@ -241,7 +239,7 @@ class ScormInstanceDeleteView(AbstractAuthenticatedView,
     def __call__(self):
         client = self._get_scorm_client()
         try:
-            client.delete_course(self.scorm_id)
+            client.delete_course(self.context.scorm_id)
         except ScormCloudError as exc:
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
