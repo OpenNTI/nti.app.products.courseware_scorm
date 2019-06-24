@@ -31,6 +31,10 @@
 		   provides=".interfaces.IPostBackURLUtility" />
 	</configure>
 
+    <adapter factory=".adapters._scormcontent_to_course" />
+    <adapter factory=".adapters._scormref_to_scormcontent" />
+
+    <adapter factory=".courses.SCORMContentContainerFactory" />
 	<adapter factory=".courses.SCORMCourseInstanceMetadataFactory" />
 
 	<adapter factory=".courses.RegistrationReportContainerFactory" />
@@ -51,7 +55,7 @@
  			 for="nti.dataserver.interfaces.IUser nti.contenttypes.courses.interfaces.ICourseInstance"
  			 provides=".interfaces.ISCORMIdentifier" />
 
-    <adapter factory=".model.ScormContentInfo"
+    <adapter factory=".model._course_data_to_scorm_content_info"
              for="nti.scorm_cloud.client.course.CourseData"
              provides=".interfaces.ISCORMContentInfo" />
 
@@ -100,14 +104,14 @@
  			 provides=".interfaces.ISCORMActivity" />
 
  	<adapter factory=".completion.SCORMCompletionPolicy"
- 			 for=".interfaces.IScormContent
+ 			 for=".interfaces.ISCORMContentInfo
  			      nti.contenttypes.courses.interfaces.ICourseInstance"
  			 provides="nti.contenttypes.completion.interfaces.ICompletableItemCompletionPolicy" />
 
  	<adapter factory=".completion._scorm_progress"
  			 provides=".interfaces.ISCORMProgress"
  			 for="nti.dataserver.interfaces.IUser
- 			 	  .interfaces.IScormContent
+ 			 	  .interfaces.ISCORMContentInfo
  			 	  nti.contenttypes.courses.interfaces.ICourseInstance" />
 
  	<adapter factory=".courses.SCORMCourseInstanceReportFilter"
@@ -116,13 +120,7 @@
 
 	<!-- Subscribers -->
 	<subscriber handler=".completion._on_user_progress_updated" />
-
 	<subscriber handler=".courses._on_scorm_registration_removed" />
-
-	<configure zcml:condition="have testmode">
-		<subscriber handler=".tests.test_management_views._scorm_package_launched" />
-		<subscriber handler=".tests.test_management_views._on_scorm_registration_postback" />
-	</configure>
 
 	<!-- Client -->
 	<include package="." file="meta.zcml" />
@@ -167,20 +165,15 @@
              provides=".interfaces.ISCORMWorkspace" />
 
 	<!-- Decorators -->
-	<subscriber factory=".decorators._SCORMCourseInstanceDecorator"
-				provides="nti.externalization.interfaces.IExternalObjectDecorator"
-				for=".interfaces.ISCORMCourseInstance
-				     pyramid.interfaces.IRequest" />
+	<subscriber factory=".decorators._SCORMContentInfoLaunchDecorator"
+                provides="nti.externalization.interfaces.IExternalObjectDecorator"
+                for="nti.app.products.courseware_scorm.interfaces.ISCORMContentInfo
+                     pyramid.interfaces.IRequest" />
 
-	<subscriber factory=".decorators._SCORMCourseInstanceMetadataDecorator"
-				provides="nti.externalization.interfaces.IExternalObjectDecorator"
-				for=".interfaces.ISCORMCourseMetadata
-				     pyramid.interfaces.IRequest" />
-
-	<subscriber factory=".decorators._CourseInstanceEnrollmentDecorator"
-				provides="nti.externalization.interfaces.IExternalObjectDecorator"
-				for="nti.app.products.courseware.interfaces.ICourseInstanceEnrollment
-				     pyramid.interfaces.IRequest" />
+    <subscriber factory=".decorators._SCORMContentInfoDecorator"
+                provides="nti.externalization.interfaces.IExternalObjectDecorator"
+                for="nti.app.products.courseware_scorm.interfaces.ISCORMContentInfo
+                     pyramid.interfaces.IRequest" />
 
     <subscriber factory=".decorators._SCORMContentRefDecorator"
                 provides="nti.externalization.interfaces.IExternalObjectDecorator"
@@ -190,11 +183,6 @@
     <subscriber factory=".decorators._CourseInstanceDecorator"
                 provides="nti.externalization.interfaces.IExternalObjectDecorator"
                 for="nti.contenttypes.courses.interfaces.ICourseInstance
-                     pyramid.interfaces.IRequest" />
-
-    <subscriber factory=".decorators._SCORMContentInfoDecorator"
-                provides="nti.externalization.interfaces.IExternalObjectDecorator"
-                for="nti.app.products.courseware_scorm.interfaces.ISCORMContentInfo
                      pyramid.interfaces.IRequest" />
 
     <utility factory=".ntiids._SCORMContentRefResolver" name="SCORMContentRef" />
@@ -207,6 +195,7 @@
 					root_interfaces=".interfaces.ISCORMCourseMetadata
 									 .interfaces.IScormInstance
 									 .interfaces.ISCORMContentInfo
+									 .interfaces.ISCORMContentInfoContainer
 									 .interfaces.IScormRegistration
 									 .interfaces.ISCORMRegistrationReport
 									 .interfaces.ISCORMObjective

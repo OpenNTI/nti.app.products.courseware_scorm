@@ -14,7 +14,6 @@ from pyramid import httpexceptions as hexc
 from pyramid.view import view_config
 
 from zope import component
-from zope import interface
 
 from zope.cachedescriptors.property import Lazy
 
@@ -35,17 +34,13 @@ from nti.app.products.courseware_scorm.courses import SCORMCourseInstance
 from nti.app.products.courseware_scorm.interfaces import ISCORMCollection
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 from nti.app.products.courseware_scorm.interfaces import ISCORMContentInfo
-from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
-from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 
-from nti.app.products.courseware_scorm.views import UPDATE_SCORM_VIEW_NAME
+from nti.app.products.courseware_scorm.model import ScormContentInfo
+
 from nti.app.products.courseware_scorm.views import CREATE_SCORM_COURSE_VIEW_NAME
-from nti.app.products.courseware_scorm.views import IMPORT_SCORM_COURSE_VIEW_NAME
 
 from nti.common.string import is_true
 
-from nti.contenttypes.courses.interfaces import ICourseInstance
-from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 from nti.contenttypes.courses.interfaces import ICourseAdministrativeLevel
 
 from nti.dataserver.authorization import ACT_READ
@@ -53,8 +48,6 @@ from nti.dataserver.authorization import ACT_CONTENT_EDIT
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
-
-from nti.externalization.proxy import removeAllProxies
 
 from nti.scorm_cloud.client.mixins import get_source
 
@@ -137,7 +130,7 @@ class SCORMContentUploadMixin(object):
         """
         Upload the content to scorm cloud, optionally tagging it as requested.
 
-        Returns the newly created scorm content scorm_id.
+        Returns the newly created :class:`IScormContentInfo`.
         """
         client = self._get_scorm_client()
         try:
@@ -151,7 +144,7 @@ class SCORMContentUploadMixin(object):
                                  'message': exc.message,
                              },
                              None)
-        return scorm_id
+        return ScormContentInfo(scorm_id=scorm_id)
 
     def _handle_multipart(self, sources):
         """
@@ -177,66 +170,6 @@ class SCORMContentUploadMixin(object):
                              },
                              None)
         return source
-
-
-@view_config(route_name='objects.generic.traversal',
-             renderer='rest',
-             context=ICourseInstance,
-             request_method='POST',
-             name=IMPORT_SCORM_COURSE_VIEW_NAME)
-class ImportSCORMCourseView(AbstractAdminScormCourseView,
-                            SCORMContentUploadMixin):
-    """
-    A view for importing uploaded SCORM courses to SCORM Cloud.
-    """
-
-    def _do_call(self):
-        source = self._get_scorm_source()
-        entry_ntiid = ICourseCatalogEntry(self.context).ntiid
-        scorm_id = self.upload_content(source, tags=(entry_ntiid,))
-        metadata = ISCORMCourseMetadata(self.context)
-        if metadata.has_scorm_package() and self.unregister_users:
-            # Unregister users. We'll rely on launching to re-register users as
-            # needed.
-            client = self._get_scorm_client()
-            try:
-                client.unregister_users_for_scorm_content(source)
-            except ScormCloudError as exc:
-                raise_json_error(self.request,
-                                 hexc.HTTPUnprocessableEntity,
-                                 {
-                                     'message': exc.message,
-                                 },
-                                 None)
-        course = removeAllProxies(self.context)
-        interface.alsoProvides(course, ISCORMCourseInstance)
-        metadata.scorm_id = scorm_id
-        return self.context
-
-
-@view_config(route_name='objects.generic.traversal',
-             renderer='rest',
-             context=ICourseInstance,
-             request_method='POST',
-             name=UPDATE_SCORM_VIEW_NAME)
-class UpdateSCORMView(AbstractAdminScormCourseView,
-                      SCORMContentUploadMixin):
-
-    def _do_call(self):
-        source = self._get_scorm_source()
-        client = self._get_scorm_client()
-        metadata = ISCORMCourseMetadata(self.context)
-        try:
-            client.update_assets(metadata.scorm_id, source, self.request)
-        except ScormCloudError as exc:
-            raise_json_error(self.request,
-                             hexc.HTTPUnprocessableEntity,
-                             {
-                                 'message': exc.message,
-                             },
-                             None)
-
-        return self.context
 
 
 @view_config(route_name='objects.generic.traversal',
@@ -270,12 +203,12 @@ class SCORMCollectionPutView(AbstractAuthenticatedView,
     :class:`ISCORMCollection`.
     """
 
-    def __call__(self):
+    def _do_call(self):
         source = self._get_scorm_source()
-        scorm_id = self.upload_content(source, tags=self.context.tags)
-        result = LocatedExternalDict()
-        result['scorm_id'] = scorm_id
-        return result
+        scorm_content_info = self.upload_content(source, tags=self.context.tags)
+        scorm_content_info.creator = self.remoteUser.username
+        self.context.store_content(scorm_content_info)
+        return scorm_content_info
 
 
 @view_config(route_name='objects.generic.traversal',
@@ -300,4 +233,5 @@ class ScormInstanceDeleteView(AbstractAuthenticatedView,
                                  'message': exc.message,
                              },
                              None)
+        self.__parent__.remove_content(self.scorm_id)
         return hexc.HTTPNoContent()

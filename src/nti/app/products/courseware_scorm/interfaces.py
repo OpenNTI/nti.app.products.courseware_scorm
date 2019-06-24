@@ -23,6 +23,9 @@ from zope.location.interfaces import IContained
 from nti.appserver.workspaces.interfaces import IWorkspace
 from nti.appserver.workspaces.interfaces import IContainerCollection
 
+from nti.base.interfaces import ICreated
+from nti.base.interfaces import ILastModified
+
 from nti.contenttypes.presentation.interfaces import href_schema_field
 from nti.contenttypes.presentation.interfaces import INTIIDIdentifiable
 from nti.contenttypes.presentation.interfaces import IGroupOverViewable
@@ -37,6 +40,7 @@ from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import IDoNotCreateDefaultOutlineCourseInstance
 
 from nti.coremetadata.interfaces import IUser
+from nti.coremetadata.interfaces import IShouldHaveTraversablePath
 
 from nti.schema.field import Bool
 from nti.schema.field import List
@@ -56,11 +60,10 @@ class ISCORMCourseInstance(ICourseInstance, IDoNotCreateDefaultOutlineCourseInst
 
 class IScormContent(interface.Interface):
     """
-    An item that points to a piece of scorm content.
+    An item that points to a :class:`ISCORMContentInfo`.
     """
 
-    scorm_id = ValidTextLine(title=u"The SCORM ID",
-                             required=True)
+    target = ValidTextLine(title=u"Scorm content info ntiid", required=False)
 
 
 class ISCORMContentRef(IAssetTitleDescribed,
@@ -68,10 +71,9 @@ class ISCORMContentRef(IAssetTitleDescribed,
                        INTIIDIdentifiable,
                        ICoursePresentationAsset,
                        INonExportableAsset,
-                       ICompletableItem,
                        IScormContent):
     """
-    A presentation asset ref pointing towards scorm content.
+    A presentation asset ref pointing towards :class:`ISCORMContentInfo`.
     """
 
     icon = href_schema_field(title=u"Icon href", required=False)
@@ -245,7 +247,7 @@ class ISCORMIdentifier(interface.Interface):
         """
 
 
-class ISCORMContentInfo(interface.Interface):
+class ISCORMContentInfo(IContained, ICreated, ILastModified, ICompletableItem):
     """
     A scorm course content info. This represents the scorm content or
     course on scorm cloud.
@@ -255,13 +257,36 @@ class ISCORMContentInfo(interface.Interface):
                              required=True)
 
     title = ValidTextLine(title=u'The scorm content title',
-                          required=True)
+                          required=False)
 
-    course_version = ValidTextLine(title=u'The course version.')
+    course_version = ValidTextLine(title=u'The course version.',
+                                   required=False)
 
-    registration_count = Number(title=u'The registration count.')
+    registration_count = Number(title=u'The registration count.',
+                                required=False)
 
-    tags = ListOrTuple(title=u'The scorm content tags.')
+    tags = ListOrTuple(title=u'The scorm content tags.',
+                       required=False)
+
+
+class ISCORMContentInfoContainer(IShouldHaveTraversablePath,
+                                 ILastModified,
+                                 ISCORMCollection):
+    """
+    A storage container for :class:`ISCORMContentInfo`.
+    """
+
+    contains(ISCORMContentInfo)
+
+    def store_content(content):
+        """
+        Store the given :class:`ISCORMContentInfo` into this container.
+        """
+
+    def remove_content(content):
+        """
+        Remove the given :class:`ISCORMContentInfo`.
+        """
 
 
 class IScormInstance(interface.Interface):

@@ -25,6 +25,8 @@ from zope.event import notify
 
 from zope.intid.interfaces import IIntIds
 
+from nti.app.products.courseware_scorm import SCORM_COLLECTION_NAME
+
 from nti.app.products.courseware_scorm.interfaces import ISCORMIdentifier
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 from nti.app.products.courseware_scorm.interfaces import ISCORMCourseInstance
@@ -32,6 +34,8 @@ from nti.app.products.courseware_scorm.interfaces import ISCORMCourseMetadata
 from nti.app.products.courseware_scorm.interfaces import IRegistrationReportContainer
 from nti.app.products.courseware_scorm.interfaces import ISCORMRegistrationRemovedEvent
 from nti.app.products.courseware_scorm.interfaces import IUserRegistrationReportContainer
+
+from nti.app.products.courseware_scorm.model import SCORMContentInfoContainer
 
 from nti.cabinet.filer import transfer_to_native_file
 
@@ -107,6 +111,9 @@ class SCORMCourseMetadata(Persistent, Contained):
 
 SCORMCourseInstanceMetadataFactory = an_factory(SCORMCourseMetadata,
                                                 SCORM_COURSE_METADATA_KEY)
+
+SCORMContentContainerFactory = an_factory(SCORMContentInfoContainer,
+                                          SCORM_COLLECTION_NAME)
 
 
 @interface.implementer(ISCORMRegistrationRemovedEvent)
