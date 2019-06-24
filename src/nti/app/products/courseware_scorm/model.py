@@ -146,6 +146,7 @@ class SCORMContentRef(PersistentPresentationAsset):
     mime_type = mimeType = 'application/vnd.nextthought.scormcontentref'
 
     __name__ = alias('ntiid')
+    target = None
 
     @readproperty
     def ntiid(self):  # pylint: disable=method-hidden
