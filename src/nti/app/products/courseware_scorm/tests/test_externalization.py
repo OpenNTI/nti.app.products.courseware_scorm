@@ -67,7 +67,7 @@ class TestExternal(ApplicationLayerTest):
         course_data.numberOfVersions = u'2'
         course_data.numberOfRegistrations = u'18'
         content = ISCORMContentInfo(course_data)
-        ext_obj = toExternalObject(content)
+        ext_obj = toExternalObject(content, decorate=False)
         assert_that(ext_obj, has_entries(u'title', u'new title',
                                          u'scorm_id', u'123456',
                                          u'course_version', u'2',
@@ -79,7 +79,7 @@ class TestExternal(ApplicationLayerTest):
         # Bad data
         course_data.numberOfRegistrations = u'aaa'
         content = ISCORMContentInfo(course_data)
-        ext_obj = toExternalObject(content)
+        ext_obj = toExternalObject(content, decorate=False)
         assert_that(ext_obj, has_entries(u'title', u'new title',
                                          u'scorm_id', u'123456',
                                          u'course_version', u'2',
@@ -92,7 +92,7 @@ class TestExternal(ApplicationLayerTest):
                                    registration_count=10,
                                    tags=[u'tag1', u'tag2'])
 
-        ext_obj = toExternalObject(content)
+        ext_obj = toExternalObject(content, decorate=False)
         assert_that(ext_obj, has_entries(u'scorm_id', u'123456',
                                          u'title', u'scorm title',
                                          u'course_version', u'v1',
