@@ -71,7 +71,6 @@ class ISCORMContentRef(IAssetTitleDescribed,
                        INTIIDIdentifiable,
                        ICoursePresentationAsset,
                        INonExportableAsset,
-                       ICompletableItem,
                        IScormContent):
     """
     A presentation asset ref pointing towards :class:`ISCORMContentInfo`.
@@ -248,7 +247,7 @@ class ISCORMIdentifier(interface.Interface):
         """
 
 
-class ISCORMContentInfo(IContained, ICreated, ILastModified):
+class ISCORMContentInfo(IContained, ICreated, ILastModified, ICompletableItem):
     """
     A scorm course content info. This represents the scorm content or
     course on scorm cloud.

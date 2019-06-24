@@ -31,6 +31,7 @@
 		   provides=".interfaces.IPostBackURLUtility" />
 	</configure>
 
+    <adapter factory=".adapters._scormcontent_to_course" />
     <adapter factory=".adapters._scormref_to_scormcontent" />
 
     <adapter factory=".courses.SCORMContentContainerFactory" />
@@ -120,11 +121,6 @@
 	<!-- Subscribers -->
 	<subscriber handler=".completion._on_user_progress_updated" />
 	<subscriber handler=".courses._on_scorm_registration_removed" />
-
-	<configure zcml:condition="have testmode">
-		<subscriber handler=".tests.test_management_views._scorm_package_launched" />
-		<subscriber handler=".tests.test_management_views._on_scorm_registration_postback" />
-	</configure>
 
 	<!-- Client -->
 	<include package="." file="meta.zcml" />

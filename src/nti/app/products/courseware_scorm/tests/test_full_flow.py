@@ -187,16 +187,12 @@ class TestFullFlow(CoursewareSCORMLayerTest):
                                 'CreatedTime', not_none()))
         scorm_content_ntiid = scorm_content_ext.get('NTIID')
         assert_that(scorm_content_ntiid, not_none())
-        # FIXME: student, launch with no delete rel and progress rel
         self.require_link_href_with_rel(scorm_content_ext, 'delete')
         self.require_link_href_with_rel(scorm_content_ext,
                                         LAUNCH_SCORM_COURSE_VIEW_NAME)
 
         # Create lesson content ref
         scorm_ref_ext = self._create_scorm_content_ref(scorm_content_ntiid, outline)
-        assert_that(scorm_ref_ext, has_entries(u'CompletedDate', none(),
-                                               u'CompletedItem', none(),
-                                               u'CompletionPolicy', none()))
 
         assert_that(scorm_ref_ext, has_entries(u'description', u'scorm description',
                                                u'href', not_none(),
@@ -213,6 +209,9 @@ class TestFullFlow(CoursewareSCORMLayerTest):
         scorm_ref_content = scorm_ref_ext.get('ScormContentInfo')
         assert_that(scorm_ref_content, not_none())
         assert_that(scorm_ref_content, has_entry('NTIID', scorm_content_ntiid))
+        assert_that(scorm_ref_content, has_entries(u'CompletedDate', none(),
+                                                   u'CompletedItem', none(),
+                                                   u'CompletionPolicy', has_entry(CLASS, u'SCORMCompletionPolicy')))
 
         # Create enrolled user, reg_id and postback url
         new_username1 = u'CapnCook'
@@ -304,7 +303,11 @@ class TestFullFlow(CoursewareSCORMLayerTest):
         user_scorm_ref_ext = user_scorm_ref_ext.json_body
         user_scorm_content_ext = user_scorm_ref_ext.get('ScormContentInfo')
         assert_that(user_scorm_content_ext, not_none())
+        assert_that(scorm_ref_content, has_entries(u'CompletedDate', none(),
+                                                   u'CompletedItem', none(),
+                                                   u'CompletionPolicy', has_entry(CLASS, u'SCORMCompletionPolicy')))
 
+        # This counts towards completion even though success is false...
         failed_postback_data = _get_postback(reg_id, complete=True, success=False)
         params = {'username': username_hash,
                   'password': pw_hash,
@@ -312,3 +315,28 @@ class TestFullFlow(CoursewareSCORMLayerTest):
         self.testapp.post(postback_href,
                           params=params,
                           content_type='application/x-www-form-urlencoded')
+        user_scorm_ref_ext = self.testapp.get(scorm_ref_href, extra_environ=new_user_env)
+        user_scorm_ref_ext = user_scorm_ref_ext.json_body
+        user_scorm_content_ext = user_scorm_ref_ext.get('ScormContentInfo')
+        assert_that(user_scorm_content_ext, not_none())
+        assert_that(user_scorm_content_ext, has_entries(u'CompletedDate', not_none(),
+                                                        u'CompletedItem', has_entries('ItemNTIID', scorm_content_ntiid,
+                                                                                      'Success', True),
+                                                        u'CompletionPolicy', has_entry(CLASS, u'SCORMCompletionPolicy')))
+
+        # Another postback (with a failed report) does not break completion
+        params = {'username': username_hash,
+                  'password': pw_hash,
+                  'data': incomplete_postback_data}
+        self.testapp.post(postback_href,
+                          params=params,
+                          content_type='application/x-www-form-urlencoded')
+        user_scorm_ref_ext = self.testapp.get(scorm_ref_href, extra_environ=new_user_env)
+        user_scorm_ref_ext = user_scorm_ref_ext.json_body
+        user_scorm_content_ext = user_scorm_ref_ext.get('ScormContentInfo')
+        assert_that(user_scorm_content_ext, not_none())
+        assert_that(user_scorm_content_ext, has_entries(u'CompletedDate', not_none(),
+                                                        u'CompletedItem', has_entries('ItemNTIID', scorm_content_ntiid,
+                                                                                      'Success', True),
+                                                        u'CompletionPolicy', has_entry(CLASS, u'SCORMCompletionPolicy')))
+

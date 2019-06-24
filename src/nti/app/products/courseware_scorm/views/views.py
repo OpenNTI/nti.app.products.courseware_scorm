@@ -259,11 +259,6 @@ class SCORMRegistrationResultPostBack(AbstractView):
             raise hexc.HTTPBadRequest()
         scorm_content = content_container[scorm_id]
         completed_item = get_completed_item(user, course, scorm_content)
-        # We still broadcast the events in any case.
-        notify(UserProgressUpdatedEvent(obj=scorm_content,
-                                        user=user,
-                                        context=course))
-        notify(SCORMRegistrationPostbackEvent(user, course, scorm_content, datetime.utcnow()))
 
         prev_report = user_container.get_registration_report(scorm_id)
         if prev_report is None:
@@ -274,6 +269,12 @@ class SCORMRegistrationResultPostBack(AbstractView):
             # completion for this scorm id.
             user_container.remove_registration_report(scorm_id)
             user_container.add_registration_report(scorm_id, report)
+
+        # We still broadcast the events in any case.
+        notify(UserProgressUpdatedEvent(obj=scorm_content,
+                                        user=user,
+                                        context=course))
+        notify(SCORMRegistrationPostbackEvent(user, course, scorm_content, datetime.utcnow()))
 
     def __call__(self):
         username = self.request.params.get('username', None)

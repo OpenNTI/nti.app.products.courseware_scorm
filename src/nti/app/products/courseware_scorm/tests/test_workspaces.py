@@ -25,8 +25,6 @@ from nti.app.products.courseware_scorm.interfaces import ISCORMWorkspace
 from nti.app.products.courseware_scorm.interfaces import ISCORMContentInfo
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 
-from nti.app.products.courseware_scorm.model import ScormContentInfo
-
 from nti.app.products.courseware_scorm.tests import CoursewareSCORMLayerTest
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
@@ -103,7 +101,7 @@ class TestConfiguredWorkspace(CoursewareSCORMLayerTest):
 
         # Incorrect site is filtered out
         course_data.tags = ('alpha.nextthought.com',)
-        content_info = ScormContentInfo(course_data)
+        content_info = ISCORMContentInfo(course_data)
         mock_content.is_callable().returns((content_info,))
         scorm_res = self.testapp.get(scorm_collection_href)
         scorm_res = scorm_res.json_body
@@ -112,7 +110,7 @@ class TestConfiguredWorkspace(CoursewareSCORMLayerTest):
 
         # Filter lines up
         course_data.tags = ('janux.ou.edu',)
-        content_info = ScormContentInfo(course_data)
+        content_info = ISCORMContentInfo(course_data)
         mock_content.is_callable().returns((content_info,))
         scorm_res = self.testapp.get(scorm_collection_href)
         scorm_res = scorm_res.json_body
