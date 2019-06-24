@@ -399,6 +399,11 @@ class SCORMCloudClient(object):
         scorm_content = service.get_course_list(courseIdFilterRegex=filter_id, tags=tags)
         return [ISCORMContentInfo(x) for x in scorm_content or ()]
 
+    def get_scorm_instance_detail(self, scorm_id):
+        service = self.cloud.get_course_service()
+        scorm_content = service.get_course_detail(scorm_id)
+        return ISCORMContentInfo(scorm_content, None)
+
     def get_scorm_tags(self, scorm_id):
         service = self.cloud.get_tag_service()
         tags = service.get_scorm_tags(scorm_id)

@@ -215,6 +215,12 @@ class ISCORMCloudClient(interface.Interface):
         Returns all available :class:`ISCORMContentInfo` content objects.
         """
 
+    def get_scorm_instance_detail(scorm_id):
+        """
+        Returns the :class:`IScormContentInfo` representing the data stored on
+        scorm cloud for a package.
+        """
+
     def get_scorm_tags(scorm_id):
         """
         Returns an iterable of tags for the given scorm id.

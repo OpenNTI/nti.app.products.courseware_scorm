@@ -126,6 +126,21 @@ class SCORMContentUploadMixin(object):
                              None)
         return client
 
+    def get_scorm_content(self, client, scorm_id):
+        """
+        Return the scorm content info referenced by the given scorm_id.
+        """
+        try:
+            result = client.get_scorm_instance_detail(scorm_id)
+        except ScormCloudError as exc:
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                 'message': exc.message,
+                             },
+                             None)
+        return result
+
     def upload_content(self, source, tags=None):
         """
         Upload the content synchronously to scorm cloud, optionally tagging it
@@ -145,7 +160,7 @@ class SCORMContentUploadMixin(object):
                                  'message': exc.message,
                              },
                              None)
-        return ScormContentInfo(scorm_id=scorm_id)
+        return self.get_scorm_content(client, scorm_id)
 
     def _handle_multipart(self, sources):
         """
