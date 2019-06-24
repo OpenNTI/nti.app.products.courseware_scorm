@@ -50,7 +50,6 @@ class SCORMProgress(Progress):
     def AbsoluteProgress(self):
         report = self.registration_report
         activity = report.activity
-        # TODO: Why do we not look at success?
         if activity is not None:
             progress = 1 if (activity.complete or activity.completed) else 0
         else:
@@ -104,13 +103,16 @@ class SCORMCompletionPolicy(AbstractCompletableItemCompletionPolicy):
         activity = report.activity
         if activity is not None:
             completed = activity.complete or activity.completed
+            success = activity.success
         else:
             completed = report.complete
+            success = report.success
 
         if completed:
             result = CompletedItem(Item=progress.Item,
                                    Principal=progress.User,
-                                   CompletedDate=progress.LastModified)
+                                   CompletedDate=progress.LastModified,
+                                   Success=success)
         return result
 
 

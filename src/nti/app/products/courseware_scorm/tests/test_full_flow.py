@@ -303,15 +303,32 @@ class TestFullFlow(CoursewareSCORMLayerTest):
         user_scorm_ref_ext = user_scorm_ref_ext.json_body
         user_scorm_content_ext = user_scorm_ref_ext.get('ScormContentInfo')
         assert_that(user_scorm_content_ext, not_none())
-        assert_that(scorm_ref_content, has_entries(u'CompletedDate', none(),
-                                                   u'CompletedItem', none(),
-                                                   u'CompletionPolicy', has_entry(CLASS, u'SCORMCompletionPolicy')))
+        assert_that(user_scorm_content_ext, has_entries(u'CompletedDate', none(),
+                                                        u'CompletedItem', none(),
+                                                        u'CompletionPolicy', has_entry(CLASS, u'SCORMCompletionPolicy')))
 
-        # This counts towards completion even though success is false...
+        # Unsuccessful completion
         failed_postback_data = _get_postback(reg_id, complete=True, success=False)
         params = {'username': username_hash,
                   'password': pw_hash,
                   'data': failed_postback_data}
+        self.testapp.post(postback_href,
+                          params=params,
+                          content_type='application/x-www-form-urlencoded')
+        user_scorm_ref_ext = self.testapp.get(scorm_ref_href, extra_environ=new_user_env)
+        user_scorm_ref_ext = user_scorm_ref_ext.json_body
+        user_scorm_content_ext = user_scorm_ref_ext.get('ScormContentInfo')
+        assert_that(user_scorm_content_ext, not_none())
+        assert_that(user_scorm_content_ext, has_entries(u'CompletedDate', not_none(),
+                                                        u'CompletedItem', has_entries('ItemNTIID', scorm_content_ntiid,
+                                                                                      'Success', False),
+                                                        u'CompletionPolicy', has_entry(CLASS, u'SCORMCompletionPolicy')))
+
+        # Successful completion
+        success_postback_data = _get_postback(reg_id, complete=True, success=True)
+        params = {'username': username_hash,
+                  'password': pw_hash,
+                  'data': success_postback_data}
         self.testapp.post(postback_href,
                           params=params,
                           content_type='application/x-www-form-urlencoded')

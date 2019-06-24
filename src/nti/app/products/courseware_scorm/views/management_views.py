@@ -128,7 +128,8 @@ class SCORMContentUploadMixin(object):
 
     def upload_content(self, source, tags=None):
         """
-        Upload the content to scorm cloud, optionally tagging it as requested.
+        Upload the content synchronously to scorm cloud, optionally tagging it
+        as requested.
 
         Returns the newly created :class:`IScormContentInfo`.
         """
