@@ -31,9 +31,14 @@ from nti.app.products.courseware_scorm import MessageFactory as _
 from nti.app.products.courseware_scorm.courses import is_course_admin
 from nti.app.products.courseware_scorm.courses import SCORMCourseInstance
 
+from nti.app.products.courseware_scorm.interfaces import UPLOAD_CREATED
+
 from nti.app.products.courseware_scorm.interfaces import ISCORMCollection
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 from nti.app.products.courseware_scorm.interfaces import ISCORMContentInfo
+
+from nti.app.products.courseware_scorm.model import ScormContentInfo
+from nti.app.products.courseware_scorm.model import SCORMContentInfoUploadJob
 
 from nti.app.products.courseware_scorm.views import CREATE_SCORM_COURSE_VIEW_NAME
 
@@ -139,18 +144,9 @@ class SCORMContentUploadMixin(object):
                              None)
         return result
 
-    def upload_content(self, source, tags=None):
-        """
-        Upload the content synchronously to scorm cloud, optionally tagging it
-        as requested.
-
-        Returns the newly created :class:`IScormContentInfo`.
-        """
-        client = self._get_scorm_client()
+    def _start_async_import(self, client, source):
         try:
-            scorm_id = client.import_scorm_content(source)
-            if tags:
-                client.set_scorm_tags(scorm_id, tags)
+            token, scorm_id = client.import_scorm_content_async(source)
         except ScormCloudError as exc:
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
@@ -158,7 +154,27 @@ class SCORMContentUploadMixin(object):
                                  'message': exc.message,
                              },
                              None)
-        return self.get_scorm_content(client, scorm_id)
+        return token, scorm_id
+
+    def _set_content_tags(self, client, scorm_id, tags):
+        client.set_scorm_tags(scorm_id, tags)
+
+    def upload_content(self, source, tags=None):
+        """
+        Upload the content asynchronously to scorm cloud, optionally tagging it
+        as requested.
+
+        Returns the newly created :class:`IScormContentInfo`.
+        """
+        client = self._get_scorm_client()
+        token, scorm_id = self._start_async_import(client, source)
+        if tags:
+            # FIXME: Can we do this during async import...
+            self._set_content_tags(client, scorm_id, tags)
+        result = ScormContentInfo(scorm_id=scorm_id)
+        result.upload_job = SCORMContentInfoUploadJob(Token=token,
+                                                      State=UPLOAD_CREATED)
+        return result
 
     def _handle_multipart(self, sources):
         """
@@ -229,11 +245,57 @@ class SCORMCollectionPutView(AbstractAuthenticatedView,
              renderer='rest',
              context=ISCORMContentInfo,
              permission=ACT_CONTENT_EDIT,
-             request_method='DELETE')
-class ScormInstanceDeleteView(AbstractAuthenticatedView,
+             request_method='GET')
+class ScormContentInfoGetView(AbstractAuthenticatedView,
                               SCORMContentUploadMixin):
     """
-    A view for deleting a :class:`ISCORMInstance` object from scorm_cloud.
+    A view for getting a :class:`ISCORMContentInfo` object. If this content
+    is incomplete due to an asynchronous upload, we attempt to check on the
+    status of the upload, pulling down the scorm content info if the upload
+    has completed.
+    """
+
+    def copy_scorm_content_info(self, source, target):
+        for name in ISCORMContentInfo.names():
+            value = getattr(source, name, None)
+            if value is not None:
+                setattr(target, name, value)
+
+    def update_upload_job(self, upload_job, async_result):
+        upload_job.ErrorMessage = async_result.error_message
+        upload_job.State = async_result.status
+
+    def _get_async_import_result(self, client, token):
+        return client.get_async_import_result(token)
+
+    def __call__(self):
+        client = self._get_scorm_client()
+        upload_job = self.context.upload_job
+        if upload_job and not upload_job.is_upload_complete():
+            # Fetch job status
+            async_result = self._get_async_import_result(client, upload_job.token)
+            if async_result.status != upload_job.State:
+                # State has changed, we need to update and commit.
+                self.update_upload_job(upload_job, async_result)
+                self.request.environ['nti.request_had_transaction_side_effects'] = True
+                if upload_job.is_upload_successfully_complete():
+                    new_content_info = self.get_scorm_content(client,
+                                                              self.context.scorm_id)
+                    # Copy our non-null attributes from scorm cloud info
+                    # into our context.
+                    self.copy_scorm_content_info(new_content_info, self.context)
+        return self.context
+
+
+@view_config(route_name='objects.generic.traversal',
+             renderer='rest',
+             context=ISCORMContentInfo,
+             permission=ACT_CONTENT_EDIT,
+             request_method='DELETE')
+class ScormContentInfoDeleteView(AbstractAuthenticatedView,
+                                 SCORMContentUploadMixin):
+    """
+    A view for deleting a :class:`ISCORMContentInfo` object from scorm_cloud.
     """
 
     def __call__(self):

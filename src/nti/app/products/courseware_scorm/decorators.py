@@ -20,6 +20,7 @@ from nti.app.products.courseware_scorm.interfaces import ISCORMContentInfo
 from nti.app.products.courseware_scorm.views import SCORM_PROGRESS_VIEW_NAME
 from nti.app.products.courseware_scorm.views import LAUNCH_SCORM_COURSE_VIEW_NAME
 from nti.app.products.courseware_scorm.views import PREVIEW_SCORM_COURSE_VIEW_NAME
+from nti.app.products.courseware_scorm.views import SCORM_CONTENT_ASYNC_UPLOAD_UPDATE_VIEW
 
 from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
@@ -38,8 +39,9 @@ from nti.externalization.interfaces import IExternalObjectDecorator
 
 from nti.links.links import Link
 
-from nti.traversal.traversal import find_interface
 from nti.ntiids.ntiids import find_object_with_ntiid
+
+from nti.traversal.traversal import find_interface
 
 LINKS = StandardExternalFields.LINKS
 
@@ -58,6 +60,10 @@ class _SCORMContentRefDecorator(AbstractAuthenticatedRequestAwareDecorator):
 @component.adapter(ISCORMContentInfo)
 @interface.implementer(IExternalObjectDecorator)
 class _SCORMContentInfoLaunchDecorator(AbstractAuthenticatedRequestAwareDecorator):
+
+    def _predicate(self, context, unused_external):
+        return context.upload_job is None \
+            or context.upload_job.is_upload_successfully_complete()
 
     def _do_decorate_external(self, context, external):
         course = find_interface(context, ICourseInstance, strict=True)
@@ -89,6 +95,9 @@ class _SCORMContentInfoDecorator(AbstractAuthenticatedRequestAwareDecorator):
     def _do_decorate_external(self, context, external):
         _links = external.setdefault(LINKS, [])
         _links.append(Link(context, rel='delete'))
+        if context.upload_job and not context.upload_job.is_upload_complete():
+            _links.append(Link(context,
+                               rel=SCORM_CONTENT_ASYNC_UPLOAD_UPDATE_VIEW))
 
 
 @component.adapter(ICourseInstance)

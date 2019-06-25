@@ -172,6 +172,24 @@ class SCORMCloudClient(object):
         return scorm_id
     import_course = import_scorm_content
 
+    def import_scorm_content_async(self, source):
+        """
+        Imports a SCORM course zip file into SCORM Cloud asynchronously.
+
+        :param source: The zip file source of the course to import.
+        :returns: The async upload token and scorm_id
+        """
+        cloud_service = self.cloud.get_course_service()
+        scorm_id = _generate_scorm_id()
+        logger.info("Importing course using aysynchrously (app_id=%s) (scorm_id=%s)",
+                    self.app_id, scorm_id)
+        token = cloud_service.import_uploaded_course_async(scorm_id, source)
+        return token, scorm_id
+
+    def get_async_import_result(self, token):
+        cloud_service = self.cloud.get_course_service()
+        return cloud_service.get_async_import_result(token)
+
     def unregister_users_for_scorm_content(self, scorm_id):
         # XXX: why do this instead of delete function, logging?
         service = self.cloud.get_registration_service()
