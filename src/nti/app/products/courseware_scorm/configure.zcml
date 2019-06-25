@@ -195,6 +195,7 @@
 					root_interfaces=".interfaces.ISCORMCourseMetadata
 									 .interfaces.IScormInstance
 									 .interfaces.ISCORMContentInfo
+									 .interfaces.ISCORMContentInfoUploadJob
 									 .interfaces.ISCORMContentInfoContainer
 									 .interfaces.IScormRegistration
 									 .interfaces.ISCORMRegistrationReport

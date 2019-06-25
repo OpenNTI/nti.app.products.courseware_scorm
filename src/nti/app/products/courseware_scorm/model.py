@@ -10,8 +10,12 @@ from __future__ import absolute_import
 
 from datetime import datetime
 
+from persistent import Persistent
+
 from zope import component
 from zope import interface
+
+from zope.annotation import factory as an_factory
 
 from zope.cachedescriptors.property import Lazy
 from zope.cachedescriptors.property import readproperty
@@ -22,7 +26,8 @@ from zope.container.contained import Contained
 
 from zope.intid.interfaces import IIntIds
 
-from nti.app.products.courseware_scorm.interfaces import ISCORMStatic
+from nti.app.products.courseware_scorm.interfaces import ISCORMStatic,\
+    UPLOAD_ERROR, UPLOAD_FINISHED
 from nti.app.products.courseware_scorm.interfaces import ISCORMComment
 from nti.app.products.courseware_scorm.interfaces import ISCORMRuntime
 from nti.app.products.courseware_scorm.interfaces import ISCORMActivity
@@ -35,6 +40,7 @@ from nti.app.products.courseware_scorm.interfaces import ISCORMInteraction
 from nti.app.products.courseware_scorm.interfaces import IScormRegistration
 from nti.app.products.courseware_scorm.interfaces import ISCORMLearnerPreference
 from nti.app.products.courseware_scorm.interfaces import ISCORMRegistrationReport
+from nti.app.products.courseware_scorm.interfaces import ISCORMContentInfoUploadJob
 from nti.app.products.courseware_scorm.interfaces import ISCORMContentInfoContainer
 
 from nti.app.products.courseware_scorm.workspaces import SCORMInstanceCollection
@@ -75,6 +81,8 @@ from nti.scorm_cloud.client.registration import LearnerPreference
 from nti.scorm_cloud.client.registration import RegistrationReport
 
 logger = __import__('logging').getLogger(__name__)
+
+SCORM_CONTENT_UPLOAD_JOB_KEY = 'nti.app.products.courseware_scorm.scorm_content_upload_job'
 
 
 def _parse_float(str_value, name):
@@ -166,6 +174,7 @@ class ScormContentInfo(PersistentCreatedAndModifiedTimeObject,
 
     creator = None
     NTIID = alias('ntiid')
+    upload_job = None
 
     mimeType = mime_type = "application/vnd.nextthought.scorm.scormcontentinfo"
 
@@ -177,6 +186,38 @@ class ScormContentInfo(PersistentCreatedAndModifiedTimeObject,
     def __acl__(self):
         # If we don't have this, it would derive one from ICreated, rather than its parent.
         return acl_from_aces([])
+
+
+@interface.implementer(ISCORMContentInfoUploadJob)
+class SCORMContentInfoUploadJob(Persistent,
+                                Contained,
+                                SchemaConfigured):
+    """
+    A job holding scorm content upload state.
+    """
+
+    createDirectFieldProperties(ISCORMContentInfoUploadJob)
+
+    __external_can_create__ = False
+    token = alias("Token")
+    state = alias("State")
+
+    @property
+    def ntiid(self):
+        return to_external_ntiid_oid(self)
+
+    def is_upload_complete(self):
+        """
+        Returns a bool on whether this job has finished.
+        """
+        return self.state in (UPLOAD_ERROR, UPLOAD_FINISHED)
+
+    def is_upload_successfully_complete(self):
+        """
+        Returns a bool on whether this job has completed
+        successfully.
+        """
+        return self.state == UPLOAD_FINISHED
 
 
 @component.adapter(CourseData)

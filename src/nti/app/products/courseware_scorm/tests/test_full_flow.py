@@ -36,6 +36,11 @@ from nti.app.products.courseware_scorm.client import SCORMCloudClient
 from nti.app.products.courseware_scorm.client import PostBackURLGenerator
 from nti.app.products.courseware_scorm.client import PostBackPasswordUtility
 
+from nti.app.products.courseware_scorm.interfaces import UPLOAD_ERROR
+from nti.app.products.courseware_scorm.interfaces import UPLOAD_CREATED
+from nti.app.products.courseware_scorm.interfaces import UPLOAD_RUNNING
+from nti.app.products.courseware_scorm.interfaces import UPLOAD_FINISHED
+
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 
 from nti.app.products.courseware_scorm.model import SCORMContentRef
@@ -44,6 +49,7 @@ from nti.app.products.courseware_scorm.model import ScormContentInfo
 from nti.app.products.courseware_scorm.utils import get_registration_id_for_user_and_course
 
 from nti.app.products.courseware_scorm.views import LAUNCH_SCORM_COURSE_VIEW_NAME
+from nti.app.products.courseware_scorm.views import SCORM_CONTENT_ASYNC_UPLOAD_UPDATE_VIEW
 
 from nti.app.products.courseware_scorm.tests import CoursewareSCORMLayerTest
 
@@ -59,6 +65,8 @@ from nti.dataserver.tests import mock_dataserver
 from nti.externalization.interfaces import StandardExternalFields
 
 from nti.ntiids.ntiids import find_object_with_ntiid
+
+from nti.scorm_cloud.client.course import AsyncImportResult
 
 HREF = StandardExternalFields.HREF
 ITEMS = StandardExternalFields.ITEMS
@@ -155,13 +163,17 @@ class TestFullFlow(CoursewareSCORMLayerTest):
         return scorm_ref_ext.json_body
 
     @WithSharedApplicationMockDS(testapp=True, users=True)
-    @fudge.patch('nti.app.products.courseware_scorm.views.management_views.SCORMContentUploadMixin.upload_content')
-    def test_full_flow(self, mock_upload_content):
+    @fudge.patch('nti.app.products.courseware_scorm.views.management_views.SCORMContentUploadMixin._start_async_import',
+                 'nti.app.products.courseware_scorm.views.management_views.SCORMContentUploadMixin._set_content_tags',
+                 'nti.app.products.courseware_scorm.views.management_views.SCORMContentUploadMixin.get_scorm_content',
+                 'nti.app.products.courseware_scorm.views.management_views.ScormContentInfoGetView._get_async_import_result')
+    def test_full_flow(self, mock_upload_content, mock_set_tags, mock_get_content_info, mock_async_result):
         """
         Create scorm content, including a ref in a lesson. Validate
         editor and enrolled user interaction (including completion)
         with the content.
         """
+        mock_set_tags.is_callable().returns(None)
         new_course = self._create_course()
         new_course_href = new_course['href']
         outline = new_course['Outline']
@@ -172,8 +184,9 @@ class TestFullFlow(CoursewareSCORMLayerTest):
         assert_that(res['Total'], is_(0))
 
         # Upload content
-        content_info = ScormContentInfo(scorm_id=u'new-scorm-id')
-        mock_upload_content.is_callable().returns(content_info)
+        scorm_id = u'new-scorm-id'
+        token = ';klafdj;kadfl;jds;df'
+        mock_upload_content.is_callable().returns((token, scorm_id))
         res = self.testapp.put(scorm_collection_href,
                                params=[('source', Upload('scorm.zip', b'data', 'application/zip'))])
 
@@ -182,14 +195,94 @@ class TestFullFlow(CoursewareSCORMLayerTest):
         assert_that(res['Total'], is_(1))
         scorm_content_ext = res['Items'][0]
         assert_that(scorm_content_ext,
-                    has_entries('scorm_id', 'new-scorm-id',
+                    has_entries('scorm_id', scorm_id,
                                 'Creator', u'sjohnson@nextthought.com',
                                 'CreatedTime', not_none()))
         scorm_content_ntiid = scorm_content_ext.get('NTIID')
         assert_that(scorm_content_ntiid, not_none())
         self.require_link_href_with_rel(scorm_content_ext, 'delete')
-        self.require_link_href_with_rel(scorm_content_ext,
+
+        # Test upload state
+        self.forbid_link_with_rel(scorm_content_ext,
+                                  LAUNCH_SCORM_COURSE_VIEW_NAME)
+        content_update_href = self.require_link_href_with_rel(scorm_content_ext,
+                                                              SCORM_CONTENT_ASYNC_UPLOAD_UPDATE_VIEW)
+        success_result = AsyncImportResult(status=UPLOAD_FINISHED,
+                                           title='unused title',
+                                           error_message=None)
+        created_result = AsyncImportResult(status=UPLOAD_CREATED,
+                                           title=None,
+                                           error_message=None)
+        running_result = AsyncImportResult(status=UPLOAD_RUNNING,
+                                           title=None,
+                                           error_message=None)
+        error_result = AsyncImportResult(status=UPLOAD_ERROR,
+                                         title=None,
+                                         error_message=u'Error during upload')
+
+        # Created
+        mock_async_result.is_callable().returns(created_result)
+        content_update_ext = self.testapp.get(content_update_href).json_body
+        upload_job = content_update_ext.get('upload_job')
+        assert_that(upload_job, not_none())
+        assert_that(upload_job, has_entries('Token', is_(token),
+                                            'ErrorMessage', none(),
+                                            'State', UPLOAD_CREATED))
+        self.forbid_link_with_rel(content_update_ext,
+                                  LAUNCH_SCORM_COURSE_VIEW_NAME)
+        self.require_link_href_with_rel(content_update_ext,
+                                        SCORM_CONTENT_ASYNC_UPLOAD_UPDATE_VIEW)
+
+        # Running
+        mock_async_result.is_callable().returns(running_result)
+        content_update_ext = self.testapp.get(content_update_href).json_body
+        upload_job = content_update_ext.get('upload_job')
+        assert_that(upload_job, not_none())
+        assert_that(upload_job, has_entries('Token', is_(token),
+                                            'ErrorMessage', none(),
+                                            'State', UPLOAD_RUNNING))
+        self.forbid_link_with_rel(content_update_ext,
+                                  LAUNCH_SCORM_COURSE_VIEW_NAME)
+        self.require_link_href_with_rel(content_update_ext,
+                                        SCORM_CONTENT_ASYNC_UPLOAD_UPDATE_VIEW)
+
+        # Error
+        mock_async_result.is_callable().returns(error_result)
+        content_update_ext = self.testapp.get(content_update_href).json_body
+        upload_job = content_update_ext.get('upload_job')
+        assert_that(upload_job, not_none())
+        assert_that(upload_job, has_entries('Token', is_(token),
+                                            'ErrorMessage', is_(u'Error during upload'),
+                                            'State', UPLOAD_ERROR))
+        self.forbid_link_with_rel(content_update_ext,
+                                  LAUNCH_SCORM_COURSE_VIEW_NAME)
+        self.forbid_link_with_rel(content_update_ext,
+                                  SCORM_CONTENT_ASYNC_UPLOAD_UPDATE_VIEW)
+
+        # In error state, the upload job (and our content) will no longer
+        # update. Reset before we test success state.
+        with mock_dataserver.mock_db_trans():
+            upload_job_ntiid = upload_job['NTIID']
+            upload_job = find_object_with_ntiid(upload_job_ntiid)
+            upload_job.State = UPLOAD_RUNNING
+
+        # Success
+        updated_info = ScormContentInfo(title=u'Scorm content title',
+                                        scorm_id=scorm_id)
+        mock_get_content_info.is_callable().returns(updated_info)
+        mock_async_result.is_callable().returns(success_result)
+        content_update_ext = self.testapp.get(content_update_href).json_body
+        assert_that(content_update_ext, has_entries('title', u'Scorm content title',
+                                                    'scorm_id', scorm_id))
+        upload_job = content_update_ext.get('upload_job')
+        assert_that(upload_job, not_none())
+        assert_that(upload_job, has_entries('Token', is_(token),
+                                            'ErrorMessage', none(),
+                                            'State', UPLOAD_FINISHED))
+        self.require_link_href_with_rel(content_update_ext,
                                         LAUNCH_SCORM_COURSE_VIEW_NAME)
+        self.forbid_link_with_rel(content_update_ext,
+                                  SCORM_CONTENT_ASYNC_UPLOAD_UPDATE_VIEW)
 
         # Create lesson content ref
         scorm_ref_ext = self._create_scorm_content_ref(scorm_content_ntiid, outline)

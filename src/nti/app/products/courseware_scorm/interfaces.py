@@ -20,6 +20,9 @@ from zope.container.interfaces import IContainer
 
 from zope.location.interfaces import IContained
 
+from zope.schema.vocabulary import SimpleTerm
+from zope.schema.vocabulary import SimpleVocabulary
+
 from nti.appserver.workspaces.interfaces import IWorkspace
 from nti.appserver.workspaces.interfaces import IContainerCollection
 
@@ -129,11 +132,25 @@ class ISCORMCloudClient(interface.Interface):
     A client for interacting with SCORM Cloud.
     """
 
-    def import_course(context, source):
+    def import_scorm_content(context, source):
         """
         Imports into SCORM Cloud a SCORM course from a zip file source.
-        :param context: The course cotext under which to import the SCORM course.
+        :param context: The course context under which to import the SCORM course.
         :param source: The SCORM course zip file source.
+        """
+
+    def import_scorm_content_async(context, source):
+        """
+        Imports into SCORM Cloud a SCORM course from a zip file source asynchronously,
+        returning a tuple of the async_token and scorm_id.
+        :param context: The course context under which to import the SCORM course.
+        :param source: The SCORM course zip file source.
+        """
+
+    def get_async_import_result(token):
+        """
+        Gets the current async import status for the given token.
+        :param token: The async import token
         """
 
     def upload_course(source, redirect_url):
@@ -253,6 +270,46 @@ class ISCORMIdentifier(interface.Interface):
         """
 
 
+UPLOAD_ERROR = u'error'
+UPLOAD_CREATED = u'created'
+UPLOAD_RUNNING = u'running'
+UPLOAD_FINISHED = u'finished'
+UPLOAD_STATES = (UPLOAD_ERROR, UPLOAD_CREATED,
+                 UPLOAD_FINISHED, UPLOAD_RUNNING)
+UPLOAD_STATE_VOCABULARY = SimpleVocabulary(
+    [SimpleTerm(x) for x in UPLOAD_STATES]
+)
+
+
+class ISCORMContentInfoUploadJob(interface.Interface):
+    """
+    Contains meta information on an asynchronous upload
+    of :class:`ISCORMContentInfo`.
+    """
+
+    Token = ValidTextLine(title=u"Upload job token",
+                          required=True)
+
+    ErrorMessage = ValidTextLine(title=u"The error message",
+                                 required=False)
+
+    State = Choice(vocabulary=UPLOAD_STATE_VOCABULARY,
+                   title=u"The state for this upload job",
+                   required=False,
+                   default=None)
+
+    def is_upload_complete():
+        """
+        Returns a bool on whether this job has finished.
+        """
+
+    def is_upload_successfully_complete():
+        """
+        Returns a bool on whether this job has completed
+        successfully.
+        """
+
+
 class ISCORMContentInfo(IContained, ICreated, ILastModified, ICompletableItem):
     """
     A scorm course content info. This represents the scorm content or
@@ -273,6 +330,11 @@ class ISCORMContentInfo(IContained, ICreated, ILastModified, ICompletableItem):
 
     tags = ListOrTuple(title=u'The scorm content tags.',
                        required=False)
+
+    upload_job = Object(ISCORMContentInfoUploadJob,
+                        title=u'The upload job',
+                        description=u'The uplaod job if this content was uploaded asynchronously',
+                        required=False)
 
 
 class ISCORMContentInfoContainer(IShouldHaveTraversablePath,
