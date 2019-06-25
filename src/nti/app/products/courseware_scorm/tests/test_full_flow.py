@@ -225,8 +225,9 @@ class TestFullFlow(CoursewareSCORMLayerTest):
         content_update_ext = self.testapp.get(content_update_href).json_body
         upload_job = content_update_ext.get('upload_job')
         assert_that(upload_job, not_none())
-        assert_that(upload_job, has_entries('Token', is_(token),
+        assert_that(upload_job, has_entries('Token', token,
                                             'ErrorMessage', none(),
+                                            'UploadFilename', 'scorm.zip',
                                             'State', UPLOAD_CREATED))
         self.forbid_link_with_rel(content_update_ext,
                                   LAUNCH_SCORM_COURSE_VIEW_NAME)
@@ -238,8 +239,9 @@ class TestFullFlow(CoursewareSCORMLayerTest):
         content_update_ext = self.testapp.get(content_update_href).json_body
         upload_job = content_update_ext.get('upload_job')
         assert_that(upload_job, not_none())
-        assert_that(upload_job, has_entries('Token', is_(token),
+        assert_that(upload_job, has_entries('Token', token,
                                             'ErrorMessage', none(),
+                                            'UploadFilename', 'scorm.zip',
                                             'State', UPLOAD_RUNNING))
         self.forbid_link_with_rel(content_update_ext,
                                   LAUNCH_SCORM_COURSE_VIEW_NAME)
@@ -251,8 +253,9 @@ class TestFullFlow(CoursewareSCORMLayerTest):
         content_update_ext = self.testapp.get(content_update_href).json_body
         upload_job = content_update_ext.get('upload_job')
         assert_that(upload_job, not_none())
-        assert_that(upload_job, has_entries('Token', is_(token),
+        assert_that(upload_job, has_entries('Token', token,
                                             'ErrorMessage', is_(u'Error during upload'),
+                                            'UploadFilename', 'scorm.zip',
                                             'State', UPLOAD_ERROR))
         self.forbid_link_with_rel(content_update_ext,
                                   LAUNCH_SCORM_COURSE_VIEW_NAME)
@@ -278,6 +281,7 @@ class TestFullFlow(CoursewareSCORMLayerTest):
         assert_that(upload_job, not_none())
         assert_that(upload_job, has_entries('Token', is_(token),
                                             'ErrorMessage', none(),
+                                            'UploadFilename', 'scorm.zip',
                                             'State', UPLOAD_FINISHED))
         self.require_link_href_with_rel(content_update_ext,
                                         LAUNCH_SCORM_COURSE_VIEW_NAME)

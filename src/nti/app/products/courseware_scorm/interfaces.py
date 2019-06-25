@@ -293,6 +293,9 @@ class ISCORMContentInfoUploadJob(interface.Interface):
     ErrorMessage = ValidTextLine(title=u"The error message",
                                  required=False)
 
+    UploadFilename = ValidTextLine(title=u"The scorm content upload filename",
+                                   required=False)
+
     State = Choice(vocabulary=UPLOAD_STATE_VOCABULARY,
                    title=u"The state for this upload job",
                    required=False,

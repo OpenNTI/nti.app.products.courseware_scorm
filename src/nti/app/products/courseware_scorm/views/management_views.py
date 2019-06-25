@@ -170,7 +170,8 @@ class SCORMContentUploadMixin(object):
         token, scorm_id = self._start_async_import(client, source)
         result = ScormContentInfo(scorm_id=scorm_id)
         result.upload_job = SCORMContentInfoUploadJob(Token=token,
-                                                      State=UPLOAD_CREATED)
+                                                      State=UPLOAD_CREATED,
+                                                      UploadFilename=source.filename)
         return result
 
     def _handle_multipart(self, sources):
