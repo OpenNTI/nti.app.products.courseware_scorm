@@ -159,7 +159,7 @@ class SCORMContentUploadMixin(object):
     def _set_content_tags(self, client, scorm_id, tags):
         client.set_scorm_tags(scorm_id, tags)
 
-    def upload_content(self, source, tags=None):
+    def upload_content(self, source):
         """
         Upload the content asynchronously to scorm cloud, optionally tagging it
         as requested.
@@ -168,9 +168,6 @@ class SCORMContentUploadMixin(object):
         """
         client = self._get_scorm_client()
         token, scorm_id = self._start_async_import(client, source)
-        if tags:
-            # FIXME: Can we do this during async import...
-            self._set_content_tags(client, scorm_id, tags)
         result = ScormContentInfo(scorm_id=scorm_id)
         result.upload_job = SCORMContentInfoUploadJob(Token=token,
                                                       State=UPLOAD_CREATED)
@@ -235,7 +232,7 @@ class SCORMCollectionPutView(AbstractAuthenticatedView,
 
     def _do_call(self):
         source = self._get_scorm_source()
-        scorm_content_info = self.upload_content(source, tags=self.context.tags)
+        scorm_content_info = self.upload_content(source)
         scorm_content_info.creator = self.remoteUser.username
         self.context.store_content(scorm_content_info)
         return scorm_content_info
@@ -281,6 +278,10 @@ class ScormContentInfoGetView(AbstractAuthenticatedView,
                 if upload_job.is_upload_successfully_complete():
                     new_content_info = self.get_scorm_content(client,
                                                               self.context.scorm_id)
+                    # Collection has tag info
+                    self._set_content_tags(client,
+                                           self.context.scorm_id,
+                                           self.context.__parent__.tags)
                     # Copy our non-null attributes from scorm cloud info
                     # into our context.
                     self.copy_scorm_content_info(new_content_info, self.context)
