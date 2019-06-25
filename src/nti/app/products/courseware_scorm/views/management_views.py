@@ -311,5 +311,5 @@ class ScormContentInfoDeleteView(AbstractAuthenticatedView,
                                  'message': exc.message,
                              },
                              None)
-        self.__parent__.remove_content(self.scorm_id)
+        self.context.__parent__.remove_content(self.scorm_id)
         return hexc.HTTPNoContent()
