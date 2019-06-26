@@ -8,14 +8,14 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+import uuid
+
 from datetime import datetime
 
 from persistent import Persistent
 
 from zope import component
 from zope import interface
-
-from zope.annotation import factory as an_factory
 
 from zope.cachedescriptors.property import Lazy
 from zope.cachedescriptors.property import readproperty
@@ -26,8 +26,10 @@ from zope.container.contained import Contained
 
 from zope.intid.interfaces import IIntIds
 
-from nti.app.products.courseware_scorm.interfaces import ISCORMStatic,\
-    UPLOAD_ERROR, UPLOAD_FINISHED
+from nti.app.products.courseware_scorm.interfaces import UPLOAD_ERROR
+from nti.app.products.courseware_scorm.interfaces import UPLOAD_FINISHED
+
+from nti.app.products.courseware_scorm.interfaces import ISCORMStatic
 from nti.app.products.courseware_scorm.interfaces import ISCORMComment
 from nti.app.products.courseware_scorm.interfaces import ISCORMRuntime
 from nti.app.products.courseware_scorm.interfaces import ISCORMActivity
@@ -51,9 +53,14 @@ from nti.contenttypes.courses.interfaces import ICourseInstance
 
 from nti.contenttypes.presentation.mixins import PersistentPresentationAsset
 
+from nti.coremetadata.interfaces import SYSTEM_USER_NAME
+
 from nti.dataserver.authorization_acl import acl_from_aces
 
 from nti.dublincore.time_mixins import PersistentCreatedAndModifiedTimeObject
+
+from nti.ntiids.ntiids import make_ntiid
+from nti.ntiids.ntiids import make_specific_safe
 
 from nti.ntiids.oids import to_external_ntiid_oid
 
@@ -83,6 +90,17 @@ from nti.scorm_cloud.client.registration import RegistrationReport
 logger = __import__('logging').getLogger(__name__)
 
 SCORM_CONTENT_UPLOAD_JOB_KEY = 'nti.app.products.courseware_scorm.scorm_content_upload_job'
+
+
+def generate_ntiid(nttype, provider=u'NTI', now=None):
+    now = datetime.utcnow() if now is None else now
+    dstr = now.strftime("%Y%m%d%H%M%S %f")
+    rand = str(uuid.uuid4().time_low)
+    specific = make_specific_safe(u"%s_%s_%s" % (SYSTEM_USER_NAME, dstr, rand))
+    result = make_ntiid(provider=provider,
+                        nttype=nttype,
+                        specific=specific)
+    return result
 
 
 def _parse_float(str_value, name):
@@ -180,7 +198,7 @@ class ScormContentInfo(PersistentCreatedAndModifiedTimeObject,
 
     @Lazy
     def ntiid(self):
-        return to_external_ntiid_oid(self)
+        return generate_ntiid(u'ScormContentInfo')
 
     @LazyOnClass
     def __acl__(self):

@@ -163,7 +163,7 @@ class TestFullFlow(CoursewareSCORMLayerTest):
         return scorm_ref_ext.json_body
 
     @WithSharedApplicationMockDS(testapp=True, users=True)
-    @fudge.patch('nti.app.products.courseware_scorm.views.management_views.SCORMContentUploadMixin._start_async_import',
+    @fudge.patch('nti.app.products.courseware_scorm.utils._upload_scorm_content',
                  'nti.app.products.courseware_scorm.views.management_views.SCORMContentUploadMixin._set_content_tags',
                  'nti.app.products.courseware_scorm.views.management_views.SCORMContentUploadMixin.get_scorm_content',
                  'nti.app.products.courseware_scorm.views.management_views.ScormContentInfoGetView._get_async_import_result',
