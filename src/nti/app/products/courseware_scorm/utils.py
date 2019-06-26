@@ -12,8 +12,15 @@ from zope import component
 
 from zope.intid.interfaces import IIntIds
 
+from nti.app.products.courseware_scorm.interfaces import UPLOAD_CREATED
+
 from nti.app.products.courseware_scorm.interfaces import ISCORMIdentifier
 from nti.app.products.courseware_scorm.interfaces import ISCORMContentRef
+from nti.app.products.courseware_scorm.interfaces import ISCORMContentInfo
+from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
+
+from nti.app.products.courseware_scorm.model import ScormContentInfo
+from nti.app.products.courseware_scorm.model import SCORMContentInfoUploadJob
 
 from nti.contentlibrary.indexed_data import get_library_catalog
 
@@ -24,6 +31,8 @@ from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 from nti.contenttypes.courses.utils import get_parent_course
 
 from nti.site.site import get_component_hierarchy_names
+
+from nti.site.utils import registerUtility
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -84,4 +93,28 @@ def get_scorm_refs(course, scorm_id):
                                        provided=(ISCORMContentRef,)):
         if item.scorm_id == scorm_id:
             result.append(item)
+    return result
+
+
+def _upload_scorm_content(client, source):
+    return client.import_scorm_content_async(source)
+
+
+def upload_scorm_content_async(source, client=None):
+    """
+    Upload the content asynchronously to scorm cloud.
+
+    Returns the newly created :class:`IScormContentInfo`.
+    """
+    if not client:
+        client = component.queryUtility(ISCORMCloudClient)
+    token, scorm_id = _upload_scorm_content(client, source)
+    result = ScormContentInfo(scorm_id=scorm_id)
+    result.upload_job = SCORMContentInfoUploadJob(Token=token,
+                                                  State=UPLOAD_CREATED,
+                                                  UploadFilename=source.filename)
+    registerUtility(component.getSiteManager(),
+                    result,
+                    ISCORMContentInfo,
+                    name=result.ntiid)
     return result

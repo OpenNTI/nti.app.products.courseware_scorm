@@ -31,14 +31,11 @@ from nti.app.products.courseware_scorm import MessageFactory as _
 from nti.app.products.courseware_scorm.courses import is_course_admin
 from nti.app.products.courseware_scorm.courses import SCORMCourseInstance
 
-from nti.app.products.courseware_scorm.interfaces import UPLOAD_CREATED
-
 from nti.app.products.courseware_scorm.interfaces import ISCORMCollection
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 from nti.app.products.courseware_scorm.interfaces import ISCORMContentInfo
 
-from nti.app.products.courseware_scorm.model import ScormContentInfo
-from nti.app.products.courseware_scorm.model import SCORMContentInfoUploadJob
+from nti.app.products.courseware_scorm.utils import upload_scorm_content_async
 
 from nti.app.products.courseware_scorm.views import CREATE_SCORM_COURSE_VIEW_NAME
 
@@ -144,9 +141,18 @@ class SCORMContentUploadMixin(object):
                              None)
         return result
 
-    def _start_async_import(self, client, source):
+    def _set_content_tags(self, client, scorm_id, tags):
+        client.set_scorm_tags(scorm_id, tags)
+
+    def upload_content(self, source):
+        """
+        Upload the content asynchronously to scorm cloud.
+
+        Returns the newly created :class:`IScormContentInfo`.
+        """
+        client = self._get_scorm_client()
         try:
-            token, scorm_id = client.import_scorm_content_async(source)
+            result = upload_scorm_content_async(source, client)
         except ScormCloudError as exc:
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
@@ -154,24 +160,6 @@ class SCORMContentUploadMixin(object):
                                  'message': exc.message,
                              },
                              None)
-        return token, scorm_id
-
-    def _set_content_tags(self, client, scorm_id, tags):
-        client.set_scorm_tags(scorm_id, tags)
-
-    def upload_content(self, source):
-        """
-        Upload the content asynchronously to scorm cloud, optionally tagging it
-        as requested.
-
-        Returns the newly created :class:`IScormContentInfo`.
-        """
-        client = self._get_scorm_client()
-        token, scorm_id = self._start_async_import(client, source)
-        result = ScormContentInfo(scorm_id=scorm_id)
-        result.upload_job = SCORMContentInfoUploadJob(Token=token,
-                                                      State=UPLOAD_CREATED,
-                                                      UploadFilename=source.filename)
         return result
 
     def _handle_multipart(self, sources):

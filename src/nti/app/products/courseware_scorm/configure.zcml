@@ -15,6 +15,8 @@
 
 	<include package="nti.scorm_cloud" />
 
+	<utility factory=".ntiids._ScormContentInfoResolver" name="ScormContentInfo" />
+
 	<utility factory=".client.PostBackPasswordUtility"
 		 provides=".interfaces.IPostBackPasswordUtility" />
 
@@ -113,10 +115,6 @@
  			 for="nti.dataserver.interfaces.IUser
  			 	  .interfaces.ISCORMContentInfo
  			 	  nti.contenttypes.courses.interfaces.ICourseInstance" />
-
- 	<adapter factory=".courses.SCORMCourseInstanceReportFilter"
- 			 provides="nti.contenttypes.reports.interfaces.IReportFilter"
- 			 for=".interfaces.ISCORMCourseInstance" />
 
 	<!-- Subscribers -->
 	<subscriber handler=".subscribers._on_scorm_content_removed" />
