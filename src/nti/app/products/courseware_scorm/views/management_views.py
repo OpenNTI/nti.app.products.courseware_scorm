@@ -252,7 +252,17 @@ class ScormContentInfoGetView(AbstractAuthenticatedView,
         upload_job.State = async_result.status
 
     def _get_async_import_result(self, client, token):
-        return client.get_async_import_result(token)
+        try:
+            return client.get_async_import_result(token)
+        except ScormCloudError as exc:
+            logger.exception("Scorm exception while getting result (%s) (%s) (%s)",
+                             token, self.context.ntiid, self.context.scorm_id)
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                 'message': exc.message,
+                             },
+                             None)
 
     def __call__(self):
         client = self._get_scorm_client()

@@ -100,16 +100,21 @@ def _upload_scorm_content(client, source):
     return client.import_scorm_content_async(source)
 
 
-def upload_scorm_content_async(source, client=None):
+def upload_scorm_content_async(source, client=None, ntiid=None):
     """
     Upload the content asynchronously to scorm cloud.
 
     Returns the newly created :class:`IScormContentInfo`.
+
+    The `ntiid` can overwrite the generated ScormContentInfo, useful
+    to fix that value during import.
     """
     if not client:
         client = component.queryUtility(ISCORMCloudClient)
     token, scorm_id = _upload_scorm_content(client, source)
     result = ScormContentInfo(scorm_id=scorm_id)
+    if ntiid is not None:
+        result.ntiid = ntiid
     result.upload_job = SCORMContentInfoUploadJob(Token=token,
                                                   State=UPLOAD_CREATED,
                                                   UploadFilename=source.filename)
