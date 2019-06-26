@@ -275,8 +275,8 @@ class ScormContentInfoGetView(AbstractAuthenticatedView,
                 self.update_upload_job(upload_job, async_result)
                 self.request.environ['nti.request_had_transaction_side_effects'] = True
                 if upload_job.is_upload_successfully_complete():
-                    logger.info("Updating scorm state (%s) (%s) (%s)",
-                                upload_job.State, async_result.status, upload_job.ErrorMessage)
+                    logger.debug("Updating scorm state (%s) (%s) (%s)",
+                                 upload_job.State, async_result.status, upload_job.ErrorMessage)
                     new_content_info = self.get_scorm_content(client,
                                                               self.context.scorm_id)
                     # Collection has tag info
