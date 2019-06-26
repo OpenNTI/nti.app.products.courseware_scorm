@@ -166,8 +166,9 @@ class TestFullFlow(CoursewareSCORMLayerTest):
     @fudge.patch('nti.app.products.courseware_scorm.views.management_views.SCORMContentUploadMixin._start_async_import',
                  'nti.app.products.courseware_scorm.views.management_views.SCORMContentUploadMixin._set_content_tags',
                  'nti.app.products.courseware_scorm.views.management_views.SCORMContentUploadMixin.get_scorm_content',
-                 'nti.app.products.courseware_scorm.views.management_views.ScormContentInfoGetView._get_async_import_result')
-    def test_full_flow(self, mock_upload_content, mock_set_tags, mock_get_content_info, mock_async_result):
+                 'nti.app.products.courseware_scorm.views.management_views.ScormContentInfoGetView._get_async_import_result',
+                 'nti.app.products.courseware_scorm.views.management_views.ScormContentInfoDeleteView._delete_scorm_course')
+    def test_full_flow(self, mock_upload_content, mock_set_tags, mock_get_content_info, mock_async_result, mock_scorm_delete):
         """
         Create scorm content, including a ref in a lesson. Validate
         editor and enrolled user interaction (including completion)
@@ -200,7 +201,7 @@ class TestFullFlow(CoursewareSCORMLayerTest):
                                 'CreatedTime', not_none()))
         scorm_content_ntiid = scorm_content_ext.get('NTIID')
         assert_that(scorm_content_ntiid, not_none())
-        self.require_link_href_with_rel(scorm_content_ext, 'delete')
+        scorm_content_del_rel = self.require_link_href_with_rel(scorm_content_ext, 'delete')
 
         # Test upload state
         self.forbid_link_with_rel(scorm_content_ext,
@@ -454,3 +455,7 @@ class TestFullFlow(CoursewareSCORMLayerTest):
                                                                                       'Success', True),
                                                         u'CompletionPolicy', has_entry(CLASS, u'SCORMCompletionPolicy')))
 
+        # Delete the scorm content also cleans up the refs
+        mock_scorm_delete.is_callable().returns(None)
+        self.testapp.delete(scorm_content_del_rel)
+        self.testapp.get(scorm_ref_href, status=404)

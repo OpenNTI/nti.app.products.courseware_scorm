@@ -300,10 +300,10 @@ class ScormContentInfoDeleteView(AbstractAuthenticatedView,
     A view for deleting a :class:`ISCORMContentInfo` object from scorm_cloud.
     """
 
-    def __call__(self):
+    def _delete_scorm_course(self, scorm_id):
         client = self._get_scorm_client()
         try:
-            client.delete_course(self.context.scorm_id)
+            client.delete_course(scorm_id)
         except ScormCloudError as exc:
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
@@ -311,5 +311,8 @@ class ScormContentInfoDeleteView(AbstractAuthenticatedView,
                                  'message': exc.message,
                              },
                              None)
-        self.context.__parent__.remove_content(self.scorm_id)
+
+    def __call__(self):
+        self._delete_scorm_course(self.context.scorm_id)
+        self.context.__parent__.remove_content(self.context.scorm_id)
         return hexc.HTTPNoContent()

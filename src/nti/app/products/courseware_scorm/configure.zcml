@@ -119,6 +119,7 @@
  			 for=".interfaces.ISCORMCourseInstance" />
 
 	<!-- Subscribers -->
+	<subscriber handler=".subscribers._on_scorm_content_removed" />
 	<subscriber handler=".completion._on_user_progress_updated" />
 	<subscriber handler=".courses._on_scorm_registration_removed" />
 
