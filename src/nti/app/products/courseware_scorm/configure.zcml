@@ -122,6 +122,10 @@
 	<subscriber handler=".completion._on_user_progress_updated" />
 	<subscriber handler=".courses._on_scorm_registration_removed" />
 
+	<subscriber handler=".subscribers.on_course_deletion_remove_content"
+                for=".interfaces.ICourseInstance
+                     zc.intid.interfaces.IBeforeIdRemovedEvent"/>
+
 	<!-- Client -->
 	<include package="." file="meta.zcml" />
 

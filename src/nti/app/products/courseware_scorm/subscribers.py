@@ -14,6 +14,7 @@ from zope import component
 from zope import interface
 
 from nti.app.contenttypes.presentation.utils.asset import remove_presentation_asset
+
 from nti.app.products.courseware.interfaces import IAllCoursesCollection
 from nti.app.products.courseware.interfaces import IAllCoursesCollectionAcceptsProvider
 
@@ -22,9 +23,14 @@ from nti.app.products.courseware_scorm.courses import SCORM_COURSE_MIME_TYPE
 from nti.app.products.courseware_scorm.interfaces import ISCORMContentRef
 from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 from nti.app.products.courseware_scorm.interfaces import ISCORMContentInfo
+from nti.app.products.courseware_scorm.interfaces import ISCORMContentInfoContainer
 
 from nti.contentlibrary.indexed_data import get_site_registry
 from nti.contentlibrary.indexed_data import get_library_catalog
+
+from nti.contenttypes.courses.interfaces import ICourseInstance
+
+from nti.scorm_cloud.client.request import ScormCloudError
 
 from nti.site.site import get_component_hierarchy_names
 
@@ -71,3 +77,29 @@ def _on_scorm_content_removed(scorm_content, unused_event):
         logger.info('Removed scorm_content (%s) from %s overview group(s)',
                     content_ntiid, count)
     return count
+
+
+@component.adapter(ICourseInstance, IBeforeIdRemovedEvent)
+def on_course_deletion_remove_content(course, event):
+    """
+    Remove content from scorm cloud on course deletion. Currently,
+    ScormContentInfo objects should not be shared between courses.
+    """
+    # pylint: disable=unused-variable
+    __traceback_info__ = course, event
+    # pylint: disable=too-many-function-args
+    content_container = ISCORMContentInfoContainer(course, None)
+    client = component.queryUtility(ISCORMCloudClient)
+    if client is None:
+        return
+    for content_info in content_container.values():
+        logger.info("Removing scorm content info on course deletion (%s) (%s) (%s)",
+                    content_info.ntiid, content_info.scorm_id, content_info.title)
+        try:
+            client.delete_course(content_info.scorm_id)
+        except ScormCloudError as exc:
+            logger.warn("Failed to remove scorm content (%s) (%s) (%s) (%s)",
+                        content_info.ntiid,
+                        content_info.scorm_id,
+                        content_info.title,
+                        exc)

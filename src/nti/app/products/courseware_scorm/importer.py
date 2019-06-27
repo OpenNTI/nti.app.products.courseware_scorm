@@ -73,11 +73,13 @@ class CourseSCORMPackageImporter(BaseSectionImporter):
                                      scorm_content_ntiid)
                 else:
                     # Save source
-                    if writeout and IFilesystemBucket.providedBy(course.root):
-                        scorm_archive = content_bucket.getChildNamed(scorm_archive_name)
-                        if scorm_archive is not None:
-                            self.makedirs(course.root.absolute_path)
-                            new_path = os.path.join(course.root.absolute_path,
-                                                    'ScormContent',
-                                                    scorm_archive_name)
-                            transfer_to_native_file(scorm_archive, new_path)
+                    # XXX: Disable writeout for now
+                    pass
+#                     if writeout and IFilesystemBucket.providedBy(course.root):
+#                         scorm_archive = content_bucket.getChildNamed(scorm_archive_name)
+#                         if scorm_archive is not None:
+#                             self.makedirs(course.root.absolute_path)
+#                             new_path = os.path.join(course.root.absolute_path,
+#                                                     'ScormContent',
+#                                                     scorm_archive_name)
+#                             transfer_to_native_file(scorm_archive, new_path)
