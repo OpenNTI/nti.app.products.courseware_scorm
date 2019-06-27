@@ -14,7 +14,8 @@ import simplejson
 from zope import component
 from zope import interface
 
-from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
+from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient,\
+    ISCORMContentInfoContainer
 
 from nti.app.products.courseware_scorm.utils import upload_scorm_content_async
 
@@ -47,6 +48,7 @@ class CourseSCORMPackageImporter(BaseSectionImporter):
         if client is None:
             logger.warn("Importing SCORM content without client configured.")
             return
+        content_container = ISCORMContentInfoContainer(course)
         if filer.is_bucket(path):
             content_buckets = filer.get(path)
             for content_bucket_name in content_buckets.enumerateChildren() or ():
@@ -67,14 +69,16 @@ class CourseSCORMPackageImporter(BaseSectionImporter):
 
                 try:
                     # Ok, we're good to upldate; ensure we use the ntiid we have
-                    upload_scorm_content_async(scorm_archive, client, ntiid=scorm_content_ntiid)
+                    scorm_content_info = upload_scorm_content_async(scorm_archive,
+                                                                    client,
+                                                                    ntiid=scorm_content_ntiid)
                 except ScormCloudError:
                     logger.exception("Scorm exception while uplading (%s)",
                                      scorm_content_ntiid)
                 else:
+                    content_container.store_content(scorm_content_info)
                     # Save source
                     # XXX: Disable writeout for now
-                    pass
 #                     if writeout and IFilesystemBucket.providedBy(course.root):
 #                         scorm_archive = content_bucket.getChildNamed(scorm_archive_name)
 #                         if scorm_archive is not None:
