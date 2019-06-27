@@ -41,10 +41,6 @@ from nti.app.products.courseware_scorm.client import SCORMCloudClient
 from nti.app.products.courseware_scorm.client import PostBackURLGenerator
 from nti.app.products.courseware_scorm.client import PostBackPasswordUtility
 
-from nti.app.products.courseware_scorm.exporter import CourseSCORMPackageExporter
-
-from nti.app.products.courseware_scorm.importer import CourseSCORMPackageImporter
-
 from nti.app.products.courseware_scorm.interfaces import UPLOAD_ERROR
 from nti.app.products.courseware_scorm.interfaces import UPLOAD_CREATED
 from nti.app.products.courseware_scorm.interfaces import UPLOAD_RUNNING
@@ -63,8 +59,6 @@ from nti.app.products.courseware_scorm.views import SCORM_CONTENT_ASYNC_UPLOAD_U
 from nti.app.products.courseware_scorm.tests import CoursewareSCORMLayerTest
 
 from nti.app.testing.decorators import WithSharedApplicationMockDS
-
-from nti.cabinet.filer import DirectoryFiler
 
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contentlibrary.interfaces import IDelimitedHierarchyContentPackageEnumeration
@@ -304,6 +298,7 @@ class TestFullFlow(CoursewareSCORMLayerTest):
 
         # Create lesson content ref
         scorm_ref_ext = self._create_scorm_content_ref(scorm_content_ntiid, outline)
+        scorm_ref_ntiid = scorm_ref_ext.get('NTIID')
 
         assert_that(scorm_ref_ext, has_entries(u'description', u'scorm description',
                                                u'href', not_none(),
@@ -504,6 +499,27 @@ class TestFullFlow(CoursewareSCORMLayerTest):
         group_items = lesson_export_ext.get('Items')[0].get('Items')
         assert_that(group_items, has_length(1))
         assert_that(group_items[0].get('target'), is_(new_scorm_content_ntiid))
+
+        # Import
+        res = self.testapp.post('/dataserver2/CourseAdmin/ImportCourse',
+                                {"admin": 'Heisenberg',
+                                 "key": "ScormImportCourse"},
+                                upload_files=[('data', 'scorm_import.zip', res.body)])
+        new_course = res.json_body['Course']
+        outline_contents_href = self.require_link_href_with_rel(new_course['Outline'], 'contents')
+        outline_res = self.testapp.get(outline_contents_href).json_body
+        lesson_node = outline_res[0]['contents'][0]
+        lesson_content_href = self.require_link_href_with_rel(lesson_node,
+                                                              "overview-content")
+        lesson_ext = self.testapp.get(lesson_content_href).json_body
+        group_items = lesson_ext.get('Items')[0].get('Items')
+        assert_that(group_items, has_length(1))
+        imported_scorm_ref = group_items[0]
+        # Valid ntiids do not collide
+        assert_that(imported_scorm_ref['NTIID'], is_not(scorm_ref_ntiid))
+        assert_that(imported_scorm_ref['ScormContentInfo']['NTIID'], is_not(scorm_content_ntiid))
+        assert_that(imported_scorm_ref['ScormContentInfo']['NTIID'], is_(new_scorm_content_ntiid))
+        assert_that(imported_scorm_ref['ScormContentInfo']['UploadJob']['State'], is_(UPLOAD_CREATED))
 
         # Delete the scorm content also cleans up the refs
         mock_scorm_delete.is_callable().returns(None)

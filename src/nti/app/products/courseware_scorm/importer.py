@@ -49,10 +49,11 @@ class CourseSCORMPackageImporter(BaseSectionImporter):
             return
         if filer.is_bucket(path):
             content_buckets = filer.get(path)
-            for content_bucket in content_buckets or ():
+            for content_bucket_name in content_buckets.enumerateChildren() or ():
+                content_bucket = content_buckets.getChildNamed(content_bucket_name)
                 scorm_content_ext = self._get_scorm_content_ext(content_bucket)
                 if scorm_content_ext is None:
-                    logger.warn("No scorm json found (%s)", content_bucket)
+                    logger.warn("No scorm json found (%s)", content_bucket_name)
                     continue
                 scorm_content_ntiid = scorm_content_ext.get('NTIID')
                 scorm_archive_name = scorm_content_ext.get('ScormArchiveFilename')

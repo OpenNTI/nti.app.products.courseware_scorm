@@ -51,6 +51,7 @@ from nti.schema.field import Choice
 from nti.schema.field import Number
 from nti.schema.field import Object
 from nti.schema.field import DateTime
+from nti.schema.field import ValidText
 from nti.schema.field import ListOrTuple
 from nti.schema.field import IndexedIterable as TypedIterable
 from nti.schema.field import DecodingValidTextLine as ValidTextLine
@@ -79,6 +80,8 @@ class ISCORMContentRef(IAssetTitleDescribed,
     """
 
     icon = href_schema_field(title=u"Icon href", required=False)
+
+    description = ValidText(title=u"Slide video description", required=False)
 
 
 class ISCORMCourseMetadata(IContained, IAttributeAnnotatable, ICompletableItem, IScormContent):
