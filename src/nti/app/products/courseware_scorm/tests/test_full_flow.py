@@ -14,6 +14,7 @@ from hamcrest import none
 from hamcrest import is_not
 from hamcrest import has_item
 from hamcrest import not_none
+from hamcrest import has_items
 from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import assert_that
@@ -21,6 +22,10 @@ from hamcrest import has_entries
 does_not = is_not
 
 import shutil
+import zipfile
+import simplejson
+
+from six.moves import cStringIO
 
 from webtest import Upload
 
@@ -35,6 +40,10 @@ from nti.app.products.courseware_scorm import SCORM_COLLECTION_NAME
 from nti.app.products.courseware_scorm.client import SCORMCloudClient
 from nti.app.products.courseware_scorm.client import PostBackURLGenerator
 from nti.app.products.courseware_scorm.client import PostBackPasswordUtility
+
+from nti.app.products.courseware_scorm.exporter import CourseSCORMPackageExporter
+
+from nti.app.products.courseware_scorm.importer import CourseSCORMPackageImporter
 
 from nti.app.products.courseware_scorm.interfaces import UPLOAD_ERROR
 from nti.app.products.courseware_scorm.interfaces import UPLOAD_CREATED
@@ -54,6 +63,8 @@ from nti.app.products.courseware_scorm.views import SCORM_CONTENT_ASYNC_UPLOAD_U
 from nti.app.products.courseware_scorm.tests import CoursewareSCORMLayerTest
 
 from nti.app.testing.decorators import WithSharedApplicationMockDS
+
+from nti.cabinet.filer import DirectoryFiler
 
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contentlibrary.interfaces import IDelimitedHierarchyContentPackageEnumeration
@@ -167,14 +178,16 @@ class TestFullFlow(CoursewareSCORMLayerTest):
                  'nti.app.products.courseware_scorm.views.management_views.SCORMContentUploadMixin._set_content_tags',
                  'nti.app.products.courseware_scorm.views.management_views.SCORMContentUploadMixin.get_scorm_content',
                  'nti.app.products.courseware_scorm.views.management_views.ScormContentInfoGetView._get_async_import_result',
-                 'nti.app.products.courseware_scorm.views.management_views.ScormContentInfoDeleteView._delete_scorm_course')
-    def test_full_flow(self, mock_upload_content, mock_set_tags, mock_get_content_info, mock_async_result, mock_scorm_delete):
+                 'nti.app.products.courseware_scorm.views.management_views.ScormContentInfoDeleteView._delete_scorm_course',
+                 'nti.app.products.courseware_scorm.exporter.CourseSCORMPackageExporter.get_archive')
+    def test_full_flow(self, mock_upload_content, mock_set_tags, mock_get_content_info, mock_async_result, mock_scorm_delete, mock_get_archive):
         """
         Create scorm content, including a ref in a lesson. Validate
         editor and enrolled user interaction (including completion)
         with the content.
         """
         mock_set_tags.is_callable().returns(None)
+        mock_get_archive.is_callable().returns(cStringIO(b'afdklj'))
         new_course = self._create_course()
         new_course_href = new_course['href']
         outline = new_course['Outline']
@@ -454,6 +467,43 @@ class TestFullFlow(CoursewareSCORMLayerTest):
                                                         u'CompletedItem', has_entries('ItemNTIID', scorm_content_ntiid,
                                                                                       'Success', True),
                                                         u'CompletionPolicy', has_entry(CLASS, u'SCORMCompletionPolicy')))
+
+        # Export
+        res = self.testapp.get('%s/Export' % new_course_href)
+
+        zip_data = cStringIO(res.body)
+        zip_file = zipfile.ZipFile(zip_data)
+        scorm_content_path = [x.filename for x in zip_file.filelist if x.filename.endswith('scorm_content.json')]
+        assert_that(scorm_content_path, has_length(1))
+        scorm_content_path = scorm_content_path[0]
+        scorm_content_ntiid_path = scorm_content_path.replace('/scorm_content.json', '').replace('ScormContent/', '')
+        assert_that(scorm_content_ntiid_path, not_none())
+
+        scorm_dir_name = 'ScormContent/%s/' % scorm_content_ntiid_path
+        assert_that([x.filename for x in zip_file.filelist],
+                    has_items('ScormContent/',
+                              scorm_dir_name,
+                              '%sscorm.zip' % scorm_dir_name,
+                              '%sscorm_content.json' % scorm_dir_name))
+
+        # Scorm content
+        content_export_ext = zip_file.open(scorm_content_path).read()
+        content_export_ext = simplejson.loads(content_export_ext)
+        new_scorm_content_ntiid = content_export_ext.get('NTIID')
+        assert_that(content_export_ext, has_entries('NTIID', new_scorm_content_ntiid,
+                                                    'ScormArchiveFilename', 'scorm.zip'))
+        assert_that(new_scorm_content_ntiid, is_not(scorm_content_ntiid))
+
+        # Lesson content
+        lesson_content_path = [x.filename for x in zip_file.filelist \
+                               if x.filename.startswith('Lessons/') and x.filename.endswith('.json')]
+        assert_that(lesson_content_path, has_length(1))
+        lesson_content_path = lesson_content_path[0]
+        lesson_export_ext = zip_file.open(lesson_content_path).read()
+        lesson_export_ext = simplejson.loads(lesson_export_ext)
+        group_items = lesson_export_ext.get('Items')[0].get('Items')
+        assert_that(group_items, has_length(1))
+        assert_that(group_items[0].get('target'), is_(new_scorm_content_ntiid))
 
         # Delete the scorm content also cleans up the refs
         mock_scorm_delete.is_callable().returns(None)

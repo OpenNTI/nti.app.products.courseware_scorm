@@ -20,6 +20,7 @@
 	<utility factory=".client.PostBackPasswordUtility"
 		 provides=".interfaces.IPostBackPasswordUtility" />
 
+    <adapter factory=".exporter.ScormContentRefExportPostProcessor" />
 	<utility factory=".exporter.CourseSCORMPackageExporter" />
 	<utility factory=".importer.CourseSCORMPackageImporter" />
 
@@ -69,7 +70,7 @@
 			 for="nti.scorm_cloud.client.registration.Registration"
 			 provides=".interfaces.IScormRegistration" />
 
-	 <adapter factory=".model.SCORMRegistrationReport"
+	<adapter factory=".model.SCORMRegistrationReport"
  			 for="nti.scorm_cloud.client.registration.RegistrationReport"
  			 provides=".interfaces.ISCORMRegistrationReport" />
 
@@ -183,6 +184,11 @@
                 provides="nti.externalization.interfaces.IExternalObjectDecorator"
                 for="nti.contenttypes.courses.interfaces.ICourseInstance
                      pyramid.interfaces.IRequest" />
+
+    <subscriber factory=".decorators.CourseCompletedItemDecorator"
+                for="nti.contenttypes.completion.interfaces.ICompletionContextCompletedItem
+                     pyramid.interfaces.IRequest"
+                provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 
     <utility factory=".ntiids._SCORMContentRefResolver" name="SCORMContentRef" />
 

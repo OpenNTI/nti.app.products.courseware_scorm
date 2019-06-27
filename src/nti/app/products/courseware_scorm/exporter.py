@@ -15,7 +15,8 @@ from six.moves import cStringIO
 from zope import component
 from zope import interface
 
-from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
+from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient,\
+    ISCORMContentRef
 from nti.app.products.courseware_scorm.interfaces import ISCORMContentInfoContainer
 
 from nti.contenttypes.courses.exporter import BaseSectionExporter
@@ -25,6 +26,7 @@ from nti.contenttypes.courses.interfaces import ICourseSectionExporter
 from nti.namedfile.file import safe_filename
 
 from nti.scorm_cloud.client.request import ScormCloudError
+from nti.contenttypes.presentation.interfaces import IAssetExportPostProcessor
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -59,7 +61,7 @@ class CourseSCORMPackageExporter(BaseSectionExporter):
             logger.warn("Exporting SCORM content without client configured.")
             return
         bucket = self.course_bucket(course) or ''
-        filer.default_bucket = os.path.join(bucket, 'ScormContent')
+        scorm_bucket = os.path.join(bucket, 'ScormContent')
 
         for scorm_content in scorm_container.values():
             logger.info("Exporting scorm content (%s) (%s)",
@@ -70,7 +72,7 @@ class CourseSCORMPackageExporter(BaseSectionExporter):
                 if not backup:
                     content_ntiid = self.hash_ntiid(scorm_content.ntiid, salt)
                 folder_name = safe_filename(content_ntiid)
-                bucket = os.path.join(bucket, folder_name)
+                bucket = os.path.join(scorm_bucket, folder_name)
                 zip_name = getattr(scorm_content.upload_job, 'UploadFilename', content_ntiid)
                 zip_name = safe_filename(zip_name)
                 filer.save(zip_name,
@@ -83,9 +85,22 @@ class CourseSCORMPackageExporter(BaseSectionExporter):
                 # scorm cloud.
                 scorm_content_ext = {'NTIID': content_ntiid,
                                      'ScormArchiveFilename': zip_name}
+                scorm_content_ext = self.dump(scorm_content_ext)
                 filer.save('scorm_content.json',
                            scorm_content_ext,
                            overwrite=True,
                            bucket=bucket,
                            contentType="application/json")
         filer.default_bucket = None # restore
+
+
+@component.adapter(ISCORMContentRef)
+@interface.implementer(IAssetExportPostProcessor)
+class ScormContentRefExportPostProcessor(object):
+
+    def __init__(self, obj):
+        self.ref = obj
+
+    def process(self, exporter, asset, ext_obj, backup, salt):
+        if not backup:
+            ext_obj['target'] = exporter.hash_ntiid(asset.target, salt)

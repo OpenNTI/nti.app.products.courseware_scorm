@@ -73,7 +73,6 @@ class ISCORMContentRef(IAssetTitleDescribed,
                        IGroupOverViewable,
                        INTIIDIdentifiable,
                        ICoursePresentationAsset,
-                       INonExportableAsset,
                        IScormContent):
     """
     A presentation asset ref pointing towards :class:`ISCORMContentInfo`.
