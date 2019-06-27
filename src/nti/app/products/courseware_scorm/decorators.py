@@ -49,6 +49,7 @@ from nti.ntiids.ntiids import find_object_with_ntiid
 from nti.traversal.traversal import find_interface
 
 LINKS = StandardExternalFields.LINKS
+ITEMS = StandardExternalFields.ITEMS
 ITEM_COUNT = StandardExternalFields.ITEM_COUNT
 
 LAUNCH_REL = LAUNCH_SCORM_COURSE_VIEW_NAME
@@ -153,7 +154,7 @@ class CourseCompletedItemDecorator(AbstractAuthenticatedRequestAwareDecorator):
             return
         user = context.user
         meta_data = result.setdefault('CompletionMetadata', {})
-        meta_items = meta_data.setdefault('ITEMS', [])
+        meta_items = meta_data.setdefault(ITEMS, [])
         principal_container = component.queryMultiAdapter((user, course),
                                                           IPrincipalCompletedItemContainer)
         success_count = result.setdefault('SuccessCount', 0)
