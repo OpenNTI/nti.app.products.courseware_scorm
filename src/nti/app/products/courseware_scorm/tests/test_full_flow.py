@@ -21,6 +21,7 @@ from hamcrest import assert_that
 from hamcrest import has_entries
 does_not = is_not
 
+import gevent
 import shutil
 import zipfile
 import simplejson
@@ -520,6 +521,14 @@ class TestFullFlow(CoursewareSCORMLayerTest):
         assert_that(imported_scorm_ref['ScormContentInfo']['NTIID'], is_not(scorm_content_ntiid))
         assert_that(imported_scorm_ref['ScormContentInfo']['NTIID'], is_(new_scorm_content_ntiid))
         assert_that(imported_scorm_ref['ScormContentInfo']['upload_job']['State'], is_(UPLOAD_CREATED))
+
+        # Content eventually updates
+        gevent.sleep(65)
+        lesson_ext = self.testapp.get(lesson_content_href).json_body
+        group_items = lesson_ext.get('Items')[0].get('Items')
+        assert_that(group_items, has_length(1))
+        imported_scorm_ref = group_items[0]
+        assert_that(imported_scorm_ref['ScormContentInfo']['upload_job']['State'], is_(UPLOAD_FINISHED))
 
         # Delete the scorm content also cleans up the refs
         mock_scorm_delete.is_callable().returns(None)

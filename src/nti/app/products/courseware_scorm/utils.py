@@ -12,6 +12,9 @@ import gevent
 
 from zope import component
 
+from zope.component.hooks import getSite
+from zope.component.hooks import site as current_site
+
 from zope.intid.interfaces import IIntIds
 
 from nti.app.products.courseware_scorm.interfaces import UPLOAD_CREATED
@@ -38,6 +41,7 @@ from nti.ntiids.ntiids import find_object_with_ntiid
 
 from nti.scorm_cloud.client.request import ScormCloudError
 
+from nti.site.site import get_site_for_site_names
 from nti.site.site import get_component_hierarchy_names
 
 from nti.site.utils import registerUtility
@@ -158,6 +162,7 @@ def _set_scorm_content_tags(client, scorm_id, tags):
     client.set_scorm_tags(scorm_id,
                           tags)
 
+
 def check_and_update_scorm_content_info(content_info, client=None):
     """
     Fetch the given :class:`IScormContentInfo` async import status,
@@ -195,6 +200,7 @@ def _spawn_async_job_updater(content_info):
     """
     tx_runner = component.getUtility(IDataserverTransactionRunner)
     content_info_ntiid = content_info.ntiid
+    content_site_name = getSite().__name__
     def do_update_scorm_content():
         # XXX: Do we need to sleep here to allow the original creation
         # tx to complete and commit? Otherwise we may not have an object
@@ -207,29 +213,31 @@ def _spawn_async_job_updater(content_info):
                 Check and update, returning whether we need to check again.
                 We run until our job is complete or an error occurs.
                 """
-                keep_running_result = True
-                # Validate still have object to check
-                tx_content_info = find_object_with_ntiid(content_info_ntiid)
-                if tx_content_info is None:
-                    keep_running_result = False
+                content_site = get_site_for_site_names((content_site_name,))
+                with current_site(content_site):
+                    keep_running_result = True
+                    # Validate still have object to check
+                    tx_content_info = find_object_with_ntiid(content_info_ntiid)
+                    if tx_content_info is None:
+                        keep_running_result = False
+                        return keep_running_result
+                    # Validate not updated by someone else
+                    upload_job = tx_content_info.upload_job
+                    is_complete = upload_job.is_upload_complete()
+                    if is_complete:
+                        keep_running_result = False
+                        return keep_running_result
+                    try:
+                        check_and_update_scorm_content_info(tx_content_info)
+                    except ScormCloudError:
+                        # We cannot do anything here right?
+                        logger.exception('Scorm error while updating (%s) (%s)',
+                                         content_info_ntiid, tx_content_info.scorm_id)
+                        keep_running_result = False
+                    # Check if we are now complete
+                    if upload_job.is_upload_complete():
+                        keep_running_result = False
                     return keep_running_result
-                # Validate not updated by someone else
-                upload_job = tx_content_info.upload_job
-                is_complete = upload_job.is_upload_complete()
-                if is_complete:
-                    keep_running_result = False
-                    return keep_running_result
-                try:
-                    check_and_update_scorm_content_info(tx_content_info)
-                except ScormCloudError:
-                    # We cannot do anything here right?
-                    logger.exception('Scorm error while updating (%s) (%s)',
-                                     content_info_ntiid, tx_content_info.scorm_id)
-                    keep_running_result = False
-                # Check if we are now complete
-                if upload_job.is_upload_complete():
-                    keep_running_result = False
-                return keep_running_result
             # Only update condition if successful tx
             keep_running = tx_runner(_check_state, retries=5, sleep=0.1)
     return gevent.spawn(do_update_scorm_content)
