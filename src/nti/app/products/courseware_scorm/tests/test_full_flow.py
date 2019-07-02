@@ -169,9 +169,9 @@ class TestFullFlow(CoursewareSCORMLayerTest):
 
     @WithSharedApplicationMockDS(testapp=True, users=True)
     @fudge.patch('nti.app.products.courseware_scorm.utils._upload_scorm_content',
-                 'nti.app.products.courseware_scorm.views.management_views.SCORMContentUploadMixin._set_content_tags',
-                 'nti.app.products.courseware_scorm.views.management_views.SCORMContentUploadMixin.get_scorm_content',
-                 'nti.app.products.courseware_scorm.views.management_views.ScormContentInfoGetView._get_async_import_result',
+                 'nti.app.products.courseware_scorm.utils._set_scorm_content_tags',
+                 'nti.app.products.courseware_scorm.utils._get_scorm_content',
+                 'nti.app.products.courseware_scorm.utils._get_async_result',
                  'nti.app.products.courseware_scorm.views.management_views.ScormContentInfoDeleteView._delete_scorm_course',
                  'nti.app.products.courseware_scorm.exporter.CourseSCORMPackageExporter.get_archive')
     def test_full_flow(self, mock_upload_content, mock_set_tags, mock_get_content_info, mock_async_result, mock_scorm_delete, mock_get_archive):
@@ -515,11 +515,11 @@ class TestFullFlow(CoursewareSCORMLayerTest):
         group_items = lesson_ext.get('Items')[0].get('Items')
         assert_that(group_items, has_length(1))
         imported_scorm_ref = group_items[0]
-        # Valid ntiids do not collide
+        # Validate ntiids do not collide
         assert_that(imported_scorm_ref['NTIID'], is_not(scorm_ref_ntiid))
         assert_that(imported_scorm_ref['ScormContentInfo']['NTIID'], is_not(scorm_content_ntiid))
         assert_that(imported_scorm_ref['ScormContentInfo']['NTIID'], is_(new_scorm_content_ntiid))
-        assert_that(imported_scorm_ref['ScormContentInfo']['UploadJob']['State'], is_(UPLOAD_CREATED))
+        assert_that(imported_scorm_ref['ScormContentInfo']['upload_job']['State'], is_(UPLOAD_CREATED))
 
         # Delete the scorm content also cleans up the refs
         mock_scorm_delete.is_callable().returns(None)

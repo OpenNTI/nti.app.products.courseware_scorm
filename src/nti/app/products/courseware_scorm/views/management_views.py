@@ -36,6 +36,7 @@ from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 from nti.app.products.courseware_scorm.interfaces import ISCORMContentInfo
 
 from nti.app.products.courseware_scorm.utils import upload_scorm_content_async
+from nti.app.products.courseware_scorm.utils import check_and_update_scorm_content_info
 
 from nti.app.products.courseware_scorm.views import CREATE_SCORM_COURSE_VIEW_NAME
 
@@ -126,23 +127,6 @@ class SCORMContentUploadMixin(object):
                              None)
         return client
 
-    def get_scorm_content(self, client, scorm_id):
-        """
-        Return the scorm content info referenced by the given scorm_id.
-        """
-        try:
-            result = client.get_scorm_instance_detail(scorm_id)
-        except ScormCloudError as exc:
-            raise_json_error(self.request,
-                             hexc.HTTPUnprocessableEntity,
-                             {
-                                 'message': exc.message,
-                             },
-                             None)
-        return result
-
-    def _set_content_tags(self, client, scorm_id, tags):
-        client.set_scorm_tags(scorm_id, tags)
 
     def upload_content(self, source):
         """
@@ -241,51 +225,25 @@ class ScormContentInfoGetView(AbstractAuthenticatedView,
     has completed.
     """
 
-    def copy_scorm_content_info(self, source, target):
-        for name in ISCORMContentInfo.names():
-            value = getattr(source, name, None)
-            if value is not None:
-                setattr(target, name, value)
-
-    def update_upload_job(self, upload_job, async_result):
-        upload_job.ErrorMessage = async_result.error_message
-        upload_job.State = async_result.status
-
-    def _get_async_import_result(self, client, token):
-        try:
-            return client.get_async_import_result(token)
-        except ScormCloudError as exc:
-            logger.exception("Scorm exception while getting result (%s) (%s) (%s)",
-                             token, self.context.ntiid, self.context.scorm_id)
-            raise_json_error(self.request,
-                             hexc.HTTPUnprocessableEntity,
-                             {
-                                 'message': exc.message,
-                             },
-                             None)
 
     def __call__(self):
         client = self._get_scorm_client()
         upload_job = self.context.upload_job
         if upload_job and not upload_job.is_upload_complete():
-            # Fetch job status
-            async_result = self._get_async_import_result(client, upload_job.token)
-            if async_result.status != upload_job.State:
-                # State has changed, we need to update and commit.
-                self.update_upload_job(upload_job, async_result)
+            # Fetch and update
+            try:
+                did_update = check_and_update_scorm_content_info(self.context, client)
+            except ScormCloudError as exc:
+                logger.exception("Scorm exception while getting result (%s) (%s) (%s)",
+                                 upload_job.token, self.context.ntiid, self.context.scorm_id)
+                raise_json_error(self.request,
+                                 hexc.HTTPUnprocessableEntity,
+                                 {
+                                    'message': exc.message,
+                                 },
+                                 None)
+            if did_update:
                 self.request.environ['nti.request_had_transaction_side_effects'] = True
-                if upload_job.is_upload_successfully_complete():
-                    logger.debug("Updating scorm state (%s) (%s) (%s)",
-                                 upload_job.State, async_result.status, upload_job.ErrorMessage)
-                    new_content_info = self.get_scorm_content(client,
-                                                              self.context.scorm_id)
-                    # Collection has tag info
-                    self._set_content_tags(client,
-                                           self.context.scorm_id,
-                                           self.context.__parent__.tags)
-                    # Copy our non-null attributes from scorm cloud info
-                    # into our context.
-                    self.copy_scorm_content_info(new_content_info, self.context)
         return self.context
 
 
