@@ -9,6 +9,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import gevent
+import transaction
 
 from zope import component
 
@@ -202,12 +203,8 @@ def _spawn_async_job_updater(content_info):
     content_info_ntiid = content_info.ntiid
     content_site_name = getSite().__name__
     def do_update_scorm_content():
-        # XXX: Do we need to sleep here to allow the original creation
-        # tx to complete and commit? Otherwise we may not have an object
-        # and the greenlet prematurely stops.
         keep_running = True
         while keep_running:
-            gevent.sleep(60)
             def _check_state():
                 """
                 Check and update, returning whether we need to check again.
@@ -240,4 +237,6 @@ def _spawn_async_job_updater(content_info):
                     return keep_running_result
             # Only update condition if successful tx
             keep_running = tx_runner(_check_state, retries=5, sleep=0.1)
-    return gevent.spawn(do_update_scorm_content)
+            gevent.sleep(60)
+    def hook(s): return s and gevent.spawn(do_update_scorm_content)
+    transaction.get().addAfterCommitHook(hook)
