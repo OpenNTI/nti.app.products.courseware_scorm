@@ -68,12 +68,12 @@ class CourseSCORMPackageImporter(BaseSectionImporter):
                     continue
 
                 try:
-                    # Ok, we're good to upldate; ensure we use the ntiid we have
+                    # Ok, we're good to update; ensure we use the ntiid we have
                     scorm_content_info = upload_scorm_content_async(scorm_archive,
                                                                     client,
                                                                     ntiid=scorm_content_ntiid)
                 except ScormCloudError:
-                    logger.exception("Scorm exception while uplading (%s)",
+                    logger.exception("Scorm exception while uploading (%s)",
                                      scorm_content_ntiid)
                 else:
                     content_container.store_content(scorm_content_info)

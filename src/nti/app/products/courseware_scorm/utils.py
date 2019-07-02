@@ -8,7 +8,12 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+import gevent
+
 from zope import component
+
+from zope.component.hooks import getSite
+from zope.component.hooks import site as current_site
 
 from zope.intid.interfaces import IIntIds
 
@@ -30,6 +35,13 @@ from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 
 from nti.contenttypes.courses.utils import get_parent_course
 
+from nti.dataserver.interfaces import IDataserverTransactionRunner
+
+from nti.ntiids.ntiids import find_object_with_ntiid
+
+from nti.scorm_cloud.client.request import ScormCloudError
+
+from nti.site.site import get_site_for_site_names
 from nti.site.site import get_component_hierarchy_names
 
 from nti.site.utils import registerUtility
@@ -122,4 +134,110 @@ def upload_scorm_content_async(source, client=None, ntiid=None):
                     result,
                     ISCORMContentInfo,
                     name=result.ntiid)
+    _spawn_async_job_updater(result)
     return result
+
+
+def _copy_scorm_content_info(source, target):
+    for name in ISCORMContentInfo.names():
+        value = getattr(source, name, None)
+        if value is not None:
+            setattr(target, name, value)
+
+
+def _update_upload_job(upload_job, async_result):
+    upload_job.ErrorMessage = async_result.error_message
+    upload_job.State = async_result.status
+
+
+def _get_async_result(client, token):
+    client.get_async_import_result(token)
+
+
+def _get_scorm_content(client, scorm_id):
+    client.get_scorm_instance_detail(scorm_id)
+
+
+def _set_scorm_content_tags(client, scorm_id, tags):
+    client.set_scorm_tags(scorm_id,
+                          tags)
+
+
+def check_and_update_scorm_content_info(content_info, client=None):
+    """
+    Fetch the given :class:`IScormContentInfo` async import status,
+    updating the content_info if necessary.
+
+    Returns a bool if state was updated.
+    """
+    result = False
+    if not client:
+        client = component.queryUtility(ISCORMCloudClient)
+    upload_job = content_info.upload_job
+    # Fetch job status
+    async_result = _get_async_result(client, upload_job.token)
+    if async_result.status != upload_job.State:
+        result = True
+        # State has changed, we need to update and commit.
+        _update_upload_job(upload_job, async_result)
+        if upload_job.is_upload_successfully_complete():
+            logger.debug("Updating scorm state (%s) (%s) (%s)",
+                         upload_job.State, async_result.status, upload_job.ErrorMessage)
+            new_content_info = _get_scorm_content(client, content_info.scorm_id)
+            # Collection has tag info
+            _set_scorm_content_tags(client,
+                                    content_info.scorm_id,
+                                    content_info.__parent__.tags)
+            # Copy our non-null attributes from scorm cloud info
+            # into our context.
+            _copy_scorm_content_info(new_content_info, content_info)
+    return result
+
+
+def _spawn_async_job_updater(content_info):
+    """
+    Spawn a greenlet to update the given :class:`IScormContentInfo`.
+    """
+    tx_runner = component.getUtility(IDataserverTransactionRunner)
+    content_info_ntiid = content_info.ntiid
+    content_site_name = getSite().__name__
+    def do_update_scorm_content():
+        # XXX: Do we need to sleep here to allow the original creation
+        # tx to complete and commit? Otherwise we may not have an object
+        # and the greenlet prematurely stops.
+        keep_running = True
+        while keep_running:
+            gevent.sleep(60)
+            def _check_state():
+                """
+                Check and update, returning whether we need to check again.
+                We run until our job is complete or an error occurs.
+                """
+                content_site = get_site_for_site_names((content_site_name,))
+                with current_site(content_site):
+                    keep_running_result = True
+                    # Validate still have object to check
+                    tx_content_info = find_object_with_ntiid(content_info_ntiid)
+                    if tx_content_info is None:
+                        keep_running_result = False
+                        return keep_running_result
+                    # Validate not updated by someone else
+                    upload_job = tx_content_info.upload_job
+                    is_complete = upload_job.is_upload_complete()
+                    if is_complete:
+                        keep_running_result = False
+                        return keep_running_result
+                    try:
+                        check_and_update_scorm_content_info(tx_content_info)
+                    except ScormCloudError:
+                        # We cannot do anything here right?
+                        logger.exception('Scorm error while updating (%s) (%s)',
+                                         content_info_ntiid, tx_content_info.scorm_id)
+                        keep_running_result = False
+                    # Check if we are now complete
+                    if upload_job.is_upload_complete():
+                        keep_running_result = False
+                    return keep_running_result
+            # Only update condition if successful tx
+            keep_running = tx_runner(_check_state, retries=5, sleep=0.1)
+    return gevent.spawn(do_update_scorm_content)
