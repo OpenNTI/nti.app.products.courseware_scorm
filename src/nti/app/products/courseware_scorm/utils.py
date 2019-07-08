@@ -152,16 +152,16 @@ def _update_upload_job(upload_job, async_result):
 
 
 def _get_async_result(client, token):
-    client.get_async_import_result(token)
+    return client.get_async_import_result(token)
 
 
 def _get_scorm_content(client, scorm_id):
-    client.get_scorm_instance_detail(scorm_id)
+    return client.get_scorm_instance_detail(scorm_id)
 
 
 def _set_scorm_content_tags(client, scorm_id, tags):
-    client.set_scorm_tags(scorm_id,
-                          tags)
+    return client.set_scorm_tags(scorm_id,
+                                 tags)
 
 
 def check_and_update_scorm_content_info(content_info, client=None):
