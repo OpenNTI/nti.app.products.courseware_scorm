@@ -73,20 +73,21 @@ class _SCORMContentInfoLaunchDecorator(AbstractAuthenticatedRequestAwareDecorato
             or context.upload_job.is_upload_successfully_complete()
 
     def _do_decorate_external(self, context, external):
-        course = find_interface(context, ICourseInstance, strict=True)
-        _links = external.setdefault(LINKS, [])
-        if    is_admin_or_content_admin_or_site_admin(self.remoteUser) \
-           or is_course_instructor_or_editor(course, self.remoteUser):
-            _links.append(Link(context,
-                               rel=LAUNCH_REL,
-                               elements=(PREVIEW_SCORM_COURSE_VIEW_NAME,)))
-        else:
-            _links.append(Link(context,
-                               rel=LAUNCH_REL,
-                               elements=(LAUNCH_SCORM_COURSE_VIEW_NAME,)))
-            _links.append(Link(context,
-                               rel=PROGRESS_REL,
-                               elements=(PROGRESS_REL,)))
+        course = find_interface(context, ICourseInstance, strict=False)
+        if course is not None:
+            _links = external.setdefault(LINKS, [])
+            if    is_admin_or_content_admin_or_site_admin(self.remoteUser) \
+               or is_course_instructor_or_editor(course, self.remoteUser):
+                _links.append(Link(context,
+                                   rel=LAUNCH_REL,
+                                   elements=(PREVIEW_SCORM_COURSE_VIEW_NAME,)))
+            else:
+                _links.append(Link(context,
+                                   rel=LAUNCH_REL,
+                                   elements=(LAUNCH_SCORM_COURSE_VIEW_NAME,)))
+                _links.append(Link(context,
+                                   rel=PROGRESS_REL,
+                                   elements=(PROGRESS_REL,)))
 
 
 @component.adapter(ISCORMContentInfo)

@@ -32,4 +32,5 @@ def _scormref_to_scormcontent(context):
 @interface.implementer(ICourseInstance)
 @component.adapter(ISCORMContentInfo)
 def _scormcontent_to_course(context):
-    return find_interface(context, ICourseInstance)
+    # Strict false for tests
+    return find_interface(context, ICourseInstance, strict=False)
