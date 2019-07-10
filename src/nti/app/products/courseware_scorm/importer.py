@@ -75,6 +75,7 @@ class CourseSCORMPackageImporter(BaseSectionImporter):
                 except ScormCloudError:
                     logger.exception("Scorm exception while uploading (%s)",
                                      scorm_content_ntiid)
+                    raise
                 else:
                     content_container.store_content(scorm_content_info)
                     # Save source
