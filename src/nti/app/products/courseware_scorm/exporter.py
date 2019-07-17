@@ -15,18 +15,21 @@ from six.moves import cStringIO
 from zope import component
 from zope import interface
 
-from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient,\
-    ISCORMContentRef
+from nti.app.products.courseware_scorm.interfaces import ISCORMContentRef
+from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
+
 from nti.app.products.courseware_scorm.interfaces import ISCORMContentInfoContainer
 
 from nti.contenttypes.courses.exporter import BaseSectionExporter
 
 from nti.contenttypes.courses.interfaces import ICourseSectionExporter
 
+from nti.contenttypes.presentation.interfaces import IAssetExportPostProcessor
+
 from nti.namedfile.file import safe_filename
 
 from nti.scorm_cloud.client.request import ScormCloudError
-from nti.contenttypes.presentation.interfaces import IAssetExportPostProcessor
+
 
 logger = __import__('logging').getLogger(__name__)
 

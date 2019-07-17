@@ -14,8 +14,10 @@ import simplejson
 from zope import component
 from zope import interface
 
-from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient,\
-    ISCORMContentInfoContainer
+from zope.schema.interfaces import ValidationError
+
+from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
+from nti.app.products.courseware_scorm.interfaces import ISCORMContentInfoContainer
 
 from nti.app.products.courseware_scorm.utils import upload_scorm_content_async
 
@@ -72,10 +74,10 @@ class CourseSCORMPackageImporter(BaseSectionImporter):
                     scorm_content_info = upload_scorm_content_async(scorm_archive,
                                                                     client,
                                                                     ntiid=scorm_content_ntiid)
-                except ScormCloudError:
+                except ScormCloudError as exc:
                     logger.exception("Scorm exception while uploading (%s)",
                                      scorm_content_ntiid)
-                    raise
+                    raise ValidationError(exc.message)
                 else:
                     content_container.store_content(scorm_content_info)
                     # Save source
