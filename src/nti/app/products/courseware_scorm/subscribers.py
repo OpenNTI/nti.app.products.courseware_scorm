@@ -29,10 +29,14 @@ from nti.contentlibrary.indexed_data import get_site_registry
 from nti.contentlibrary.indexed_data import get_library_catalog
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
+from nti.contenttypes.courses.interfaces import ICourseContentLibraryProvider
+
+from nti.coremetadata.interfaces import IUser
 
 from nti.scorm_cloud.client.request import ScormCloudError
 
 from nti.site.site import get_component_hierarchy_names
+from nti.app.products.courseware_scorm.model import ScormContentInfo
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -103,3 +107,27 @@ def on_course_deletion_remove_content(course, event):
                         content_info.scorm_id,
                         content_info.title,
                         exc)
+
+
+@component.adapter(IUser, ICourseInstance)
+@interface.implementer(ICourseContentLibraryProvider)
+class _CourseContentLibraryProvider(object):
+    """
+    Return the mimetypes of objects of course content that could be
+    added to this course by this user.
+    """
+
+    def __init__(self, user, course):
+        self.user = user
+        self.course = course
+
+    def get_item_mime_types(self):
+        """
+        Returns the collection of mimetypes that may be available (either
+        they exist or can exist) in this course.
+        """
+        client = component.queryUtility(ISCORMCloudClient)
+        result = ()
+        if client is not None:
+            result = (ScormContentInfo.mime_type,)
+        return result
