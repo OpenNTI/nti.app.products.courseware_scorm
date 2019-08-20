@@ -77,6 +77,7 @@ class CourseSCORMPackageExporter(BaseSectionExporter):
                 folder_name = safe_filename(content_ntiid)
                 bucket = os.path.join(scorm_bucket, folder_name)
                 zip_name = getattr(scorm_content.upload_job, 'UploadFilename', content_ntiid)
+                zip_name = os.path.basename(zip_name)
                 zip_name = safe_filename(zip_name)
                 filer.save(zip_name,
                            scorm_archive,
