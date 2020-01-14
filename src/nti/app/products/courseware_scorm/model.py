@@ -162,6 +162,17 @@ def _response(value):
     return ISCORMResponse(response)
 
 
+def _get_success_bool(val):
+    """
+    We may get 'passed', 'failed', or 'unknown' here. Default to
+    True unless we get 'failed'
+    """
+    result = True
+    if val and val.lower() == 'failed':
+        result = False
+    return result
+
+
 @EqHash('target')
 @interface.implementer(ISCORMContentRef)
 class SCORMContentRef(PersistentPresentationAsset):
@@ -356,7 +367,7 @@ class SCORMRegistrationReport(object):
         else:
             self.activity = None
         self.complete = registration_report.complete == u'complete'
-        self.success = registration_report.success == u'passed'
+        self.success = _get_success_bool(registration_report.success)
         self.score = _parse_int(registration_report.score, u'score')
         self.total_time = _parse_int(registration_report.totaltime, u'total_time')
 
@@ -374,7 +385,7 @@ class SCORMObjective(object):
         self.score_scaled = _parse_float(objective.score_scaled, u'SCORMObjective.score_scaled')
         self.score_min = _parse_float(objective.score_min, u'SCORMObjective.score_min')
         self.score_raw = _parse_float(objective.score_raw, u'SCORMObjective.score_raw')
-        self.success_status = {u'passed': True, u'failed': False}.get(objective.success_status)
+        self.success_status = _get_success_bool(objective.success_status)
         self.completion_status = objective.completion_status
         self.progress_measure = _parse_float(objective.progress_measure, u'SCORMObjective.progress_measure')
         self.description = objective.description
@@ -388,7 +399,7 @@ class SCORMActivity(object):
         self.id = activity.id
         self.title = activity.title
         self.complete = {u'complete': True, u'incomplete': False}.get(activity.complete)
-        self.success = {u'passed': True, u'failed': False}.get(activity.success)
+        self.success = _get_success_bool(activity.success)
         self.satisfied = activity.satisfied
         self.completed = activity.completed
         self.progress_status = activity.progressstatus
@@ -488,7 +499,7 @@ class SCORMRuntime(object):
         self.interactions = [ISCORMInteraction(i) for i in runtime.interactions]
         self.score_scaled = _parse_float(runtime.score_scaled, u'SCORMRuntime.score_scaled')
         self.suspend_data = runtime.suspend_data
-        self.success_status = {u'passed': True, u'failed': False}.get(runtime.success_status)
+        self.success_status = _get_success_bool(runtime.success_status)
         self.progress_measure = _parse_float(runtime.progress_measure, u'SCORMRuntime.progress_measure')
         self.completion_status = runtime.completion_status
         if runtime.learnerpreference is not None:

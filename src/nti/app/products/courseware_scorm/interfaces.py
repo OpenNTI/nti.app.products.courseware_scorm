@@ -32,7 +32,6 @@ from nti.base.interfaces import ILastModified
 from nti.contenttypes.presentation.interfaces import href_schema_field
 from nti.contenttypes.presentation.interfaces import INTIIDIdentifiable
 from nti.contenttypes.presentation.interfaces import IGroupOverViewable
-from nti.contenttypes.presentation.interfaces import INonExportableAsset
 from nti.contenttypes.presentation.interfaces import IAssetTitleDescribed
 from nti.contenttypes.presentation.interfaces import ICoursePresentationAsset
 
