@@ -137,7 +137,7 @@ class TestExternal(ApplicationLayerTest):
                                     regid=u'regid',
                                     instanceid=u'instanceid',
                                     complete=u'incomplete',
-                                    success=u'failure',
+                                    success=u'failed',
                                     totaltime=3,
                                     score=u'unknown')
         progress = ISCORMRegistrationReport(report, None)
@@ -152,7 +152,8 @@ class TestExternal(ApplicationLayerTest):
                                              u'score', None,
                                              u'activity', None)))
         report.format = u'activity'
-        report.score=None
+        report.score = None
+        report.success = u'unknown'
         progress = ISCORMRegistrationReport(report, None)
         assert_that(progress, is_not(none()))
         assert_that(progress,
@@ -160,7 +161,7 @@ class TestExternal(ApplicationLayerTest):
                                              u'registration_id', u'regid',
                                              u'instance_id', u'instanceid',
                                              u'complete', False,
-                                             u'success', False,
+                                             u'success', True,
                                              u'total_time', 3,
                                              u'score', None,
                                              u'activity', None)))
@@ -182,7 +183,7 @@ class TestExternal(ApplicationLayerTest):
                                              u'activity', has_entries(ID, u'a-id',
                                                                       'title', u'activity-title',
                                                                       'complete', None,
-                                                                      'success', None,
+                                                                      'success', True,
                                                                       'satisfied', False,
                                                                       'completed', False,
                                                                       'progress_status', False,
@@ -286,7 +287,7 @@ class TestExternal(ApplicationLayerTest):
                                                                                 'score_scaled', None,
                                                                                 'score_min', None,
                                                                                 'score_raw', None,
-                                                                                'success_status', None,
+                                                                                'success_status', True,
                                                                                 'completion_status', None,
                                                                                 'progress_measure', None,
                                                                                 'description', None)),
@@ -343,7 +344,7 @@ class TestExternal(ApplicationLayerTest):
                                              'score_raw', 80,
                                              'total_time', 27.63,
                                              'time_tracked', 20.36,
-                                             'success_status', None,
+                                             'success_status', True,
                                              'suspend_data', u'suspend-data',
                                              'learner_preference', has_entries('audio_level', 2.0,
                                                                                'language', u'en',
@@ -381,7 +382,7 @@ class TestExternal(ApplicationLayerTest):
                                                                                 'score_scaled', None,
                                                                                 'score_min', None,
                                                                                 'score_raw', None,
-                                                                                'success_status', None,
+                                                                                'success_status', True,
                                                                                 'completion_status', None,
                                                                                 'progress_measure', None,
                                                                                 'description', None)))))
@@ -426,14 +427,14 @@ class TestExternal(ApplicationLayerTest):
                                                                                 'score_scaled', None,
                                                                                 'score_min', None,
                                                                                 'score_raw', None,
-                                                                                'success_status', None,
+                                                                                'success_status', True,
                                                                                 'completion_status', None,
                                                                                 'progress_measure', None,
                                                                                 'description', None)),
                                              'children', has_item(has_entries(ID, u'c-id',
                                                                               'title', u'child-title',
                                                                               'complete', None,
-                                                                              'success', None,
+                                                                              'success', True,
                                                                               'satisfied', False,
                                                                               'completed', False,
                                                                               'progress_status', False,
@@ -455,7 +456,7 @@ class TestExternal(ApplicationLayerTest):
                                                                     'score_raw', None,
                                                                     'total_time', None,
                                                                     'time_tracked', None,
-                                                                    'success_status', None,
+                                                                    'success_status', True,
                                                                     'suspend_data', None,
                                                                     'learner_preference', None,
                                                                     'static', None,
