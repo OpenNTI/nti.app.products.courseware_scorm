@@ -40,11 +40,11 @@ from nti.externalization.persistence import NoPickle
 class SCORMProgress(Progress):
 
     def __init__(self, user, scorm_content, course, report):
+        super(SCORMProgress, self).__init__(User=user, LastModified=datetime.utcnow())
         self.NTIID = scorm_content.ntiid
         self.Item = scorm_content
         self.CompletionContext = course
         self.registration_report = report
-        super(SCORMProgress, self).__init__(User=user, LastModified=datetime.utcnow())
 
     @property
     def AbsoluteProgress(self):
@@ -63,6 +63,20 @@ class SCORMProgress(Progress):
     @property
     def MaxPossibleProgress(self):
         return 1
+
+    @AbsoluteProgress.setter
+    def AbsoluteProgress(self, value):
+        # Since avoiding schema config, the parent class sets
+        # the defaults. We ignore these properties.
+        pass
+
+    @HasProgress.setter
+    def HasProgress(self, value):
+        pass
+
+    @MaxPossibleProgress.setter
+    def MaxPossibleProgress(self, value):
+        pass
 
 
 @component.adapter(IUser, ISCORMContentInfo, ICourseInstance)
