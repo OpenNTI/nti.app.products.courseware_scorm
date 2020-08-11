@@ -104,8 +104,8 @@ class AbstractSCORMLaunchView(AbstractAuthenticatedView):
     def __call__(self):
         scorm_id = self._get_scorm_id()
         try:
-            self._before_launch()
             redirect_url = self._redirect_uri()
+            self._before_launch()
             launch_url = self._build_launch_url(scorm_id, redirect_url)
         except Exception as e:
             logger.exception('Unable to generate scorm cloud launch url')
