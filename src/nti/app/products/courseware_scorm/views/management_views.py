@@ -18,6 +18,7 @@ from zope import component
 from zope.cachedescriptors.property import Lazy
 
 from nti.app.base.abstract_views import get_all_sources
+from nti.app.base.abstract_views import get_safe_source_filename
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.app.externalization.error import raise_json_error
@@ -169,6 +170,7 @@ class SCORMContentUploadMixin(object):
                                  'message': _(u"No SCORM zip file was included with request."),
                              },
                              None)
+        source.filename = get_safe_source_filename(source, 'scorm_upload.zip')
         return source
 
 
