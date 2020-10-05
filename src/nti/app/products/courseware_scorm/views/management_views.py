@@ -170,6 +170,10 @@ class SCORMContentUploadMixin(object):
                                  'message': _(u"No SCORM zip file was included with request."),
                              },
                              None)
+        # Scorm cloud has issues with certain filenames (filenames with spaces
+        # seemed fine - maybe it has something to do with special characters &- and
+        # spaces). We sanitize here before we upload. The error message from scorm
+        # cloud is entirely useless - Internal Server Error
         source.filename = get_safe_source_filename(source, 'scorm_upload.zip')
         return source
 
