@@ -62,6 +62,7 @@ class _SCORMContentRefDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
     def _do_decorate_external(self, context, external):
         external['ScormContentInfo'] = find_object_with_ntiid(context.target)
+        external['Target-NTIID'] = context.target
 
 
 @component.adapter(ISCORMContentInfo)
