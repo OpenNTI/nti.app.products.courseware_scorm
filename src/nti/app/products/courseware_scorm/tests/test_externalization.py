@@ -66,12 +66,14 @@ class TestExternal(ApplicationLayerTest):
         course_data.courseId = u'123456'
         course_data.numberOfVersions = u'2'
         course_data.numberOfRegistrations = u'18'
+        course_data.learningStandard = u'aicc'
         content = ISCORMContentInfo(course_data)
         ext_obj = toExternalObject(content, decorate=False)
         assert_that(ext_obj, has_entries(u'title', u'new title',
                                          u'scorm_id', u'123456',
                                          u'course_version', u'2',
-                                         u'registration_count', 18))
+                                         u'registration_count', 18,
+                                         u'learning_standard', 'aicc'))
 
         assert_that(find_factory_for(ext_obj),
                     not_none())
@@ -90,13 +92,15 @@ class TestExternal(ApplicationLayerTest):
                                    title=u'scorm title',
                                    course_version=u'v1',
                                    registration_count=10,
-                                   tags=[u'tag1', u'tag2'])
+                                   tags=[u'tag1', u'tag2'],
+                                   learning_standard='cmi5')
 
         ext_obj = toExternalObject(content, decorate=False)
         assert_that(ext_obj, has_entries(u'scorm_id', u'123456',
                                          u'title', u'scorm title',
                                          u'course_version', u'v1',
-                                         u'registration_count', 10))
+                                         u'registration_count', 10,
+                                         u'learning_standard', 'cmi5'))
 
         assert_that(find_factory_for(ext_obj),
                     not_none())

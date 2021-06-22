@@ -51,6 +51,7 @@ from nti.schema.field import Number
 from nti.schema.field import Object
 from nti.schema.field import DateTime
 from nti.schema.field import ValidText
+from nti.schema.field import ValidTextLine
 from nti.schema.field import ListOrTuple
 from nti.schema.field import IndexedIterable as TypedIterable
 from nti.schema.field import DecodingValidTextLine as ValidTextLine
@@ -339,6 +340,14 @@ class ISCORMContentInfo(IContained, ICreated, ILastModified, ICompletableItem):
                         title=u'The upload job',
                         description=u'The uplaod job if this content was uploaded asynchronously',
                         required=False)
+
+    # The v1 API doesn't document these well. The v2 API documents the
+    # enum of possible values here much better. We should be able to
+    # move to a choice if we ever migrate to v2
+    # https://cloud.scorm.com/docs/v2/reference/swagger/#/course/GetCourse
+    learning_standard = ValidTextLine(title=u'The learning standard',
+                                      description=u'For example scorm, cmi5, aicc, etc.',
+                                      required=False)
 
 
 class ISCORMContentInfoContainer(IShouldHaveTraversablePath,
