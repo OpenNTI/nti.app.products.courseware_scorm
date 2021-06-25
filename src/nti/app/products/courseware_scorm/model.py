@@ -260,7 +260,8 @@ def _course_data_to_scorm_content_info(course_data):
                             course_version=course_data.numberOfVersions,
                             title=course_data.title,
                             tags=course_data.tags or (),
-                            registration_count=reg_count)
+                            registration_count=reg_count,
+                            learning_standard=course_data.learningStandard)
 
 
 @component.adapter(ICourseInstance)
