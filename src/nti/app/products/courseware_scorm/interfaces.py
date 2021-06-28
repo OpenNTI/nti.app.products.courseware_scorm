@@ -194,6 +194,12 @@ class ISCORMCloudClient(interface.Interface):
                         has completed.
         """
 
+    def launch_property_editor_url(scorm_id):
+        """
+        Return a url suitable for launching the advanced property editor
+        for the provided scorm cloud course.
+        """
+
     def get_registration_list(course):
         """
         Returns the list of registrations for the given course.

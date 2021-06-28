@@ -47,6 +47,7 @@ from nti.contenttypes.courses.interfaces import ICourseAdministrativeLevel
 
 from nti.dataserver.authorization import ACT_READ
 from nti.dataserver.authorization import ACT_CONTENT_EDIT
+from nti.dataserver.authorization import ACT_NTI_ADMIN
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
@@ -251,6 +252,25 @@ class ScormContentInfoGetView(AbstractAuthenticatedView,
             if did_update:
                 self.request.environ['nti.request_had_transaction_side_effects'] = True
         return self.context
+
+@view_config(route_name='objects.generic.traversal',
+             renderer='rest',
+             context=ISCORMContentInfo,
+             permission=ACT_NTI_ADMIN, #NTI Admins for now, editors may make sense in the future
+             request_method='GET',
+             name="launch_property_editor")
+class ScormContentInfoPropertiesEditor(AbstractAuthenticatedView,
+                                       SCORMContentUploadMixin):
+    """
+    A view that redirects the request to the properties editor
+    of the scorm package. Useful for advanced configuration options.
+    """
+
+    def __call__(self):
+        client = self._get_scorm_client()
+        course_id = self.context.scorm_id
+        url = client.launch_property_editor_url(course_id)
+        return hexc.HTTPSeeOther(location=url)
 
 
 @view_config(route_name='objects.generic.traversal',

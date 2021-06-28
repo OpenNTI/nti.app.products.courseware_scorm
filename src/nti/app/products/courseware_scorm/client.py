@@ -345,6 +345,10 @@ class SCORMCloudClient(object):
                 logger.warning(error)
                 raise error
 
+    def launch_property_editor_url(self, scorm_id):
+        service = self.cloud.get_course_service()
+        return service.get_property_editor_url(scorm_id)
+
     def launch(self, scorm_id, course, user, redirect_url):
         service = self.cloud.get_registration_service()
         registration_id = get_registration_id_for_user_and_course(scorm_id, user, course)
