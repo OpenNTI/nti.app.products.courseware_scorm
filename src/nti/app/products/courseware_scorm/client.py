@@ -273,11 +273,21 @@ class SCORMCloudClient(object):
             first_name = human_name.first
             last_name = human_name.last
 
-        enrollment = component.getMultiAdapter((course, user),
-                                               ICourseInstanceEnrollment)
+        enrollment = component.queryMultiAdapter((course, user),
+                                                 ICourseInstanceEnrollment)
 
-        url_factory = component.getUtility(IPostBackURLUtility)
-        url = url_factory.url_for_registration_postback(enrollment)
+        # Create a postback url if we have an enrollment record. Historically we would
+        # always have an enrollment record here as non student users would only ever
+        # preview the package, instead of launching a registration. However, scormcloud
+        # has issues previewing cmi5/xapi content. In order to let admins/instructors
+        # view that content we have to create a registration for them they can launch,
+        # but the lack of enrollment record means we can't support results postback. That's
+        # ok as we don't care about tracking completion for those users.
+        url = None
+        if enrollment:
+            url_factory = component.getUtility(IPostBackURLUtility)
+            url = url_factory.url_for_registration_postback(enrollment)
+
         user = None
         password = None
         if url:
@@ -357,8 +367,16 @@ class SCORMCloudClient(object):
                                      scorm_id=scorm_id,
                                      user=user,
                                      course=course)
-        logger.info("Launching registration: regid=%s", registration_id)
-        return service.launch(registration_id, redirect_url)
+
+        # This is a bit tightly coupled with how/when we create the registration and
+        # the lack of postback urls in certain cases. See comment in createRegistration
+        enrollment = component.queryMultiAdapter((course, user),
+                                                 ICourseInstanceEnrollment)
+        disable_tracking = not enrollment
+        logger.info("Launching registration: regid=%s, disableTracking=%s", registration_id, disable_tracking)
+        return service.launch(registration_id,
+                              redirect_url,
+                              disableTracking=disable_tracking)
 
     def preview(self, scorm_id, redirect_url):
         service = self.cloud.get_course_service()
