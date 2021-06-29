@@ -35,6 +35,7 @@ from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.utils import is_course_instructor_or_editor
 
 from nti.dataserver.authorization import ACT_CONTENT_EDIT
+from nti.dataserver.authorization import ACT_NTI_ADMIN
 
 from nti.dataserver.authorization import is_admin_or_content_admin_or_site_admin
 
@@ -64,6 +65,18 @@ class _SCORMContentRefDecorator(AbstractAuthenticatedRequestAwareDecorator):
         external['ScormContentInfo'] = find_object_with_ntiid(context.target)
         external['Target-NTIID'] = context.target
 
+@component.adapter(ISCORMContentInfo)
+@interface.implementer(IExternalObjectDecorator)
+class _SCORMContentInfoPropertiesLaunchDecorator(AbstractAuthenticatedRequestAwareDecorator):
+    
+    def _predicate(self, context, unused_external):
+        return context.scorm_id and has_permission(ACT_NTI_ADMIN, context, self.request)
+
+    def _do_decorate_external(self, context, external):
+        _links = external.setdefault(LINKS, [])
+        _links.append(Link(context,
+                           rel='property-editor',
+                           elements=('@@launch_property_editor',)))
 
 @component.adapter(ISCORMContentInfo)
 @interface.implementer(IExternalObjectDecorator)
