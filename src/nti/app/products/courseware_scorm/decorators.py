@@ -92,9 +92,12 @@ class _SCORMContentInfoLaunchDecorator(AbstractAuthenticatedRequestAwareDecorato
             _links = external.setdefault(LINKS, [])
             if    is_admin_or_content_admin_or_site_admin(self.remoteUser) \
                or is_course_instructor_or_editor(course, self.remoteUser):
+                view_name = PREVIEW_SCORM_COURSE_VIEW_NAME
+                if context.learning_standard == 'cmi5':
+                    view_name = LAUNCH_SCORM_COURSE_VIEW_NAME
                 _links.append(Link(context,
                                    rel=LAUNCH_REL,
-                                   elements=(PREVIEW_SCORM_COURSE_VIEW_NAME,)))
+                                   elements=(view_name,)))
             else:
                 _links.append(Link(context,
                                    rel=LAUNCH_REL,
