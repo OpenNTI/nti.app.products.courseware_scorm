@@ -13,10 +13,15 @@ from six.moves import cStringIO
 from pyramid import httpexceptions as hexc
 
 from pyramid.view import view_config
+from pyramid.view import view_defaults
 
 from requests.structures import CaseInsensitiveDict
 
 from zope import component
+
+from zope.interface.interfaces import ComponentLookupError
+
+from zope.component.interfaces import ISite
 
 from zope.event import notify
 
@@ -36,6 +41,8 @@ from nti.app.products.courseware_scorm.views import GET_SCORM_ARCHIVE_VIEW_NAME
 from nti.app.products.courseware_scorm.views import GET_REGISTRATION_LIST_VIEW_NAME
 from nti.app.products.courseware_scorm.views import DELETE_ALL_REGISTRATIONS_VIEW_NAME
 from nti.app.products.courseware_scorm.views import SYNC_REGISTRATION_REPORT_VIEW_NAME
+
+from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
 from nti.contenttypes.completion.interfaces import UserProgressUpdatedEvent
 
@@ -159,3 +166,84 @@ class SyncRegistrationReportView(AbstractAuthenticatedView):
         else:
             container.remove_registration_report(user)
             return hexc.HTTPNoContent()
+
+
+
+_SC_UTILITY_NAME = 'scormcloud_client'
+        
+@view_defaults(route_name='objects.generic.traversal',
+               renderer='rest',
+               context=ISite,
+               request_method='GET',
+               permission=nauth.ACT_NTI_ADMIN,
+               name="ScormCloudClient")
+class ManageScormConfigurationView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixin):
+    """
+    APIs for seeing what scorm cloud client a site is using and
+    registering/unregistering them persistently. At this point these
+    are intended to be internal and used by operations group. They
+    aren't current expected to be exposed to client applications or
+    outside users. As such it's a named view not registered as a link anywhere.
+    """
+
+    @view_config(request_method='GET')
+    def get_client(self):
+        """
+        A GET to this named view return the registered ISCORMCloudClient
+        that will be used by the ISite (context). This utility may not come from this
+        sites registry and it may or may not be persistent.
+        """
+        sm = self.context.getSiteManager()
+        try:
+            return sm.getUtility(ISCORMCloudClient)
+        except ComponentLookupError:
+            raise hexc.HTTPNotFound()
+
+    @view_config(request_method='POST')
+    def make_client(self):
+        """
+        POSTing an ISCORMCloudClient object to this view will create a
+        persistent client, store it beneath the SiteManager's default
+        folder and register it as a utility as appropriate. If a
+        persistent ISCORMCloudClient already exists in this SiteManager
+        a 409 conflict is raised.
+        """
+        sm = self.context.getSiteManager()
+        smf = sm['default']
+        client = None
+        try:
+            client = smf[_SC_UTILITY_NAME]
+        except KeyError:
+            pass
+
+        if client is not None:
+            raise hexc.HTTPConflict()
+
+        client = self.readCreateUpdateContentObject(self.remoteUser)
+
+        sm.registerUtility(client, ISCORMCloudClient, '')
+        smf[_SC_UTILITY_NAME] = client
+        
+        return client
+
+    @view_config(request_method='DELETE')
+    def nuke_client(self):
+        """
+        DELETEing this view will delete and unregister the persistent
+        ISCORMCloudClient stored (and registered) in this Site
+        Manager. If this SiteManager does not have a persitent
+        ISCORMCloudClient a 404 is returned.
+        """
+        sm = self.context.getSiteManager()
+        smf = sm['default']
+        try:
+            client = smf[_SC_UTILITY_NAME]
+        except KeyError:
+            raise hexc.HTTPNotFound()
+
+        
+        sm.unregisterUtility(client, provided=ISCORMCloudClient)
+        del smf[_SC_UTILITY_NAME]
+        return hexc.HTTPNoContent()
+
+
