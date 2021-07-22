@@ -523,6 +523,7 @@ class TestFullFlow(CoursewareSCORMLayerTest):
         assert_that(imported_scorm_ref['ScormContentInfo']['upload_job']['State'], is_(UPLOAD_CREATED))
 
         # Content eventually updates
+        # FIXME: Timing dependent.
         gevent.sleep(5)
         lesson_ext = self.testapp.get(lesson_content_href).json_body
         group_items = lesson_ext.get('Items')[0].get('Items')

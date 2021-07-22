@@ -24,6 +24,7 @@ from nti.app.products.courseware_scorm.views import PREVIEW_SCORM_COURSE_VIEW_NA
 from nti.app.products.courseware_scorm.views import SCORM_CONTENT_ASYNC_UPLOAD_UPDATE_VIEW
 
 from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
+from nti.app.renderers.decorators import AbstractRequestAwareDecorator
 
 from nti.appserver.pyramid_authorization import has_permission
 
@@ -190,3 +191,18 @@ class CourseCompletedItemDecorator(AbstractAuthenticatedRequestAwareDecorator):
         meta_data[ITEM_COUNT] = len(meta_items)
         meta_data['SuccessCount'] = success_count
         meta_data['FailCount'] = fail_count
+
+@component.adapter(ISCORMCloudClient)
+@interface.implementer(IExternalObjectDecorator)
+class _ClientSecretStripper(object):
+    """
+    Strip the secret. Ideally this would happen using _ext_excluded_out
+    but that seems to prevent us from internalizing that field.
+    """
+
+    def __init__(self, unused_context):
+        pass
+
+    def decorateExternalObject(self, context, external):
+        external.pop('secret_key', None)
+        

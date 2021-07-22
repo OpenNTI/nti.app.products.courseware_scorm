@@ -42,12 +42,12 @@ class SharedConfiguringTestLayer(ZopeComponentLayer,
         # A non-None client for tests
         cls.client = SCORMCloudClient(app_id=u'app_id',
                                       secret_key=u'secret_key',
-                                      service_url=u'service_url')
+                                      service_url=u'http://example.com/service_url')
         component.getGlobalSiteManager().registerUtility(cls.client, ISCORMCloudClient)
 
     @classmethod
     def tearDown(cls):
-        component.getGlobalSiteManager().unregisterUtility(cls.client)
+        component.getGlobalSiteManager().unregisterUtility(cls.client, ISCORMCloudClient)
         cls.tearDownPackages()
         zope.testing.cleanup.cleanUp()
 
@@ -64,8 +64,6 @@ class SharedConfiguringTestLayer(ZopeComponentLayer,
 class SCORMLayerTest(ApplicationLayerTest):
 
     layer = SharedConfiguringTestLayer
-
-    get_configuration_package = AbstractTestBase.get_configuration_package.__func__
 
 
 class CoursewareSCORMLayerTest(ApplicationLayerTest):

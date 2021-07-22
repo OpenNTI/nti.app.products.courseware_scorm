@@ -13,12 +13,18 @@ import hashlib
 
 from nameparser import HumanName
 
+from persistent import Persistent
+
 from pyramid import httpexceptions as hexc
 
 from pyramid.threadlocal import get_current_request
 
 from zope import component
 from zope import interface
+
+from zope.cachedescriptors.property import CachedProperty
+
+from zope.location.interfaces import IContained
 
 from nti.app.externalization.error import raise_json_error
 
@@ -48,6 +54,10 @@ from nti.dataserver.users.users import User
 from nti.links.externalization import render_link
 
 from nti.links.links import Link
+
+from nti.schema.fieldproperty import createDirectFieldProperties
+
+from nti.schema.schema import SchemaConfigured
 
 from nti.scorm_cloud.client import ScormCloudUtilities
 
@@ -147,14 +157,25 @@ class SCORMCloudClient(object):
     """
     The default SCORM client.
     """
+    mimeType = 'application/vnd.nextthought.scorm.scormcloudclient'
+    __external_can_create__ = False
+
+    name = None
 
     def __init__(self, app_id, secret_key, service_url):
         self.app_id = app_id
         self.secret_key = secret_key
+        self.service_url = service_url
+
+    @CachedProperty('app_id', 'secret_key', 'service_url')
+    def cloud(self):
         origin = ScormCloudUtilities.get_canonical_origin_string('NextThought',
                                                                  'Platform', '1.0')
         service = component.getUtility(IScormCloudService)
-        self.cloud = service.withargs(app_id, secret_key, service_url, origin)
+        return service.withargs(self.app_id,
+                                self.secret_key,
+                                self.service_url,
+                                origin)
 
     def import_scorm_content(self, source):
         """
@@ -460,3 +481,17 @@ class SCORMCloudClient(object):
     def remove_scorm_tag(self, scorm_id, tag):
         service = self.cloud.get_tag_service()
         service.remove_scorm_tag(scorm_id, tag)
+
+@interface.implementer(IContained)
+class PersistentSCORMCloudClient(Persistent, SchemaConfigured, SCORMCloudClient):
+
+    createDirectFieldProperties(ISCORMCloudClient)
+
+    __external_can_create__ = True
+    mimeType = 'application/vnd.nextthought.scorm.scormcloudclient'
+
+    __name__ = None
+    __parent__ = None
+
+    def __init__(self, *args, **kwargs):
+        SchemaConfigured.__init__(self, *args, **kwargs)

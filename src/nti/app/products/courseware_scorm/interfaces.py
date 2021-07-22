@@ -45,6 +45,7 @@ from nti.coremetadata.interfaces import IUser
 from nti.coremetadata.interfaces import IShouldHaveTraversablePath
 
 from nti.schema.field import Bool
+from nti.schema.field import HTTPURL
 from nti.schema.field import List
 from nti.schema.field import Choice
 from nti.schema.field import Number
@@ -133,6 +134,20 @@ class ISCORMCloudClient(interface.Interface):
     """
     A client for interacting with SCORM Cloud.
     """
+    app_id = ValidTextLine(title=u'The SCORM Cloud app id.',
+                           required=True)
+
+    secret_key = ValidTextLine(title=u'The SCORM Cloud secret key.',
+                               required=True)
+
+    service_url = HTTPURL(title=u'The SCORM Cloud service URL.',
+                          required=True,
+                          default='https://cloud.scorm.com/EngineWebServices')
+
+    name = ValidTextLine(title=u'A display name for this client.',
+                         required=False,
+                         default=u'')
+    
 
     def import_scorm_content(context, source):
         """
