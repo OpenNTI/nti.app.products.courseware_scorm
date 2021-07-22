@@ -223,7 +223,7 @@ class ManageScormConfigurationView(AbstractAuthenticatedView, ModeledContentUplo
 
         sm.registerUtility(client, ISCORMCloudClient, '')
         smf[_SC_UTILITY_NAME] = client
-        
+        self.request.response.status_int = 201
         return client
 
     @view_config(request_method='DELETE')

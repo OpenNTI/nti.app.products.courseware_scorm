@@ -19,6 +19,8 @@ from nti.app.products.courseware_scorm.interfaces import ISCORMCloudClient
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
+from nti.app.testing.application_webtest import ApplicationTestLayer
+
 from nti.testing.base import AbstractTestBase
 
 from nti.testing.layers import find_test
@@ -64,6 +66,10 @@ class SharedConfiguringTestLayer(ZopeComponentLayer,
 class SCORMLayerTest(ApplicationLayerTest):
 
     layer = SharedConfiguringTestLayer
+
+class SCORMApplicationLayerTest(ApplicationLayerTest):
+
+    layer = ApplicationTestLayer
 
 
 class CoursewareSCORMLayerTest(ApplicationLayerTest):
