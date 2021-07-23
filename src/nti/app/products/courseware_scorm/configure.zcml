@@ -204,6 +204,10 @@
                      pyramid.interfaces.IRequest"
                 provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 
+    <subscriber factory=".decorators._ClientSecretStripper"
+                provides="nti.externalization.interfaces.IExternalObjectDecorator"
+                for=".interfaces.ISCORMCloudClient" />
+
     <utility factory=".ntiids._SCORMContentRefResolver" name="SCORMContentRef" />
 
 	<!-- Externalization -->
@@ -226,7 +230,8 @@
 									 .interfaces.ISCORMLearnerPreference
 									 .interfaces.ISCORMStatic
 									 .interfaces.ISCORMRuntime
-									 .interfaces.ISCORMActivity"
-					modules=".courses .model" />
+									 .interfaces.ISCORMActivity
+									 .interfaces.ISCORMCloudClient"
+					modules=".courses .model .client" />
 
 </configure>
