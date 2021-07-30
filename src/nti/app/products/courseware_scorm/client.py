@@ -389,11 +389,7 @@ class SCORMCloudClient(object):
                                      user=user,
                                      course=course)
 
-        # This is a bit tightly coupled with how/when we create the registration and
-        # the lack of postback urls in certain cases. See comment in createRegistration
-        enrollment = component.queryMultiAdapter((course, user),
-                                                 ICourseInstanceEnrollment)
-        disable_tracking = not enrollment
+        disable_tracking = False
         logger.info("Launching registration: regid=%s, disableTracking=%s", registration_id, disable_tracking)
         return service.launch(registration_id,
                               redirect_url,
