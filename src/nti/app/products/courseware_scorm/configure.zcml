@@ -234,4 +234,8 @@
 									 .interfaces.ISCORMCloudClient"
 					modules=".courses .model .client" />
 
+	<adapter factory=".io.ScormContentInfoIO"
+			 for=".interfaces.ISCORMContentInfo"
+			 provides="nti.externalization.interfaces.IInternalObjectUpdater" />
+
 </configure>

@@ -41,6 +41,8 @@ from nti.app.products.courseware_scorm.utils import check_and_update_scorm_conte
 
 from nti.app.products.courseware_scorm.views import CREATE_SCORM_COURSE_VIEW_NAME
 
+from nti.appserver.ugd_edit_views import UGDPutView
+
 from nti.common.string import is_true
 
 from nti.contenttypes.courses.interfaces import ICourseAdministrativeLevel
@@ -252,6 +254,20 @@ class ScormContentInfoGetView(AbstractAuthenticatedView,
             if did_update:
                 self.request.environ['nti.request_had_transaction_side_effects'] = True
         return self.context
+
+@view_config(route_name='objects.generic.traversal',
+             renderer='rest',
+             context=ISCORMContentInfo,
+             permission=ACT_CONTENT_EDIT,
+             request_method='PUT')
+class ScormContentInfoPutView(UGDPutView):
+    """
+    A view for updating a :class:`ISCORMContentInfo` object. Only
+    fields not tied to the underlying content themselves can be
+    updated (controlled by the internalizer)
+    """
+
+    pass
 
 @view_config(route_name='objects.generic.traversal',
              renderer='rest',
