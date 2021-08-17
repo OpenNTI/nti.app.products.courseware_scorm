@@ -9,6 +9,7 @@ from __future__ import absolute_import
 
 from hamcrest import is_
 from hamcrest import none
+from hamcrest import instance_of
 from hamcrest import is_not
 from hamcrest import not_none
 from hamcrest import has_item
@@ -105,14 +106,21 @@ class TestExternal(ApplicationLayerTest):
         assert_that(find_factory_for(ext_obj),
                     not_none())
 
-        internal = find_factory_for(ext_obj)()
+        internal = find_factory_for(ext_obj)(scorm_id=u'123456',
+                                             title=u'scorm title',
+                                             course_version=u'v1',
+                                             registration_count=10,
+                                             learning_standard='cmi5')
+        internal.title = u'a title'
+        assert_that(internal, instance_of(ScormContentInfo))
+        assert_that(internal.title, is_(u'a title'))
+        assert_that(internal.tags, is_(none()))
+
+        # Only tags are actually updated
         update_from_external_object(internal,
                                     ext_obj,
                                     require_updater=True)
-        assert_that(internal.scorm_id, is_(u'123456'))
-        assert_that(internal.title, is_(u'scorm title'))
-        assert_that(internal.course_version, is_(u'v1'))
-        assert_that(internal.registration_count, is_(10))
+        assert_that(internal.title, is_(u'a title')) # wasn't overwritten
         assert_that(internal.tags, contains_inanyorder(u'tag1', u'tag2'))
 
     def test_scorm_content_ref(self):
