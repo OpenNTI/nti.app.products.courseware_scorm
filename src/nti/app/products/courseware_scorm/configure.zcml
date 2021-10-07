@@ -174,10 +174,12 @@
              provides=".interfaces.ISCORMWorkspace" />
 
     <!-- Decorators -->
-    <subscriber factory=".decorators._SCORMContentInfoPropertiesLaunchDecorator"
-                provides="nti.externalization.interfaces.IExternalObjectDecorator"
-                for="nti.app.products.courseware_scorm.interfaces.ISCORMContentInfo
-                     pyramid.interfaces.IRequest" />
+    <configure zcml:condition="have devmode">
+      <subscriber factory=".decorators._SCORMContentInfoPropertiesLaunchDecorator"
+                  provides="nti.externalization.interfaces.IExternalObjectDecorator"
+                  for="nti.app.products.courseware_scorm.interfaces.ISCORMContentInfo
+                       pyramid.interfaces.IRequest" />
+    </configure>
     
     <subscriber factory=".decorators._SCORMContentInfoLaunchDecorator"
                 provides="nti.externalization.interfaces.IExternalObjectDecorator"
